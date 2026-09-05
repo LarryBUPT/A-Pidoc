@@ -5,6 +5,7 @@ import type { ApiSpec } from "./domain/types.js";
 import { cases, getCase } from "./fixtures/cases.js";
 import { parseCurlTask } from "./input/debug-input.js";
 import { parseOpenApiOperation } from "./input/openapi-parser.js";
+import { scanRepository } from "./repository/scanner.js";
 
 function flags(args: string[]): Map<string, string> {
   const result = new Map<string, string>();
@@ -52,6 +53,15 @@ async function run(): Promise<void> {
   }
 
   const options = flags(args);
+  if (mode === "repo") {
+    const report = await scanRepository({
+      root: required(options, "root"),
+      openApiDocument: await jsonFile(required(options, "document"))
+    });
+    console.log(JSON.stringify(report, null, 2));
+    if (report.summary.errors > 0) process.exitCode = 1;
+    return;
+  }
   const allowedHosts = required(options, "allow-host").split(",").map((host) => host.trim()).filter(Boolean);
   const allowedPorts = required(options, "allow-port").split(",").map((port) => Number(port.trim()));
   const reasoner = createConfiguredReasoner();
@@ -84,7 +94,7 @@ async function run(): Promise<void> {
     return;
   }
   throw new Error(
-    "Usage: all | <fixture-id> | curl --input file --spec file --allow-host host --allow-port port | openapi --document file --path /path --method POST --allow-host host --allow-port port"
+    "Usage: all | <fixture-id> | repo --root dir --document openapi.json | curl --input file --spec file --allow-host host --allow-port port | openapi --document file --path /path --method POST --allow-host host --allow-port port"
   );
 }
 

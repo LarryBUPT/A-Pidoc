@@ -1,4 +1,4 @@
-# A-Pidoc 构建日志：V0 → V1-A → V1-B
+# A-Pidoc 构建日志：V0 → V1-A → V1-B → V2
 
 本文是事实日志，不是产品规划。版本、提交、Issue、Pull Request（拉取请求，简称 PR）和 Release（发布版本）均来自当前 Git 历史或 GitHub 记录。HTTP（Hypertext Transfer Protocol，超文本传输协议）、JSON（JavaScript Object Notation，JavaScript 对象表示法）、OpenAPI（OpenAPI Specification，开放接口规范）、Agent（智能体）和 Reasoner（推理器）沿用项目代码中的含义。
 
@@ -46,6 +46,7 @@ flowchart LR
 | V1-A 完成 | Issue #1；PR #11，`fa7aeb3` | `v0.3.0` | curl/OpenAPI 进入同一真实执行链路，但没有 Pi |
 | V1-B 完成 | Issue #13；PR #14，`ddfee2e` | `v0.4.0` | Pi Reasoner、Prompt、输出约束、降级和三轮评测接通 |
 | 文档事实化 | Issue #16 | 不发产品版本 | 公开当前事实，私有保存个人规划 |
+| V2 | Issue #21；PR #22；仓库预检实现与固定 fixture | `v0.5.0` | 从源码定位 fetch、OpenAPI 差异和环境变量缺口，默认不执行 |
 
 ## 2026-09-05：V0，先证明闭环能跑
 
@@ -239,6 +240,41 @@ V0 只能证明算法骨架；V1-A 要证明用户自己的请求能进入相同
 ### 本阶段遇到的问题与风险
 
 第一次创建 `.private/` 时使用了当前 PowerShell 不支持的 `New-Item -LiteralPath` 参数，目标目录没有创建，移动也没有发生。检查确认源目录仍有 11 个文件后，改用 `.NET Directory.CreateDirectory`，再次校验源和目标绝对路径，最终完成 11→11 的移动。这个过程证明破坏性或递归文件操作前后都应核对精确路径和数量。
+
+## 2026-09-06：V2，把入口前移到代码仓库
+
+证据：Issue #21、PR #22、`src/repository/*`、`test/fixtures/repository` 与 `test/repository-scanner.test.ts`。
+
+### 改了什么
+
+- CLI 新增 `repo --root <dir> --document <openapi.json>`。
+- 扫描器只读 `.js/.jsx/.ts/.tsx`，忽略依赖、构建和覆盖率目录，不跟随符号链接，并限制文件数与单文件大小。
+- 识别字面量 HTTP(S) `fetch` 的 URL、方法、文件和行号，与 OpenAPI 3.x 的 method/path 比对。
+- 识别 `process.env.NAME`、`import.meta.env.NAME`，只读取 `.env.example` 的变量名，不读取 `.env`。
+- 输出 `RepositoryReport`，区分规范缺失、环境变量缺失、动态 URL 未支持和超大文件。
+
+### 为什么这样改
+
+V1 已能诊断一条明确请求，但用户仍需先在陌生仓库中定位调用点。V2 先完成无副作用预检，让“从仓库找到问题”成为可验证入口，同时避免扫描结果直接产生网络请求或模型费用。
+
+### 怎么证明它有效
+
+- 固定仓库样例包含 2 个字面量调用：1 个匹配 `POST /orders`，1 个未在 OpenAPI 声明。
+- 固定样例包含已声明与未声明环境变量，以及一个动态 `fetch`。
+- 测试断言具体文件、行号、operation、Finding 数量和扫描限制。
+- CLI 测试在 `A_PIDOC_REASONER=pi` 且无 Key 时仍能输出报告，证明 repo 模式没有构造 Pi 或调用模型。
+
+### 这一步还没有解决什么
+
+- 这是保守的文本级静态分析，不是完整抽象语法树或跨文件数据流分析。
+- 不支持 Axios、自定义 HTTP 客户端、变量拼接和模板表达式 URL。
+- 不会自动把发现项转换成 `DebugTask`，也不会执行、修代码或提交 PR。
+
+### 本阶段遇到的问题与风险
+
+- 固定 fixture 位于 `test/fixtures`，最初被 TypeScript 编译器当成项目源码；fixture 中故意使用的 `import.meta.env` 不属于当前 Node 类型环境。随后在 `tsconfig.json` 排除 fixture，扫描器仍按文件读取它。
+- 首个限制测试把 `await` 写进非异步回调，编译器在运行前阻断；改为先加载文档再执行断言。
+- 正则扫描便于解释和固定验证，但可能受注释、字符串内容或复杂语法影响；报告明确把动态目标标为未支持，不把不确定结果伪装成已解析。
 
 ## 从这条迭代得到的方法
 

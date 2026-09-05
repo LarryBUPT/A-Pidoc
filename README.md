@@ -2,12 +2,14 @@
 
 API Doctor 是一个面向初级开发者与 SaaS（Software as a Service，软件即服务）实施人员的 HTTP API（Hypertext Transfer Protocol Application Programming Interface，基于超文本传输协议的应用程序编程接口）联调诊断 Agent（智能体）。它把失败请求、接口规范和运行证据组织成一条可复现链路，并在安全策略约束下执行修正、重试与结果复核。
 
-产品 V1 使用 **Pi Agent + deterministic safety baseline（确定性安全基线）**：Pi Debug Agent 负责基于请求、响应、规范和规则生成结构化修复计划；本地 Schema Gate（结构校验闸门）、安全策略、HTTP Tool（网络请求工具）和独立 Reviewer（证据复核器）决定计划能否执行及证据是否成立。确定性 Reasoner（推理器）同时保留为离线基线和显式降级选项。
+产品 V2 包含两条互补链路：Repository Preflight（仓库预检）先静态扫描源码中的 API 调用和环境变量，并与 OpenAPI 规范比对；单请求 Debug Agent 再使用 **Pi Agent + deterministic safety baseline（确定性安全基线）** 生成受约束修复计划、执行、重试并复核证据。仓库预检默认不执行网络、不调用模型。
 
 ## 已完成的最小闭环
 
 ```mermaid
 flowchart LR
+    R[源码仓库 + OpenAPI] --> S[受限静态扫描]
+    S --> T[调用点 / 规范差异 / 环境变量报告]
     A[curl / OpenAPI / 固定请求] --> B[规范化]
     B --> C[域名策略检查]
     C --> D[受控 HTTP / Fixture 工具]
@@ -22,15 +24,17 @@ flowchart LR
     K --> L[结构化报告与 Trace]
 ```
 
-覆盖 6 个固定案例：401 鉴权格式、415 Content-Type、422 字段类型、405 请求方法、429 受控重试，以及健康请求。当前共有 36 项自动化测试；Pi Tier A（每个 PR 必须通过的最小 Agent 评测层）会连续运行 3 次。另有域名越权、敏感信息、超时和非法模型输出测试。
+覆盖 6 个固定诊断案例和 1 个固定仓库案例。当前共有 49 项自动化测试；Pi Tier A（每个 PR 必须通过的最小 Agent 评测层）会连续运行 3 次。另有接口滥用、网络越权、敏感信息、预算、超时和非法模型输出测试。
 
-## V0 → V1 的真实迭代
+## V0 → V2 的真实迭代
 
 | 阶段 | 发布版本 | 只解决一个问题 | 明确未解决 |
 | --- | --- | --- | --- |
 | V0 | `v0.1.0` | 固定失败请求能否完成执行、诊断、单步修复、重试和复核 | 真实输入、真实 HTTP、Pi |
 | V1-A | `v0.2.0`～`v0.3.0` | curl 和 OpenAPI（OpenAPI Specification，开放接口规范）能否进入受控真实 HTTP 闭环 | Pi 模型路径 |
 | V1-B | `v0.4.0` | Pi 能否通过同一 Reasoner 接口生成受约束计划，并保留确定性安全与复核 | 公网模型评测、Skill 动态加载、仓库级诊断 |
+| V1-B 安全补丁 | `v0.4.1` | 模型与 HTTP 边界能否阻断凭据泄漏、滥用和无上限调用 | 云端账户预算、Key 轮换、隐私同意 |
+| V2 | `v0.5.0` | 能否从本地仓库定位字面量 fetch、规范差异和环境变量缺口 | 动态 URL、Axios、跨文件数据流、自动执行 |
 
 完整证据和每阶段的“改了什么、为什么、怎么证明、尚未解决”见 [构建日志](docs/build-log.md)。
 
@@ -45,7 +49,16 @@ npm run demo
 npm run eval:tier-a
 ```
 
-预期结果：36 项测试全部通过，6 个固定案例全部显示 `passed: true`，Pi Tier A 显示 `3/3 runs passed`。
+预期结果：49 项测试全部通过，6 个固定诊断案例全部显示 `passed: true`，Pi Tier A 显示 `3/3 runs passed`。
+
+运行 V2 固定仓库预检：
+
+```bash
+npm run build
+node dist/src/cli.js repo --root test/fixtures/repository --document test/fixtures/repository/openapi.json
+```
+
+该 fixture 故意包含一个 OpenAPI 未声明调用和两个未声明环境变量，因此命令返回退出码 1，并输出带文件与行号的 JSON 报告。这是预期的“发现问题”，不是扫描器崩溃。
 
 启动本地服务：
 
@@ -133,7 +146,7 @@ HTTP API 同时保留 V0 `{ "caseId": "auth-header" }` 输入，并新增：
 ## 文档导航
 
 - [架构与核心链路](docs/architecture.md)：数据流、模块边界、关键取舍和当前风险。
-- [V0 → V1 构建日志](docs/build-log.md)：按真实提交、Issue、PR 和测试记录迭代。
+- [V0 → V2 构建日志](docs/build-log.md)：按真实提交、Issue、PR 和测试记录迭代。
 - [面试追问题](docs/interview.md)：根据真实实现生成问题，回答由你自己填写。
 - [贡献与发布工作流](CONTRIBUTING.md)：Issue、分支、CI/CD（Continuous Integration / Continuous Delivery，持续集成与持续交付）和 Release 规则。
 
@@ -157,7 +170,8 @@ src/
   input/             curl 等真实输入解析器
   knowledge/         MVP 规则检索
   observability/     全链路 Trace
-  security/          请求白名单和尝试预算
+  repository/        V2 仓库扫描、OpenAPI 比对和结构化报告
+  security/          脱敏、公开错误、请求白名单和预算
   tools/             Fixture 与受限真实 HTTP 工具
   cli.ts             固定数据演示入口
   server.ts          HTTP API 服务入口
@@ -172,5 +186,6 @@ docs/                可由仓库事实验证的公开文档
 ## 支持范围
 
 - 稳定能力：确定性 Reasoner、Fixture 回归集、规则检索、安全策略、重试、Reviewer、Trace 与离线评测。
-- V1 能力：官方 Pi Agent 运行时、版本化 Debug Prompt、受约束的模型修复计划、显式降级、curl/OpenAPI、JSON Schema 基线校验、受限真实 HTTP、CLI/HTTP API 和全链路脱敏。
-- 暂不支持：OpenAPI `$ref`、非 JSON request body、文档 RAG（Retrieval-Augmented Generation，检索增强生成）/rerank、Skill 动态加载、Pi 工具自主调用、代码仓库扫描、生产部署和公网模型在线 CI。
+- V1 能力：官方 Pi Agent 运行时、版本化 Debug Prompt、受约束的模型修复计划、显式降级、curl/OpenAPI、JSON Schema 基线校验、受限真实 HTTP、CLI/HTTP API、调用预算和全链路脱敏。
+- V2 能力：受限扫描 JavaScript/TypeScript，定位字面量 `fetch`、方法、源码行号、OpenAPI operation 匹配和 `.env.example` 声明缺口；扫描默认无网络和模型调用。
+- 暂不支持：OpenAPI `$ref`、非 JSON request body、动态 URL/跨文件数据流、Axios/自定义客户端、文档 RAG（Retrieval-Augmented Generation，检索增强生成）/rerank、Skill 动态加载、Pi 工具自主调用、自动执行扫描请求、生产部署和公网模型在线 CI。
