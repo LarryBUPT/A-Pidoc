@@ -44,6 +44,16 @@ Windows PowerShell 可使用：
 Invoke-RestMethod -Method Post -Uri http://localhost:3000/api/debug -ContentType application/json -Body '{"caseId":"auth-header"}'
 ```
 
+V1 开发分支已提供实验性的 curl 解析器和真实 HTTP 工具。真实请求必须显式传入 host allowlist；工具默认只允许 `localhost` 与 `127.0.0.1`，同时限制超时、响应体大小、重定向并脱敏响应中的凭据字段。它们尚未接入稳定版 CLI/API：
+
+```ts
+import { parseCurl } from "./dist/src/input/curl-parser.js";
+import { RealHttpTool } from "./dist/src/tools/real-http-tool.js";
+
+const request = parseCurl(`curl http://127.0.0.1:3000/health`);
+const tool = new RealHttpTool({ allowedHosts: ["127.0.0.1"], timeoutMs: 2_000 });
+```
+
 ## 开发与发布
 
 需求通过 Issue 发起，改动通过关联 PR 合并；PR 中填写 `Closes #<issue>` 后，合并会自动关闭需求。CI 在 PR 和 `main` 上执行 TypeScript 构建、单元测试与当前确定性 Tier A 评测。
@@ -58,10 +68,11 @@ src/
   core/              Agent 编排主循环
   domain/            稳定 JSON/TypeScript 契约
   fixtures/          可重复的故障案例
+  input/             curl 等真实输入解析器
   knowledge/         MVP 规则检索
   observability/     全链路 Trace
   security/          请求白名单和尝试预算
-  tools/             受控 HTTP Fixture 工具
+  tools/             Fixture 与受限真实 HTTP 工具
   cli.ts             固定数据演示入口
   server.ts          HTTP API 服务入口
 test/                核心链路、权限和 Trace 测试
@@ -82,6 +93,6 @@ docs/                JD 分析、PRD、架构与迭代路线
 
 ## 当前边界
 
-- 已接通：确定性 Reasoner、Fixture HTTP 工具、规则检索、安全策略、重试、Reviewer、Trace、离线评测、HTTP 服务。
-- 尚未接通：真实网络工具、OpenAPI/curl 解析、Pi 模型、向量检索、持久化、并发任务、前端 UI、MCP。
+- 已接通：确定性 Reasoner、Fixture HTTP 工具、规则检索、安全策略、重试、Reviewer、Trace、离线评测、HTTP 服务；开发分支新增 curl 解析与受限真实 HTTP 工具。
+- 尚未接通：将真实输入接入稳定 CLI/API、OpenAPI 解析、Pi 模型、向量检索、持久化、并发任务、前端 UI、MCP。
 - `.pi/skills/api-doctor/SKILL.md` 已定义领域工作流；真实 Pi 接入时复用 `Reasoner` 契约，不改核心编排。
