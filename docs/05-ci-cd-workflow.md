@@ -47,7 +47,7 @@ flowchart LR
 首次推送后需要在 GitHub 完成两项仓库级设置：
 
 1. 为 `main` 建立 Ruleset，禁止直接 push，并要求 `Build, unit tests, and Tier A eval` 检查通过。
-2. 创建只授权本仓库的 fine-grained PAT，授予 Contents 与 Pull requests 的 Read and write 权限，并保存为 Actions Secret `RELEASE_PLEASE_TOKEN`。这样 Release Please 创建的 PR 才会像普通 PR 一样触发 CI。
+2. 建议创建只授权本仓库的 fine-grained PAT，授予 Contents 与 Pull requests 的 Read and write 权限，并保存为 Actions Secret `RELEASE_PLEASE_TOKEN`。这样 Release Please 创建的 PR 才会像普通 PR 一样触发 CI；未配置时工作流会回退到内置 `GITHUB_TOKEN`。
 
 仓库内不保存 PAT、npm token 或模型密钥。`RELEASE_PLEASE_TOKEN` 只保存在 GitHub Actions Secrets；当前项目不需要 npm token 或模型密钥。
 

@@ -42,4 +42,4 @@ PR 被放弃时应直接关闭，并保留 Issue；需求只有在验收完成�
 - 单人项目可暂不强制批准数；有协作者后设为至少 1 个批准。
 - 禁止 force push 和删除 `main`。
 
-为让 Release Please 创建的 PR 触发正常 CI，需要配置仓库 Secret `RELEASE_PLEASE_TOKEN`。使用只授权本仓库的 fine-grained PAT，并仅授予 Contents 与 Pull requests 的 Read and write 权限。不要把 token 写入代码或 Issue。
+工作流在未配置 Secret 时会回退到内置 `GITHUB_TOKEN`。为让 Release Please 创建的 PR 也触发正常 CI，仍建议配置仓库 Secret `RELEASE_PLEASE_TOKEN`：使用只授权本仓库的 fine-grained PAT，并仅授予 Contents 与 Pull requests 的 Read and write 权限。不要把 token 写入代码或 Issue。
