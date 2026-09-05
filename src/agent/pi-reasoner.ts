@@ -1,5 +1,5 @@
 import { Agent, type StreamFn } from "@earendil-works/pi-agent-core";
-import type { Model } from "@earendil-works/pi-ai";
+import { streamSimple, type AssistantMessage, type Model } from "@earendil-works/pi-ai";
 import type {
   ApiSpec,
   Diagnosis,
@@ -8,8 +8,9 @@ import type {
   Reasoner,
   RootCause
 } from "../domain/types.js";
-import { isSensitiveKey, redactRequest, redactValue, REDACTED } from "../security/redaction.js";
+import { isSensitiveKey, redactRequest, redactText, redactValue, REDACTED } from "../security/redaction.js";
 import { DEBUG_AGENT_PROMPT_VERSION, DEBUG_AGENT_SYSTEM_PROMPT } from "./prompts/debug-agent.js";
+import { PublicError } from "../security/errors.js";
 
 const ROOT_CAUSES = new Set<RootCause>([
   "AUTH_HEADER_FORMAT",
@@ -29,9 +30,9 @@ const EXPECTED_CAUSE = new Map<number, RootCause>([
   [429, "RATE_LIMIT_TRANSIENT"]
 ]);
 
-export class PiReasonerError extends Error {
-  constructor(message: string) {
-    super(`Pi Reasoner: ${message}`);
+export class PiReasonerError extends PublicError {
+  constructor(message: string, code = "PI_OUTPUT_REJECTED", httpStatus = 502) {
+    super(code, `Pi Reasoner: ${message}`, httpStatus);
     this.name = "PiReasonerError";
   }
 }
@@ -42,6 +43,8 @@ export interface PiReasonerOptions {
   streamFn?: StreamFn;
   fallback?: Reasoner;
   timeoutMs?: number;
+  maxOutputTokens?: number;
+  maxPromptBytes?: number;
 }
 
 function object(value: unknown, label: string): Record<string, unknown> {
@@ -143,23 +146,33 @@ function localEvidence(status: number, body: unknown, spec: ApiSpec, rules: Know
   ];
 }
 
-function assistantText(agent: Agent): string {
+function assistantMessage(agent: Agent): AssistantMessage {
   const message = [...agent.state.messages].reverse().find((item) => item.role === "assistant");
   if (!message || message.role !== "assistant") throw new PiReasonerError("model returned no assistant message");
   if (message.stopReason === "error" || message.stopReason === "aborted") {
-    throw new PiReasonerError(message.errorMessage ?? `model stopped with ${message.stopReason}`);
+    throw new PiReasonerError("provider request failed", "PI_PROVIDER_ERROR");
   }
-  return message.content.map((item) => item.type === "text" ? item.text : "").join("");
+  return message;
 }
 
 export class PiReasoner implements Reasoner {
   readonly runtime;
   private readonly timeoutMs: number;
+  private readonly maxOutputTokens: number;
+  private readonly maxPromptBytes: number;
 
   constructor(private readonly options: PiReasonerOptions) {
     this.timeoutMs = options.timeoutMs ?? 30_000;
+    this.maxOutputTokens = options.maxOutputTokens ?? 2_048;
+    this.maxPromptBytes = options.maxPromptBytes ?? 32_768;
     if (!Number.isInteger(this.timeoutMs) || this.timeoutMs < 100 || this.timeoutMs > 300_000) {
       throw new PiReasonerError("timeoutMs must be an integer between 100 and 300000");
+    }
+    if (!Number.isInteger(this.maxOutputTokens) || this.maxOutputTokens < 256 || this.maxOutputTokens > 4_096) {
+      throw new PiReasonerError("maxOutputTokens must be an integer between 256 and 4096");
+    }
+    if (!Number.isInteger(this.maxPromptBytes) || this.maxPromptBytes < 1_024 || this.maxPromptBytes > 262_144) {
+      throw new PiReasonerError("maxPromptBytes must be an integer between 1024 and 262144");
     }
     this.runtime = {
       mode: "pi" as const,
@@ -167,6 +180,8 @@ export class PiReasoner implements Reasoner {
       model: options.model.id,
       promptVersion: DEBUG_AGENT_PROMPT_VERSION,
       timeoutMs: this.timeoutMs,
+      maxOutputTokens: this.maxOutputTokens,
+      maxPromptBytes: this.maxPromptBytes,
       fallback: options.fallback ? "deterministic" as const : "none" as const
     };
   }
@@ -177,7 +192,7 @@ export class PiReasoner implements Reasoner {
         method: input.spec.method,
         requiredHeaders: Object.fromEntries(Object.entries(input.spec.requiredHeaders).map(([name, value]) => [
           name,
-          isSensitiveKey(name) ? REDACTED : value
+          isSensitiveKey(name) ? REDACTED : redactText(value)
         ])),
         requiredBody: input.spec.requiredBody
       };
@@ -192,14 +207,28 @@ export class PiReasoner implements Reasoner {
         apiSpec: safeSpec,
         knowledgeRules: input.rules.map(({ id, statuses, keywords, guidance }) => ({ id, statuses, keywords, guidance }))
       });
+      if (Buffer.byteLength(prompt, "utf8") > this.maxPromptBytes) {
+        throw new PiReasonerError("redacted prompt exceeds configured byte limit", "PI_PROMPT_TOO_LARGE", 413);
+      }
+      const boundedModel = {
+        ...this.options.model,
+        maxTokens: Math.min(this.options.model.maxTokens, this.maxOutputTokens)
+      };
+      const upstreamStream = this.options.streamFn ?? streamSimple;
+      const boundedStream: StreamFn = (model, context, streamOptions) => upstreamStream(model, context, {
+        ...streamOptions,
+        maxTokens: this.maxOutputTokens,
+        maxRetries: 0,
+        timeoutMs: this.timeoutMs
+      });
       const agent = new Agent({
         initialState: {
           systemPrompt: DEBUG_AGENT_SYSTEM_PROMPT,
-          model: this.options.model,
+          model: boundedModel,
           thinkingLevel: "low",
           tools: []
         },
-        ...(this.options.streamFn ? { streamFn: this.options.streamFn } : {}),
+        streamFn: boundedStream,
         ...(this.options.apiKey ? { getApiKey: () => this.options.apiKey } : {})
       });
       let timedOut = false;
@@ -214,13 +243,27 @@ export class PiReasoner implements Reasoner {
         clearTimeout(timer);
       }
       if (timedOut) throw new PiReasonerError(`model timed out after ${this.timeoutMs}ms`);
-      const diagnosis = parseDiagnosis(assistantText(agent), input.spec, input.result.status);
+      const message = assistantMessage(agent);
+      const diagnosis = parseDiagnosis(
+        message.content.map((item) => item.type === "text" ? item.text : "").join(""),
+        input.spec,
+        input.result.status
+      );
       return {
         ...diagnosis,
-        evidence: localEvidence(input.result.status, input.result.body, input.spec, input.rules)
+        evidence: localEvidence(input.result.status, input.result.body, input.spec, input.rules),
+        modelUsage: {
+          inputTokens: message.usage.input,
+          outputTokens: message.usage.output,
+          totalTokens: message.usage.totalTokens,
+          estimatedCostUsd: message.usage.cost.total
+        }
       };
     } catch (error) {
-      if (!this.options.fallback) throw error;
+      if (!this.options.fallback) {
+        if (error instanceof PiReasonerError) throw error;
+        throw new PiReasonerError("provider request failed", "PI_PROVIDER_ERROR");
+      }
       const diagnosis = await this.options.fallback.diagnose(input);
       return {
         ...diagnosis,

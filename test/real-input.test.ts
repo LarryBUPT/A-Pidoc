@@ -48,7 +48,7 @@ test("RealHttpTool executes local requests and redacts sensitive response data",
   });
   context.after(() => server.close());
   const port = await listen(server);
-  const result = await new RealHttpTool({ allowedHosts: ["127.0.0.1"] })
+  const result = await new RealHttpTool({ allowedHosts: ["127.0.0.1"], allowedPorts: [port] })
     .execute(parseCurl(`curl http://127.0.0.1:${port}/health`));
 
   assert.equal(result.status, 200);
@@ -60,7 +60,7 @@ test("RealHttpTool preserves non-JSON responses as data", async (context) => {
   const server = createServer((_request, response) => response.end("plain response"));
   context.after(() => server.close());
   const port = await listen(server);
-  const result = await new RealHttpTool({ allowedHosts: ["127.0.0.1"] })
+  const result = await new RealHttpTool({ allowedHosts: ["127.0.0.1"], allowedPorts: [port] })
     .execute(parseCurl(`curl http://127.0.0.1:${port}/plain`));
   assert.deepEqual(result.body, { data: "plain response" });
 });
@@ -74,7 +74,7 @@ test("RealHttpTool times out slow requests", async (context) => {
   context.after(() => server.close());
   const port = await listen(server);
   await assert.rejects(
-    new RealHttpTool({ timeoutMs: 10 }).execute(parseCurl(`curl http://127.0.0.1:${port}/slow`)),
+    new RealHttpTool({ timeoutMs: 10, allowedPorts: [port] }).execute(parseCurl(`curl http://127.0.0.1:${port}/slow`)),
     /aborted|timeout/i
   );
 });
@@ -84,7 +84,7 @@ test("RealHttpTool rejects oversized responses", async (context) => {
   context.after(() => server.close());
   const port = await listen(server);
   await assert.rejects(
-    new RealHttpTool({ maxResponseBytes: 5 }).execute(parseCurl(`curl http://127.0.0.1:${port}/large`)),
+    new RealHttpTool({ maxResponseBytes: 5, allowedPorts: [port] }).execute(parseCurl(`curl http://127.0.0.1:${port}/large`)),
     /exceeds 5 byte limit/
   );
 });

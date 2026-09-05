@@ -15,6 +15,7 @@ import { TraceRecorder } from "../observability/trace.js";
 import { RequestPolicy } from "../security/request-policy.js";
 import { EvidenceReviewer } from "../agent/reviewer.js";
 import { redactDiagnosis, redactRequest } from "../security/redaction.js";
+import { PublicError, safeError } from "../security/errors.js";
 
 function applyDiagnosis(request: ApiRequest, diagnosis: Diagnosis): ApiRequest {
   const next = structuredClone(request);
@@ -53,6 +54,7 @@ export class DebugOrchestrator {
     let current = structuredClone(task.request);
     const attempts: Attempt[] = [];
     let observedRootCause: RootCause = "UNKNOWN";
+    let reasonerCalls = 0;
 
     try {
       await trace.span("normalize_input", async () => current, {
@@ -83,6 +85,10 @@ export class DebugOrchestrator {
         const rules = await trace.span("knowledge_retrieval", async () => retrieveRules(result), {
           status: result.status
         });
+        if (reasonerCalls >= this.policy.maxReasonerCalls) {
+          throw new PublicError("MODEL_CALL_BUDGET_EXCEEDED", "Model call budget exceeded for this task", 429);
+        }
+        reasonerCalls += 1;
         const diagnosis = await trace.span(
           "diagnose_and_plan",
           () => this.reasoner.diagnose({ request: current, spec: task.spec, result, rules }),
@@ -111,6 +117,7 @@ export class DebugOrchestrator {
         trace: trace.snapshot()
       };
     } catch (error) {
+      const safe = safeError(error);
       return {
         runId: randomUUID(),
         taskId: task.id,
@@ -120,7 +127,7 @@ export class DebugOrchestrator {
         finalRequest: redactRequest(current),
         attempts,
         rootCause: "UNKNOWN",
-        summary: error instanceof Error ? error.message : "unknown error",
+        summary: `${safe.code}: ${safe.message}`,
         evaluation: {
           passed: false,
           requestSucceeded: false,

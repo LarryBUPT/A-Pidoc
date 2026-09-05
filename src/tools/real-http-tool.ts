@@ -33,6 +33,7 @@ async function readLimitedBody(response: Response, limit: number): Promise<strin
 
 export interface RealHttpToolOptions {
   allowedHosts?: Iterable<string>;
+  allowedPorts?: Iterable<number>;
   timeoutMs?: number;
   maxResponseBytes?: number;
 }
@@ -43,13 +44,16 @@ export class RealHttpTool implements HttpTool {
   private readonly maxResponseBytes: number;
 
   constructor(options: RealHttpToolOptions = {}) {
-    this.policy = new RequestPolicy(new Set(options.allowedHosts ?? ["localhost", "127.0.0.1"]));
+    this.policy = new RequestPolicy({
+      allowedHosts: options.allowedHosts ?? ["localhost", "127.0.0.1"],
+      ...(options.allowedPorts ? { allowedPorts: options.allowedPorts } : {})
+    });
     this.timeoutMs = options.timeoutMs ?? 5_000;
     this.maxResponseBytes = options.maxResponseBytes ?? 1_000_000;
   }
 
   async execute(request: ApiRequest): Promise<HttpResult> {
-    this.policy.assertAllowed(request);
+    await this.policy.assertResolvedAddressAllowed(request);
     const started = performance.now();
     const response = await fetch(request.url, {
       method: request.method,

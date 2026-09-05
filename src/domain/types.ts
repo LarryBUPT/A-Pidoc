@@ -48,6 +48,14 @@ export interface Diagnosis {
   summary: string;
   action: FixAction;
   evidence: Evidence[];
+  modelUsage?: ModelUsage;
+}
+
+export interface ModelUsage {
+  inputTokens: number;
+  outputTokens: number;
+  totalTokens: number;
+  estimatedCostUsd: number;
 }
 
 export interface KnowledgeRule {
@@ -131,5 +139,7 @@ export interface ReasonerRuntimeMetadata {
   model?: string;
   promptVersion?: string;
   timeoutMs?: number;
+  maxOutputTokens?: number;
+  maxPromptBytes?: number;
   fallback: "none" | "deterministic";
 }
