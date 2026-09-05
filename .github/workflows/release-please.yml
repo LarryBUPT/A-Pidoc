@@ -12,6 +12,7 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
+  actions: write
   contents: write
   pull-requests: write
 
@@ -23,8 +24,21 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Create release PR or GitHub Release
+        id: release
         uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         with:
           token: ${{ secrets.RELEASE_PLEASE_TOKEN || github.token }}
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
+
+      # GITHUB_TOKEN-created PRs do not emit pull_request workflows. Dispatch
+      # CI explicitly so the release branch receives the required status check.
+      - name: Dispatch CI for release PR branches
+        if: steps.release.outputs.prs_created == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_PRS: ${{ steps.release.outputs.prs }}
+        run: |
+          jq -r '.[].headBranchName' <<< "$RELEASE_PRS" | while IFS= read -r branch; do
+            test -n "$branch" && gh workflow run ci.yml --ref "$branch"
+          done
