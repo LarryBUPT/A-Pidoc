@@ -1,10 +1,10 @@
 # A-Pidoc 架构与核心链路
 
-本文只描述 `v0.4.0` 已实现的代码。规划中的文档检索、代码仓库扫描、持久化、前端界面和生产部署不在当前架构中。
+本文只描述 V2 已实现并由测试覆盖的代码。规划中的文档检索、动态代码数据流、持久化、前端界面和生产部署不在当前架构中。
 
 ## 一句话概括
 
-A-Pidoc 接收失败的接口请求和接口规范，在受控环境中真实执行请求，依据响应和规范生成一次修复，再用下一次响应证明修复是否有效。
+A-Pidoc 先从本地源码定位 API 调用、规范差异和配置缺口；对用户明确提交的单条请求，才进入受控执行、诊断、修复和证据复核链路。
 
 ## 先认识术语
 
@@ -23,10 +23,28 @@ A-Pidoc 接收失败的接口请求和接口规范，在受控环境中真实执
 | CI/CD | Continuous Integration / Continuous Delivery，持续集成与持续交付 | 每次提交自动构建、测试，并按规则生成可追溯版本 |
 | RAG | Retrieval-Augmented Generation，检索增强生成 | 先查资料，再把相关内容交给模型回答 |
 | MCP | Model Context Protocol，模型上下文协议 | 用统一协议连接模型与外部工具或数据源 |
+| Static Analysis | 静态分析 | 只读代码文本推断结构，不运行被扫描项目 |
+| Repository Preflight | 仓库预检 | 在真实调试前先列出调用点、规范和配置问题 |
 
 ## 用户场景
 
-> 作为刚接触接口联调的开发者，我想提交一条失败的 curl 命令或一个 OpenAPI operation，让系统告诉我失败原因、修了什么，并用真实响应证明结论。
+> 作为刚接触陌生项目的开发者，我想先指定源码目录和 OpenAPI 文档找到可疑调用点；确认单条请求后，再让系统用真实响应证明失败原因和修复结果。
+
+## V2 仓库预检数据流
+
+```mermaid
+flowchart LR
+    A[仓库根目录] --> B[目录与文件预算]
+    B --> C[JS/TS 只读扫描<br/>你在这里]
+    D[OpenAPI 3.x] --> E[Operation 索引]
+    F[.env.example 变量名] --> C
+    C --> G[字面量 fetch + 环境变量]
+    E --> H[方法与路径比对]
+    G --> H
+    H --> I[RepositoryReport<br/>文件 + 行号 + Finding]
+```
+
+扫描器不读取 `.env`，不跟随符号链接，忽略 `.git`、`node_modules`、`dist`、`build`、`coverage`，并限制文件数和单文件大小。它只识别字面量 HTTP(S) `fetch`；动态目标会输出 `DYNAMIC_FETCH_UNSUPPORTED`，不会猜测。
 
 ## 核心数据流
 
@@ -62,7 +80,7 @@ sequenceDiagram
 
     U->>I: curl 或 OpenAPI
     I->>O: DebugTask
-    O->>P: 校验协议、凭据和 Host
+    O->>P: 校验协议、凭据、Host、Port 和模型调用预算
     P-->>O: 允许或阻断
     O->>T: 执行请求
     T-->>O: HttpResult
@@ -82,7 +100,27 @@ sequenceDiagram
 
 ## 按可验证步骤理解核心链路
 
-### 第 1 步：把不同输入变成统一任务
+### 第 0 步：对仓库做无副作用预检
+
+**改了什么**
+
+- `src/repository/scanner.ts` 受限遍历源码，提取字面量 `fetch` 和环境变量引用。
+- `src/repository/types.ts` 定义带源码位置、规范匹配和 Finding 的 `RepositoryReport`。
+- CLI 新增 `repo --root --document`，且在创建 Pi Reasoner 之前返回扫描结果。
+
+**为什么这样改**
+
+V1 要求用户先手工找到失败请求。V2 把入口前移到仓库，但保持静态、只读，避免扫描结果未经确认就触发网络或模型费用。
+
+**怎么证明它有效**
+
+`test/fixtures/repository` 固定了已匹配调用、规范缺失、已声明/未声明环境变量和动态 URL；`test/repository-scanner.test.ts` 同时验证扫描函数与 CLI，甚至把 `A_PIDOC_REASONER=pi` 且不给 Key，证明 repo 模式不会构造 Pi Reasoner。
+
+**这一步还没有解决什么**
+
+Axios、自定义 HTTP 客户端、模板字符串、变量拼接、跨文件值传播和自动生成 `DebugTask` 尚未实现。
+
+### 第 1 步：把明确输入变成统一任务
 
 **改了什么**
 
@@ -106,7 +144,7 @@ OpenAPI `$ref`、非 JSON request body、Markdown/HTML 接口文档和 Postman C
 
 **改了什么**
 
-`RequestPolicy` 只允许 HTTP/HTTPS、拒绝 URL 内嵌凭据、限制 Host，并把最大尝试次数固定在策略中。`RealHttpTool` 另有限时、响应大小和重定向约束。
+`RequestPolicy` 只允许 HTTP/HTTPS、拒绝 URL 内嵌凭据，限制 Host、Port、DNS 解析后的私网地址、最大尝试次数和每任务模型调用数。`RealHttpTool` 另有限时、响应大小和重定向约束。HTTP API 还有 Bearer 认证、Origin、每 IP 限流和并发上限。
 
 **为什么这样改**
 
@@ -118,7 +156,7 @@ Agent 生成的计划不能直接获得网络执行权。每一次初始请求�
 
 **这一步还没有解决什么**
 
-当前没有对 POST、PUT、PATCH、DELETE 等可能改变服务端状态的方法增加人工确认；安全依赖调用者只配置测试环境 Host。
+当前没有对 POST、PUT、PATCH、DELETE 等可能改变服务端状态的方法增加人工确认；DNS 检查和实际连接之间仍存在时间窗口，公网部署还需要网络层出口策略。
 
 ### 第 3 步：真实执行并保留证据
 
@@ -154,7 +192,7 @@ Agent 生成的计划不能直接获得网络执行权。每一次初始请求�
 
 **这一步还没有解决什么**
 
-- required CI 不调用公网模型，因此没有线上智谱模型的稳定率、延迟和费用数据。
+- required CI 不调用公网模型，因此没有线上 DeepSeek 模型的稳定率、延迟和费用数据。
 - `.pi/skills/api-doctor/SKILL.md` 存在于仓库，但当前 `PiReasoner` 加载的是 `src/agent/prompts/debug-agent.ts`，并未运行时加载该 Skill。
 - 当前 Pi Agent 没有注册工具；网络执行和重试由外层 Orchestrator 控制，而不是模型自主调用工具。
 
@@ -199,6 +237,7 @@ Reviewer 当前是确定性类，不是 Pi 子 Agent；它主要检查成功状�
 | 模块 | 负责什么 | 不负责什么 | 关键文件 |
 | --- | --- | --- | --- |
 | 输入层 | 解析 curl/OpenAPI，生成统一任务 | 不执行网络请求 | `src/input/*` |
+| 仓库预检层 | 只读扫描源码并与 OpenAPI/.env.example 比对 | 不执行网络、不调用模型 | `src/repository/*` |
 | 编排层 | 控制阶段顺序、重试预算和报告 | 不直接判断具体根因 | `src/core/orchestrator.ts` |
 | 安全层 | Host、协议、凭据和脱敏 | 不进行模型推理 | `src/security/*` |
 | 工具层 | 固定或真实执行 HTTP | 不决定下一步修复 | `src/tools/*` |
@@ -215,22 +254,23 @@ Reviewer 当前是确定性类，不是 Pi 子 Agent；它主要检查成功状�
 3. **模型只提计划，Orchestrator 掌握工具**：更安全、更容易回归，但还不是工具自主型 Agent。
 4. **公网模型不进入 required CI**：避免密钥、费用和服务波动阻塞合并，但线上效果需要另建评测。
 5. **显式降级**：模型失败不会悄悄伪装成 Pi 成功；是否退回确定性路径由部署者决定。
+6. **仓库扫描默认无副作用**：先定位证据，暂不自动执行；牺牲一步自动化，避免误请求和模型费用。
 
 ## 推荐阅读顺序
 
 | 顺序 | 文件 | 为什么先看 |
 | --- | --- | --- |
-| 1 | `src/domain/types.ts` | 先认识请求、诊断、动作和报告契约 |
-| 2 | `src/core/orchestrator.ts` | 看完整主循环和每个决策点 |
-| 3 | `src/input/debug-input.ts` | 看外部输入怎样进入主循环 |
-| 4 | `src/security/request-policy.ts` | 看模型之前的安全边界 |
-| 5 | `src/agent/deterministic-reasoner.ts` | 用固定规则理解诊断职责 |
-| 6 | `src/agent/pi-reasoner.ts` | 再看 Pi、脱敏、校验和降级 |
-| 7 | `src/agent/reviewer.ts` | 看如何判定一次执行是否可信 |
-| 8 | `test/pi-reasoner.test.ts` | 用测试反推实际承诺和边界 |
+| 1 | `src/repository/types.ts` | 先认识 V2 仓库报告契约 |
+| 2 | `src/repository/scanner.ts` | 看仓库怎样变成调用点和 Finding |
+| 3 | `src/domain/types.ts` | 再认识单请求、诊断、动作和报告契约 |
+| 4 | `src/core/orchestrator.ts` | 看单请求主循环和每个决策点 |
+| 5 | `src/input/debug-input.ts` | 看明确输入怎样进入主循环 |
+| 6 | `src/security/request-policy.ts` | 看网络和预算边界 |
+| 7 | `src/agent/pi-reasoner.ts` | 看 Pi、脱敏、校验和降级 |
+| 8 | `test/repository-scanner.test.ts` | 用固定仓库反推 V2 实际承诺 |
 
 ## 动手验证
 
-先运行 `npm run demo`，观察六个固定案例；再启动 `examples/mock-api.mjs`，运行 README 中的 curl 示例，找到报告里第一次 `415`、修正动作、第二次 `200` 和最后的 `evidence_review`。
+先运行 README 中的 `repo` 命令，观察文件/行号、规范缺失和环境变量缺口；再运行 `npm run demo`，观察六个固定诊断案例。
 
 验证理解：为什么 Pi 生成了一个 `set_header` 动作后，仍然不能直接发送请求？答案应能同时提到 Orchestrator、RequestPolicy 和 HttpTool。

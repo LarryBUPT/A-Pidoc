@@ -39,7 +39,7 @@
 ### 3. 请用 2 分钟介绍 V0 到 V1 的迭代。
 
 - 考察点：是否能解释为什么分 V0、V1-A、V1-B，而不是罗列功能。
-- 仓库证据：`docs/build-log.md`、`CHANGELOG.md`、标签 `v0.1.0`～`v0.4.0`。
+- 仓库证据：`docs/build-log.md`、`CHANGELOG.md`、标签 `v0.1.0`～`v0.5.0`。
 - 我的回答：
 
 ## 第二组：核心链路
@@ -131,7 +131,7 @@
 - 仓库证据：`timeoutMs`、`agent.abort()`、catch fallback、配置测试。
 - 我的回答：
 
-### 16. 为什么 required CI 不调用真实智谱模型？
+### 16. 为什么 required CI 不调用真实 DeepSeek 模型？
 
 - 考察点：可复现性、密钥、费用、限流和外部依赖。
 - 仓库证据：`registerFauxProvider`、`scripts/pi-tier-a.mjs`、CI workflow。
@@ -159,15 +159,15 @@
 ### 19. 如何防止 Server-Side Request Forgery？
 
 - Server-Side Request Forgery（服务端请求伪造）：攻击者诱导服务端访问不该访问的地址。
-- 仓库证据：`RequestPolicy`、RealHttpTool allowlist、URL credential 检查。
-- 追问：只校验 hostname 是否足够？DNS rebinding 怎么处理？
+- 仓库证据：`RequestPolicy` 的协议、Host、Port、DNS 解析地址检查，RealHttpTool 的重定向阻断。
+- 追问：为什么 DNS 预检查仍不能完全替代网络层出口策略？
 - 我的回答：
 
 ### 20. 敏感信息在哪些阶段脱敏？
 
 - 考察点：模型输入、报告、Trace 和错误路径。
 - 仓库证据：`src/security/redaction.ts`、Pi prompt 构造、`redactDiagnosis`。
-- 追问：自由文本 summary 里出现秘密怎么办？
+- 追问：字段名脱敏与值级脱敏各覆盖什么？为什么仍不能承诺识别所有个人信息？
 - 我的回答：
 
 ### 21. 当前对写请求的保护够吗？
@@ -177,7 +177,7 @@
 - 追问：如果增加 dry-run、method allowlist 或用户确认，放在哪一层？
 - 我的回答：
 
-### 22. 测试为什么从 23 项增长到 36 项？新增测试覆盖了什么？
+### 22. 测试为什么从 23 项增长到 49 项？新增测试覆盖了什么？
 
 - 考察点：不是追求数量，而是覆盖新风险。
 - 仓库证据：`test/pi-reasoner.test.ts`、`scripts/pi-tier-a.mjs`。
@@ -238,13 +238,27 @@
 - 限制：不要把仓库扫描、RAG、MCP、UI 一次全部塞进来。
 - 我的回答：
 
-### 31. V2 为什么应该是仓库级诊断，而不是继续堆错误码？
+### 31. V2 为什么选择仓库预检，而不是继续堆错误码？
 
 - 考察点：从单请求价值走向工程上下文价值。
-- 当前事实：V2 尚未实现。
+- 仓库证据：`src/repository/scanner.ts`、`test/fixtures/repository`、repo CLI 测试。
+- 追问：为什么 V2 默认不执行扫描到的请求，也不调用 Pi？
 - 我的回答：
 
-### 32. 哪些数据能够证明这个产品“真正好用”？
+### 32. 仓库扫描器为什么先支持字面量 fetch？
+
+- 考察点：能否解释最小垂直链路、可验证性和能力边界。
+- 仓库证据：`literalFetch`、`DYNAMIC_FETCH_UNSUPPORTED`、固定 fixture。
+- 追问：文本正则相对抽象语法树会有哪些误报和漏报？
+- 我的回答：
+
+### 33. 如何证明 repo 模式没有产生模型费用？
+
+- 仓库证据：`src/cli.ts` 在 `createConfiguredReasoner()` 之前处理 repo；CLI 测试显式设置 Pi 模式但不给 Key，仍生成报告。
+- 追问：如果以后要让 Pi 解释 Finding，怎样保留“扫描不付费”的默认行为？
+- 我的回答：
+
+### 34. 哪些数据能够证明这个产品“真正好用”？
 
 - 可考虑但尚未采集：首次修复成功率、平均尝试次数、误修率、阻断危险请求比例、诊断耗时、单次模型费用。
 - 要求：把“已有自动测试证据”和“未来需要真实用户数据”分开。
@@ -258,5 +272,6 @@
 - [ ] 我不会把 `.pi/skills` 说成已被运行时加载。
 - [ ] 我不会把 EvidenceReviewer 说成 Pi 子 Agent。
 - [ ] 我能解释为什么模型只生成计划、不能直接获得工具权限。
+- [ ] 我能区分仓库预检的静态证据与单请求链路的运行证据。
 - [ ] 我能说出至少三个已测试的失败场景。
 - [ ] 我会主动说明真实公网模型和真实用户指标尚未进入证据链。
