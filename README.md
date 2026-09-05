@@ -2,7 +2,7 @@
 
 API Doctor 是一个面向初级开发者与 SaaS 实施人员的 API 联调诊断 Agent。它把失败请求、接口规范和运行证据组织成一条可复现链路，并在安全策略约束下执行修正、重试与结果复核。
 
-当前版本坚持 **deterministic first**：先用固定案例和确定性 Reasoner 跑通 Agent Harness，再通过同一接口接入 Pi/真实模型。这样能把工作流 Bug 与模型不确定性分开定位。
+当前版本坚持 **deterministic first**：使用固定案例和确定性 Reasoner 跑通 Agent Harness，以便把工作流问题与外部服务的不确定性分开定位。
 
 ## 已完成的最小闭环
 
@@ -76,23 +76,9 @@ src/
   cli.ts             固定数据演示入口
   server.ts          HTTP API 服务入口
 test/                核心链路、权限和 Trace 测试
-.pi/skills/          Pi 可发现的领域 Skill
-docs/                JD 分析、PRD、架构与迭代路线
 ```
 
-## 文档导航
+## 支持范围
 
-1. [JD 共性与个人差距](docs/01-jd-analysis.md)
-2. [MVP PRD](docs/02-mvp-prd.md)
-3. [架构、数据流与测试设计](docs/03-architecture.md)
-4. [JD 适配迭代路线](docs/04-jd-roadmap.md)
-5. [CI/CD 工作流设计](docs/05-ci-cd-workflow.md)
-6. [原始产品路线参考](docs/方案.md)
-
-`docs/abandon/` 是此前通用桌面 Coding Agent 方案，仅保留为调研材料，不代表当前实现范围。
-
-## 当前边界
-
-- 已接通：确定性 Reasoner、Fixture HTTP 工具、规则检索、安全策略、重试、Reviewer、Trace、离线评测、HTTP 服务；开发分支新增 curl 解析与受限真实 HTTP 工具。
-- 尚未接通：将真实输入接入稳定 CLI/API、OpenAPI 解析、Pi 模型、向量检索、持久化、并发任务、前端 UI、MCP。
-- `.pi/skills/api-doctor/SKILL.md` 已定义领域工作流；真实 Pi 接入时复用 `Reasoner` 契约，不改核心编排。
+- 稳定能力：确定性 Reasoner、Fixture HTTP 工具、规则检索、安全策略、重试、Reviewer、Trace、离线评测与 HTTP 服务。
+- 实验能力：curl 解析与受限真实 HTTP 工具，尚未接入稳定版 CLI/API。
