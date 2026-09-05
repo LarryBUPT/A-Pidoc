@@ -13,6 +13,7 @@ concurrency:
 
 permissions:
   contents: read
+  statuses: write
 
 jobs:
   quality-gate:
@@ -41,3 +42,18 @@ jobs:
 
       - name: Verify generated output is reproducible
         run: git diff --exit-code
+
+      # workflow_dispatch check suites are not associated with an open PR.
+      # Publish the same context as a commit status after every check succeeds
+      # so repository rules can recognize explicitly dispatched release PR CI.
+      - name: Publish required status for dispatched CI
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api --method POST \
+            "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+            -f state=success \
+            -f context='Build, unit tests, and Tier A eval' \
+            -f description='Required CI completed via workflow_dispatch' \
+            -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
