@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/LarryBUPT/A-Pidoc/compare/v0.4.1...v0.5.0) (2026-09-05)
+
+
+### Features
+
+* add safe repository API preflight ([#22](https://github.com/LarryBUPT/A-Pidoc/issues/22)) ([20b39ab](https://github.com/LarryBUPT/A-Pidoc/commit/20b39ab382a505730c4537feeceaf7957bfcf3d5))
+
 ## [0.4.1](https://github.com/LarryBUPT/A-Pidoc/compare/v0.4.0...v0.4.1) (2026-09-05)
 
 
