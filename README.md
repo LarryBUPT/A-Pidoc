@@ -2,7 +2,7 @@
 
 API Doctor 是一个面向初级开发者与 SaaS 实施人员的 API 联调诊断 Agent。它把失败请求、接口规范和运行证据组织成一条可复现链路，并在安全策略约束下执行修正、重试与结果复核。
 
-当前版本坚持 **deterministic first**：使用固定案例和确定性 Reasoner 跑通 Agent Harness，以便把工作流问题与外部服务的不确定性分开定位。
+当前版本坚持 **deterministic first**：确定性 Reasoner 负责可回归的诊断基线，V1 已支持把 curl 或 OpenAPI operation 接入同一条受控 HTTP 诊断链路。
 
 ## 已完成的最小闭环
 
@@ -44,14 +44,29 @@ Windows PowerShell 可使用：
 Invoke-RestMethod -Method Post -Uri http://localhost:3000/api/debug -ContentType application/json -Body '{"caseId":"auth-header"}'
 ```
 
-V1 开发分支已提供实验性的 curl 解析器和真实 HTTP 工具。真实请求必须显式传入 host allowlist；工具默认只允许 `localhost` 与 `127.0.0.1`，同时限制超时、响应体大小、重定向并脱敏响应中的凭据字段。它们尚未接入稳定版 CLI/API：
+## V1 真实输入
 
-```ts
-import { parseCurl } from "./dist/src/input/curl-parser.js";
-import { RealHttpTool } from "./dist/src/tools/real-http-tool.js";
+V1 支持 curl 与 OpenAPI 3.x operation。真实请求必须配置 host allowlist；CLI 通过 `--allow-host` 显式传入，HTTP 服务通过 `A_PIDOC_ALLOWED_HOSTS` 环境变量配置，客户端请求不能扩大服务端权限。工具同时限制超时、请求/响应大小和重定向，并脱敏报告中的凭据字段。
 
-const request = parseCurl(`curl http://127.0.0.1:3000/health`);
-const tool = new RealHttpTool({ allowedHosts: ["127.0.0.1"], timeoutMs: 2_000 });
+完整本地示例见 [examples/README.md](examples/README.md)。快速运行 curl 诊断：
+
+```bash
+node examples/mock-api.mjs
+node dist/src/cli.js curl --input examples/order.curl --spec examples/order-spec.json --allow-host 127.0.0.1
+```
+
+HTTP API 同时保留 V0 `{ "caseId": "auth-header" }` 输入，并新增：
+
+```json
+{
+  "kind": "curl",
+  "command": "curl -X POST http://127.0.0.1:3001/orders -H 'Content-Type: text/plain' -d '{\"amount\":12}'",
+  "spec": {
+    "method": "POST",
+    "requiredHeaders": { "Content-Type": "application/json" },
+    "requiredBody": { "amount": "number" }
+  }
+}
 ```
 
 ## 开发与发布
@@ -76,9 +91,11 @@ src/
   cli.ts             固定数据演示入口
   server.ts          HTTP API 服务入口
 test/                核心链路、权限和 Trace 测试
+examples/            本地 Mock API 与 V1 可复现输入
 ```
 
 ## 支持范围
 
-- 稳定能力：确定性 Reasoner、Fixture HTTP 工具、规则检索、安全策略、重试、Reviewer、Trace、离线评测与 HTTP 服务。
-- 实验能力：curl 解析与受限真实 HTTP 工具，尚未接入稳定版 CLI/API。
+- 稳定能力：确定性 Reasoner、Fixture 回归集、规则检索、安全策略、重试、Reviewer、Trace 与离线评测。
+- V1 能力：curl/OpenAPI 解析、JSON Schema 基线校验、受限真实 HTTP 工具、CLI/HTTP API 真实输入、输出脱敏。
+- 暂不支持：OpenAPI `$ref`、非 JSON request body、真实模型/Pi Reasoner、文档 RAG 与公网服务部署。

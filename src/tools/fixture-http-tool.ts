@@ -1,12 +1,14 @@
 import type { ApiRequest, DebugCase, HttpResult, HttpTool } from "../domain/types.js";
 
 export class FixtureHttpTool implements HttpTool {
-  private readonly calls = new Map<string, number>();
+  private calls = 0;
 
-  async execute(caseData: DebugCase, request: ApiRequest): Promise<HttpResult> {
+  constructor(private readonly caseData: DebugCase) {}
+
+  async execute(request: ApiRequest): Promise<HttpResult> {
     const started = performance.now();
-    const count = (this.calls.get(caseData.id) ?? 0) + 1;
-    this.calls.set(caseData.id, count);
+    const count = ++this.calls;
+    const caseData = this.caseData;
 
     let status = 200;
     let body: Record<string, unknown> = { orderId: `order-${caseData.id}`, accepted: true };

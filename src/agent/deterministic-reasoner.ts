@@ -7,6 +7,11 @@ function ruleEvidence(rules: Parameters<Reasoner["diagnose"]>[0]["rules"]) {
   }));
 }
 
+function requiredHeader(headers: Record<string, string>, name: string): string | undefined {
+  const entry = Object.entries(headers).find(([key]) => key.toLowerCase() === name.toLowerCase());
+  return entry?.[1];
+}
+
 export class DeterministicReasoner implements Reasoner {
   async diagnose(input: Parameters<Reasoner["diagnose"]>[0]): Promise<Diagnosis> {
     const common = [
@@ -24,18 +29,25 @@ export class DeterministicReasoner implements Reasoner {
     }
 
     if (input.result.status === 401) {
+      const expected = requiredHeader(input.spec.requiredHeaders, "Authorization");
       return {
         rootCause: "AUTH_HEADER_FORMAT",
         summary: "Authorization 格式与接口规范不一致。",
-        action: { kind: "set_header", name: "Authorization", value: input.spec.requiredHeaders.Authorization ?? "" },
-        evidence: [...common, { source: "api_spec", detail: "规范要求 Authorization 使用 Bearer scheme。" }]
+        action: expected ? { kind: "set_header", name: "Authorization", value: expected } : { kind: "stop" },
+        evidence: [...common, {
+          source: "api_spec",
+          detail: expected
+            ? "规范提供了 Authorization 修正值。"
+            : "规范未提供可安全使用的凭据，停止自动修改。"
+        }]
       };
     }
     if (input.result.status === 415) {
+      const expected = requiredHeader(input.spec.requiredHeaders, "Content-Type") ?? "application/json";
       return {
         rootCause: "CONTENT_TYPE_MISMATCH",
         summary: "JSON 请求体使用了错误的 Content-Type。",
-        action: { kind: "set_header", name: "Content-Type", value: input.spec.requiredHeaders["Content-Type"] ?? "application/json" },
+        action: { kind: "set_header", name: "Content-Type", value: expected },
         evidence: [...common, { source: "api_spec", detail: "规范声明请求体为 application/json。" }]
       };
     }

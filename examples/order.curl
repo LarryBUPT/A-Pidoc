@@ -1,0 +1,1 @@
+curl -X POST http://127.0.0.1:3001/orders -H "Content-Type: text/plain" -d '{"amount":12}'

@@ -2,9 +2,10 @@ import { randomUUID } from "node:crypto";
 import type {
   ApiRequest,
   Attempt,
-  DebugCase,
   DebugReport,
+  DebugTask,
   Diagnosis,
+  EvaluationExpectation,
   HttpTool,
   Reasoner,
   RootCause
@@ -13,11 +14,15 @@ import { retrieveRules } from "../knowledge/rules.js";
 import { TraceRecorder } from "../observability/trace.js";
 import { RequestPolicy } from "../security/request-policy.js";
 import { EvidenceReviewer } from "../agent/reviewer.js";
+import { redactDiagnosis, redactRequest } from "../security/redaction.js";
 
 function applyDiagnosis(request: ApiRequest, diagnosis: Diagnosis): ApiRequest {
   const next = structuredClone(request);
   switch (diagnosis.action.kind) {
     case "set_header":
+      for (const existing of Object.keys(next.headers)) {
+        if (existing.toLowerCase() === diagnosis.action.name.toLowerCase()) delete next.headers[existing];
+      }
       next.headers[diagnosis.action.name] = diagnosis.action.value;
       break;
     case "set_body":
@@ -42,26 +47,32 @@ export class DebugOrchestrator {
     private readonly policy = new RequestPolicy()
   ) {}
 
-  async run(caseData: DebugCase): Promise<DebugReport> {
+  async run(task: DebugTask, expectation?: EvaluationExpectation): Promise<DebugReport> {
     const trace = new TraceRecorder();
-    const originalRequest = structuredClone(caseData.request);
-    let current = structuredClone(caseData.request);
+    const originalRequest = structuredClone(task.request);
+    let current = structuredClone(task.request);
     const attempts: Attempt[] = [];
     let observedRootCause: RootCause = "UNKNOWN";
 
     try {
-      await trace.span("normalize_input", async () => current, { caseId: caseData.id });
+      await trace.span("normalize_input", async () => current, {
+        taskId: task.id,
+        inputSource: task.source,
+        redacted: true
+      });
 
       for (let index = 1; index <= this.policy.maxAttempts; index += 1) {
         await trace.span("policy_check", async () => this.policy.assertAllowed(current), {
           attempt: index,
           host: new URL(current.url).hostname
         });
-        const result = await trace.span("http_tool", () => this.httpTool.execute(caseData, current), {
+        const result = await trace.span("http_tool", () => this.httpTool.execute(current), {
           attempt: index,
-          method: current.method
+          method: current.method,
+          inputSource: task.source,
+          redacted: true
         });
-        const attempt: Attempt = { index, request: structuredClone(current), result };
+        const attempt: Attempt = { index, request: redactRequest(current), result };
         attempts.push(attempt);
 
         if (result.status >= 200 && result.status < 300) {
@@ -73,24 +84,24 @@ export class DebugOrchestrator {
           status: result.status
         });
         const diagnosis = await trace.span("diagnose_and_plan", () =>
-          this.reasoner.diagnose({ request: current, spec: caseData.spec, result, rules })
+          this.reasoner.diagnose({ request: current, spec: task.spec, result, rules })
         );
-        attempt.diagnosis = diagnosis;
+        attempt.diagnosis = redactDiagnosis(diagnosis);
         if (observedRootCause === "UNKNOWN") observedRootCause = diagnosis.rootCause;
         if (diagnosis.action.kind === "stop") break;
         current = applyDiagnosis(current, diagnosis);
       }
 
       const evaluation = await trace.span("evidence_review", async () =>
-        this.reviewer.review(attempts, caseData.expectedRootCause, observedRootCause)
+        this.reviewer.review(attempts, observedRootCause, expectation?.expectedRootCause)
       );
-      const last = attempts.at(-1);
       return {
         runId: randomUUID(),
-        caseId: caseData.id,
+        taskId: task.id,
+        inputSource: task.source,
         status: evaluation.requestSucceeded ? "resolved" : "unresolved",
-        originalRequest,
-        finalRequest: structuredClone(current),
+        originalRequest: redactRequest(originalRequest),
+        finalRequest: redactRequest(current),
         attempts,
         rootCause: observedRootCause,
         summary: evaluation.passed ? "根因识别、修正和证据复核全部通过。" : "执行完成，但评测未全部通过。",
@@ -100,10 +111,11 @@ export class DebugOrchestrator {
     } catch (error) {
       return {
         runId: randomUUID(),
-        caseId: caseData.id,
+        taskId: task.id,
+        inputSource: task.source,
         status: "blocked",
-        originalRequest,
-        finalRequest: current,
+        originalRequest: redactRequest(originalRequest),
+        finalRequest: redactRequest(current),
         attempts,
         rootCause: "UNKNOWN",
         summary: error instanceof Error ? error.message : "unknown error",
