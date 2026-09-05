@@ -46,7 +46,7 @@ flowchart LR
 | V1-A 完成 | Issue #1；PR #11，`fa7aeb3` | `v0.3.0` | curl/OpenAPI 进入同一真实执行链路，但没有 Pi |
 | V1-B 完成 | Issue #13；PR #14，`ddfee2e` | `v0.4.0` | Pi Reasoner、Prompt、输出约束、降级和三轮评测接通 |
 | 文档事实化 | Issue #16 | 不发产品版本 | 公开当前事实，私有保存个人规划 |
-| V2 | Issue #21；仓库预检实现与固定 fixture | `v0.5.0` | 从源码定位 fetch、OpenAPI 差异和环境变量缺口，默认不执行 |
+| V2 | Issue #21；PR #22；仓库预检实现与固定 fixture | `v0.5.0` | 从源码定位 fetch、OpenAPI 差异和环境变量缺口，默认不执行 |
 
 ## 2026-09-05：V0，先证明闭环能跑
 
@@ -243,7 +243,7 @@ V0 只能证明算法骨架；V1-A 要证明用户自己的请求能进入相同
 
 ## 2026-09-06：V2，把入口前移到代码仓库
 
-证据：Issue #21、`src/repository/*`、`test/fixtures/repository` 与 `test/repository-scanner.test.ts`。
+证据：Issue #21、PR #22、`src/repository/*`、`test/fixtures/repository` 与 `test/repository-scanner.test.ts`。
 
 ### 改了什么
 
