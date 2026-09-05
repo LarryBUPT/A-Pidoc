@@ -1,5 +1,7 @@
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
+export type InputSource = "fixture" | "curl" | "openapi";
+
 export type RootCause =
   | "AUTH_HEADER_FORMAT"
   | "CONTENT_TYPE_MISMATCH"
@@ -71,25 +73,34 @@ export interface Attempt {
   diagnosis?: Diagnosis;
 }
 
-export interface DebugCase {
+export interface DebugTask {
   id: string;
   title: string;
-  behavior: RootCause;
+  source: InputSource;
   request: ApiRequest;
   spec: ApiSpec;
+}
+
+export interface DebugCase extends DebugTask {
+  behavior: RootCause;
+  expectedRootCause: RootCause;
+}
+
+export interface EvaluationExpectation {
   expectedRootCause: RootCause;
 }
 
 export interface Evaluation {
   passed: boolean;
   requestSucceeded: boolean;
-  rootCauseMatched: boolean;
+  rootCauseMatched: boolean | null;
   evidenceComplete: boolean;
 }
 
 export interface DebugReport {
   runId: string;
-  caseId: string;
+  taskId: string;
+  inputSource: InputSource;
   status: "resolved" | "unresolved" | "blocked";
   originalRequest: ApiRequest;
   finalRequest: ApiRequest;
@@ -101,7 +112,7 @@ export interface DebugReport {
 }
 
 export interface HttpTool {
-  execute(caseData: DebugCase, request: ApiRequest): Promise<HttpResult>;
+  execute(request: ApiRequest): Promise<HttpResult>;
 }
 
 export interface Reasoner {

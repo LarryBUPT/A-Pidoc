@@ -1,15 +1,6 @@
-import type { ApiRequest, DebugCase, HttpResult, HttpTool } from "../domain/types.js";
+import type { ApiRequest, HttpResult, HttpTool } from "../domain/types.js";
 import { RequestPolicy } from "../security/request-policy.js";
-
-const SENSITIVE_KEY = /authorization|api[-_]?key|token|secret|password|cookie/i;
-
-function redact(value: unknown): unknown {
-  if (Array.isArray(value)) return value.map(redact);
-  if (!value || typeof value !== "object") return value;
-  return Object.fromEntries(
-    Object.entries(value).map(([key, item]) => [key, SENSITIVE_KEY.test(key) ? "[REDACTED]" : redact(item)])
-  );
-}
+import { isSensitiveKey, redactValue } from "../security/redaction.js";
 
 async function readLimitedBody(response: Response, limit: number): Promise<string> {
   const declaredSize = Number(response.headers.get("content-length"));
@@ -57,7 +48,7 @@ export class RealHttpTool implements HttpTool {
     this.maxResponseBytes = options.maxResponseBytes ?? 1_000_000;
   }
 
-  async execute(_caseData: DebugCase, request: ApiRequest): Promise<HttpResult> {
+  async execute(request: ApiRequest): Promise<HttpResult> {
     this.policy.assertAllowed(request);
     const started = performance.now();
     const response = await fetch(request.url, {
@@ -77,10 +68,10 @@ export class RealHttpTool implements HttpTool {
       }
     }
     const body = parsed && typeof parsed === "object" && !Array.isArray(parsed)
-      ? (redact(parsed) as Record<string, unknown>)
-      : { data: redact(parsed) };
+      ? (redactValue(parsed) as Record<string, unknown>)
+      : { data: redactValue(parsed) };
     const headers = Object.fromEntries(
-      [...response.headers.entries()].map(([key, value]) => [key, SENSITIVE_KEY.test(key) ? "[REDACTED]" : value])
+      [...response.headers.entries()].map(([key, value]) => [key, isSensitiveKey(key) ? "[REDACTED]" : value])
     );
     return {
       status: response.status,

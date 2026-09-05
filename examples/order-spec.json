@@ -1,0 +1,9 @@
+{
+  "method": "POST",
+  "requiredHeaders": {
+    "Content-Type": "application/json"
+  },
+  "requiredBody": {
+    "amount": "number"
+  }
+}
