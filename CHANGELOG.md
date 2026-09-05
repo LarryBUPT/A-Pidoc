@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/LarryBUPT/A-Pidoc/compare/v0.2.0...v0.3.0) (2026-09-05)
+
+
+### Features
+
+* complete guarded V1 input workflow ([#11](https://github.com/LarryBUPT/A-Pidoc/issues/11)) ([fa7aeb3](https://github.com/LarryBUPT/A-Pidoc/commit/fa7aeb3918e3f7b899e50fb390e17cfa05c11652)), closes [#1](https://github.com/LarryBUPT/A-Pidoc/issues/1)
+
 ## [0.2.0](https://github.com/LarryBUPT/A-Pidoc/compare/v0.1.0...v0.2.0) (2026-09-05)
 
 
