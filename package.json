@@ -3,14 +3,16 @@
   "version": "0.3.0",
   "private": true,
   "type": "module",
-  "description": "A deterministic-first API debugging agent harness built for later Pi integration.",
+  "description": "A Pi-powered API debugging agent with deterministic safety and evaluation gates.",
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "demo": "npm run build --silent && node dist/src/cli.js all",
     "serve": "npm run build --silent && node dist/src/server.js",
     "test:unit": "node --test dist/test/*.test.js",
+    "test:pi": "node --test dist/test/pi-reasoner.test.js",
     "test": "npm run build --silent && npm run test:unit",
-    "eval:tier-a": "npm run test:unit",
+    "eval:pi:stability": "node scripts/pi-tier-a.mjs",
+    "eval:tier-a": "npm run test:unit && npm run eval:pi:stability",
     "check": "npm run build --silent && npm run test:unit"
   },
   "engines": {
@@ -19,5 +21,9 @@
   "devDependencies": {
     "@types/node": "24.3.1",
     "typescript": "5.9.2"
+  },
+  "dependencies": {
+    "@earendil-works/pi-agent-core": "0.74.2",
+    "@earendil-works/pi-ai": "0.74.2"
   }
 }

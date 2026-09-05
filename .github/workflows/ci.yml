@@ -37,7 +37,7 @@ jobs:
       - name: Compile TypeScript
         run: npm run build
 
-      - name: Run unit tests and deterministic Tier A eval
+      - name: Run unit tests and offline Pi Tier A stability eval
         run: npm run eval:tier-a
 
       - name: Verify generated output is reproducible

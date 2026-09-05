@@ -83,8 +83,10 @@ export class DebugOrchestrator {
         const rules = await trace.span("knowledge_retrieval", async () => retrieveRules(result), {
           status: result.status
         });
-        const diagnosis = await trace.span("diagnose_and_plan", () =>
-          this.reasoner.diagnose({ request: current, spec: task.spec, result, rules })
+        const diagnosis = await trace.span(
+          "diagnose_and_plan",
+          () => this.reasoner.diagnose({ request: current, spec: task.spec, result, rules }),
+          { ...this.reasoner.runtime }
         );
         attempt.diagnosis = redactDiagnosis(diagnosis);
         if (observedRootCause === "UNKNOWN") observedRootCause = diagnosis.rootCause;

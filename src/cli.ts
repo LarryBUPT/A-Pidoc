@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
-import { createFixtureApp, createRealApp } from "./app.js";
+import { createFixtureApp, createRealAppWithReasoner } from "./app.js";
+import { createConfiguredReasoner } from "./config/reasoner.js";
 import type { ApiSpec } from "./domain/types.js";
 import { cases, getCase } from "./fixtures/cases.js";
 import { parseCurlTask } from "./input/debug-input.js";
@@ -26,7 +27,7 @@ async function jsonFile(path: string): Promise<unknown> {
   return JSON.parse(await readFile(path, "utf8"));
 }
 
-function printReport(report: Awaited<ReturnType<ReturnType<typeof createRealApp>["run"]>>): void {
+function printReport(report: Awaited<ReturnType<ReturnType<typeof createRealAppWithReasoner>["run"]>>): void {
   console.log(JSON.stringify(report, null, 2));
   if (!report.evaluation.passed) process.exitCode = 1;
 }
@@ -52,6 +53,7 @@ async function run(): Promise<void> {
 
   const options = flags(args);
   const allowedHosts = required(options, "allow-host").split(",").map((host) => host.trim()).filter(Boolean);
+  const reasoner = createConfiguredReasoner();
   if (mode === "curl") {
     const command = options.has("command")
       ? required(options, "command")
@@ -61,7 +63,7 @@ async function run(): Promise<void> {
       command,
       spec: await jsonFile(required(options, "spec")) as ApiSpec
     });
-    printReport(await createRealApp({ allowedHosts }).run(task));
+    printReport(await createRealAppWithReasoner({ allowedHosts }, reasoner).run(task));
     return;
   }
   if (mode === "openapi") {
@@ -77,7 +79,7 @@ async function run(): Promise<void> {
     if (parsed.schemaIssues.length > 0) {
       throw new Error(`OpenAPI request validation failed: ${JSON.stringify(parsed.schemaIssues)}`);
     }
-    printReport(await createRealApp({ allowedHosts }).run(parsed.task));
+    printReport(await createRealAppWithReasoner({ allowedHosts }, reasoner).run(parsed.task));
     return;
   }
   throw new Error(

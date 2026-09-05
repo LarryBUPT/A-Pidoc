@@ -1,12 +1,15 @@
 import { createServer, type IncomingMessage, type Server } from "node:http";
 import { pathToFileURL } from "node:url";
-import { createFixtureApp, createRealApp } from "./app.js";
+import { createFixtureApp, createRealAppWithReasoner } from "./app.js";
+import { createConfiguredReasoner } from "./config/reasoner.js";
+import type { Reasoner } from "./domain/types.js";
 import { getCase } from "./fixtures/cases.js";
 import { parseRealDebugInput } from "./input/debug-input.js";
 import type { RealHttpToolOptions } from "./tools/real-http-tool.js";
 
 export interface ApiServerOptions extends RealHttpToolOptions {
   maxRequestBytes?: number;
+  reasoner?: Reasoner;
 }
 
 async function readJson(request: IncomingMessage, limit: number): Promise<unknown> {
@@ -23,6 +26,7 @@ async function readJson(request: IncomingMessage, limit: number): Promise<unknow
 
 export function createApiServer(options: ApiServerOptions = {}): Server {
   const maxRequestBytes = options.maxRequestBytes ?? 1_000_000;
+  const reasoner = options.reasoner ?? createConfiguredReasoner();
   return createServer(async (request, response) => {
     response.setHeader("content-type", "application/json; charset=utf-8");
     if (request.method === "GET" && request.url === "/health") {
@@ -47,7 +51,7 @@ export function createApiServer(options: ApiServerOptions = {}): Server {
           response.end(JSON.stringify({ error: "request body does not match OpenAPI schema", issues: parsed.schemaIssues }));
           return;
         }
-        const report = await createRealApp(options).run(parsed.task);
+        const report = await createRealAppWithReasoner(options, reasoner).run(parsed.task);
         response.statusCode = report.status === "blocked" ? 400 : 200;
         response.end(JSON.stringify(report, null, 2));
         return;

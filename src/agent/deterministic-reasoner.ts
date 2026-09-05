@@ -13,6 +13,8 @@ function requiredHeader(headers: Record<string, string>, name: string): string |
 }
 
 export class DeterministicReasoner implements Reasoner {
+  readonly runtime = { mode: "deterministic", fallback: "none" } as const;
+
   async diagnose(input: Parameters<Reasoner["diagnose"]>[0]): Promise<Diagnosis> {
     const common = [
       { source: "http_response" as const, detail: `HTTP ${input.result.status}: ${JSON.stringify(input.result.body)}` },
