@@ -1,8 +1,8 @@
 # A-Pidoc / API Doctor
 
-API Doctor 是一个面向初级开发者与 SaaS 实施人员的 API 联调诊断 Agent。它把失败请求、接口规范和运行证据组织成一条可复现链路，并在安全策略约束下执行修正、重试与结果复核。
+API Doctor 是一个面向初级开发者与 SaaS（Software as a Service，软件即服务）实施人员的 HTTP API（Hypertext Transfer Protocol Application Programming Interface，基于超文本传输协议的应用程序编程接口）联调诊断 Agent（智能体）。它把失败请求、接口规范和运行证据组织成一条可复现链路，并在安全策略约束下执行修正、重试与结果复核。
 
-产品 V1 使用 **Pi Agent + deterministic safety baseline**：Pi Debug Agent 负责基于请求、响应、规范和规则生成结构化修复计划；本地 schema gate、安全策略、HTTP Tool 和独立 Reviewer 决定计划能否执行及证据是否成立。确定性 Reasoner 同时保留为离线基线和显式降级选项。
+产品 V1 使用 **Pi Agent + deterministic safety baseline（确定性安全基线）**：Pi Debug Agent 负责基于请求、响应、规范和规则生成结构化修复计划；本地 Schema Gate（结构校验闸门）、安全策略、HTTP Tool（网络请求工具）和独立 Reviewer（证据复核器）决定计划能否执行及证据是否成立。确定性 Reasoner（推理器）同时保留为离线基线和显式降级选项。
 
 ## 已完成的最小闭环
 
@@ -22,18 +22,30 @@ flowchart LR
     K --> L[结构化报告与 Trace]
 ```
 
-覆盖 6 个固定案例：401 鉴权格式、415 Content-Type、422 字段类型、405 请求方法、429 受控重试，以及健康请求。另有域名越权阻断测试。
+覆盖 6 个固定案例：401 鉴权格式、415 Content-Type、422 字段类型、405 请求方法、429 受控重试，以及健康请求。当前共有 36 项自动化测试；Pi Tier A（每个 PR 必须通过的最小 Agent 评测层）会连续运行 3 次。另有域名越权、敏感信息、超时和非法模型输出测试。
+
+## V0 → V1 的真实迭代
+
+| 阶段 | 发布版本 | 只解决一个问题 | 明确未解决 |
+| --- | --- | --- | --- |
+| V0 | `v0.1.0` | 固定失败请求能否完成执行、诊断、单步修复、重试和复核 | 真实输入、真实 HTTP、Pi |
+| V1-A | `v0.2.0`～`v0.3.0` | curl 和 OpenAPI（OpenAPI Specification，开放接口规范）能否进入受控真实 HTTP 闭环 | Pi 模型路径 |
+| V1-B | `v0.4.0` | Pi 能否通过同一 Reasoner 接口生成受约束计划，并保留确定性安全与复核 | 公网模型评测、Skill 动态加载、仓库级诊断 |
+
+完整证据和每阶段的“改了什么、为什么、怎么证明、尚未解决”见 [构建日志](docs/build-log.md)。
 
 ## 运行
 
 要求 Node.js 20+。
 
 ```bash
-npm install
-npm test
+npm ci
+npm run check
 npm run demo
 npm run eval:tier-a
 ```
+
+预期结果：36 项测试全部通过，6 个固定案例全部显示 `passed: true`，Pi Tier A 显示 `3/3 runs passed`。
 
 启动本地服务：
 
@@ -50,7 +62,7 @@ Invoke-RestMethod -Method Post -Uri http://localhost:3000/api/debug -ContentType
 
 ## Pi Agent 模式
 
-默认模式是 `deterministic`，因此本地开发和 CI 不需要外部密钥。启用真实 Pi Agent 时，CLI 和 HTTP API 读取同一组服务端环境变量：
+默认模式是 `deterministic`，因此本地开发和 CI（Continuous Integration，持续集成）不需要外部密钥。启用真实 Pi Agent 时，CLI（Command-Line Interface，命令行界面）和 HTTP API 读取同一组服务端环境变量：
 
 | 变量 | 必需 | 含义 |
 | --- | --- | --- |
@@ -78,7 +90,9 @@ npm run serve
 
 ## V1 真实输入
 
-V1 支持 curl 与 OpenAPI 3.x operation。真实请求必须配置 host allowlist；CLI 通过 `--allow-host` 显式传入，HTTP 服务通过 `A_PIDOC_ALLOWED_HOSTS` 环境变量配置，客户端请求不能扩大服务端权限。工具同时限制超时、请求/响应大小和重定向，并脱敏报告中的凭据字段。
+V1 支持 curl 与 OpenAPI 3.x operation（接口操作定义）。真实请求必须配置 Host Allowlist（主机白名单）；CLI 通过 `--allow-host` 显式传入，HTTP 服务通过 `A_PIDOC_ALLOWED_HOSTS` 环境变量配置，客户端请求不能扩大服务端权限。工具同时限制超时、请求/响应大小和重定向，并脱敏报告中的凭据字段。
+
+请求体和报告使用 JSON（JavaScript Object Notation，JavaScript 对象表示法）；当前 OpenAPI 校验只覆盖项目实现的 JSON Schema（JSON 结构规范）子集。
 
 完整本地示例见 [examples/README.md](examples/README.md)。快速运行 curl 诊断：
 
@@ -100,6 +114,15 @@ HTTP API 同时保留 V0 `{ "caseId": "auth-header" }` 输入，并新增：
   }
 }
 ```
+
+## 文档导航
+
+- [架构与核心链路](docs/architecture.md)：数据流、模块边界、关键取舍和当前风险。
+- [V0 → V1 构建日志](docs/build-log.md)：按真实提交、Issue、PR 和测试记录迭代。
+- [面试追问题](docs/interview.md)：根据真实实现生成问题，回答由你自己填写。
+- [贡献与发布工作流](CONTRIBUTING.md)：Issue、分支、CI/CD（Continuous Integration / Continuous Delivery，持续集成与持续交付）和 Release 规则。
+
+个人求职分析、JD、废弃方案和未来规划保存在本地 `.private/planning-docs/`，由 `.gitignore` 排除，不进入 GitHub。
 
 ## 开发与发布
 
@@ -126,10 +149,13 @@ src/
 scripts/             Pi Tier A 多轮稳定性评测
 test/                核心链路、Pi 输出校验、权限和 Trace 测试
 examples/            本地 Mock API 与 V1 可复现输入
+.pi/skills/          领域工作流说明；当前 PiReasoner 尚未动态加载
+docs/                可由仓库事实验证的公开文档
+.private/            本地个人资料和规划，不进入 Git
 ```
 
 ## 支持范围
 
 - 稳定能力：确定性 Reasoner、Fixture 回归集、规则检索、安全策略、重试、Reviewer、Trace 与离线评测。
 - V1 能力：官方 Pi Agent 运行时、版本化 Debug Prompt、受约束的模型修复计划、显式降级、curl/OpenAPI、JSON Schema 基线校验、受限真实 HTTP、CLI/HTTP API 和全链路脱敏。
-- 暂不支持：OpenAPI `$ref`、非 JSON request body、文档 RAG/rerank、代码仓库扫描、生产部署和公网模型在线 CI。
+- 暂不支持：OpenAPI `$ref`、非 JSON request body、文档 RAG（Retrieval-Augmented Generation，检索增强生成）/rerank、Skill 动态加载、Pi 工具自主调用、代码仓库扫描、生产部署和公网模型在线 CI。
