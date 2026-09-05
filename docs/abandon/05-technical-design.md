@@ -1,8 +1,8 @@
-# L-Pilot 技术设计方案
+# A-Pidoc 技术设计方案
 
 ## 1. 设计摘要
 
-L-Pilot 采用 Electron + React 桌面壳，在独立 Node Worker 进程中通过 `@earendil-works/pi-coding-agent` SDK 创建会话。Pi 负责模型、Agent loop、流式事件、上下文、压缩和 JSONL 会话；L-Pilot 负责 UI、进程监督、安全工具、权限审批、workspace 边界、diff 和撤销。
+A-Pidoc 采用 Electron + React 桌面壳，在独立 Node Worker 进程中通过 `@earendil-works/pi-coding-agent` SDK 创建会话。Pi 负责模型、Agent loop、流式事件、上下文、压缩和 JSONL 会话；A-Pidoc 负责 UI、进程监督、安全工具、权限审批、workspace 边界、diff 和撤销。
 
 技术选择可概括为：**不 fork Pi，不依赖 Tether 私有 Core，不在 Renderer 运行 Agent，不把 OS 进程隔离误称为沙箱。**
 
@@ -130,7 +130,7 @@ createAgentSessionRuntime(createRuntime, {
 });
 ```
 
-`createRuntime` 注入精确版本的 `ModelRuntime`、`SettingsManager`、`DefaultResourceLoader` 和 L-Pilot tools。禁用 Pi 内置 `write/edit/bash`，只注册受控工具。
+`createRuntime` 注入精确版本的 `ModelRuntime`、`SettingsManager`、`DefaultResourceLoader` 和 A-Pidoc tools。禁用 Pi 内置 `write/edit/bash`，只注册受控工具。
 
 Driver 将 Pi event 映射为：
 
@@ -166,7 +166,7 @@ type DomainEvent =
 
 ### 6.1 为什么替换内置写/命令工具
 
-仅在 `tool_call` UI 上弹窗会留下绕过风险。L-Pilot 将执行边界放进工具实现：审批未返回 allow 时，工具函数本身不能写文件或 spawn 命令。
+仅在 `tool_call` UI 上弹窗会留下绕过风险。A-Pidoc 将执行边界放进工具实现：审批未返回 allow 时，工具函数本身不能写文件或 spawn 命令。
 
 ### 6.2 PathGuard
 
@@ -244,10 +244,10 @@ Git diff 是展示增强，不是恢复事实来源；未初始化 Git 的目录
 | 数据 | 位置/机制 | 事实来源 |
 | --- | --- | --- |
 | 消息/模型/compaction | Pi session JSONL | Pi |
-| 最近项目/归档/置顶 | 应用 JSON 配置，原子写入 | L-Pilot |
-| checkpoint 内容 | 应用数据目录，按 session/turn | L-Pilot |
+| 最近项目/归档/置顶 | 应用 JSON 配置，原子写入 | A-Pidoc |
+| checkpoint 内容 | 应用数据目录，按 session/turn | A-Pidoc |
 | Provider 密钥 | Pi AuthStorage/系统安全存储适配 | Main/Worker |
-| UI 偏好 | 应用 JSON 配置 | L-Pilot |
+| UI 偏好 | 应用 JSON 配置 | A-Pidoc |
 
 MVP 不引入 SQLite。会话列表按需扫描 Pi header/尾部摘要并做内存缓存；当数据量证明扫描成为瓶颈，再引入可重建索引。
 
@@ -312,7 +312,7 @@ sequenceDiagram
 
 ## 11. Tether 对比
 
-| 维度 | Tether（调研快照） | L-Pilot MVP | 选择理由 |
+| 维度 | Tether（调研快照） | A-Pidoc MVP | 选择理由 |
 | --- | --- | --- | --- |
 | 前端 | Electron/React，三栏、计划、终端、视觉、Skills | Electron/React，保留三栏但只含 Files/Changes/Run | 视觉体验接近，功能面减半 |
 | Agent 层 | 私有 `tether-agent-core` 包裹 Pi | 直接 Pi SDK + 自有薄 driver/safe-tools | 可审查、无私有运行时依赖 |

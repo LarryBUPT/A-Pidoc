@@ -3,7 +3,7 @@
   "packages": {
     ".": {
       "release-type": "node",
-      "package-name": "l-pilot-api-doctor",
+      "package-name": "a-pidoc",
       "include-component-in-tag": false,
       "changelog-path": "CHANGELOG.md"
     }

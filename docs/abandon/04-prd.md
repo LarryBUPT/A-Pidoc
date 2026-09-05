@@ -1,10 +1,10 @@
-# L-Pilot 产品需求文档（PRD）
+# A-Pidoc 产品需求文档（PRD）
 
 ## 1. 文档信息
 
 | 项 | 内容 |
 | --- | --- |
-| 产品 | L-Pilot Desktop |
+| 产品 | A-Pidoc Desktop |
 | 版本 | MVP / 0.1 |
 | 日期 | 2026-08-23 |
 | 内核 | `@earendil-works/pi-coding-agent` |
@@ -13,7 +13,7 @@
 
 ## 2. 产品定义
 
-L-Pilot 是一个面向个人开发者的本地 coding agent。用户选择代码目录、描述需求，Agent 读取文件、修改代码、运行命令，并在同一界面展示过程、变更和撤销入口。
+A-Pidoc 是一个面向个人开发者的本地 coding agent。用户选择代码目录、描述需求，Agent 读取文件、修改代码、运行命令，并在同一界面展示过程、变更和撤销入口。
 
 它不是 IDE，也不是团队 Agent 平台。MVP 只解决一个问题：**让用户在可看、可停、可确认、可恢复的前提下完成一次 vibecoding 任务。**
 

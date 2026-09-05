@@ -164,7 +164,7 @@ Agent 的补丁工具限制在 workspace 内，成功写入后将路径、前后
 - Renderer 发起的 workspace restore 路径应继续核对是否完整复用 Core 的冲突哈希校验，避免 UI 撤销绕过安全检查。
 - 仓库 README 声明 MIT，但该快照根目录未见 LICENSE；其 npm Core 包含 MIT LICENSE。复制实现前应向维护者确认仓库许可边界。
 
-## 8. 对 L-Pilot 的直接启示
+## 8. 对 A-Pidoc 的直接启示
 
 应复用：三栏信息架构、独立 Agent 进程、窄 IPC、Pi JSONL 事实来源、运行事件适配层、审批与冲突安全撤销。
 

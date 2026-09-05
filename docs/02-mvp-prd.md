@@ -4,7 +4,7 @@
 
 | 项目 | 内容 |
 | --- | --- |
-| 产品 | L-Pilot / API Doctor |
+| 产品 | A-Pidoc / API Doctor |
 | 版本 | V0.1 Deterministic MVP |
 | 用户 | 初级开发者、SaaS 实施和技术支持人员 |
 | 核心问题 | 面对失败的第三方 HTTP 请求，不知道应该先查什么、改什么、如何证明修好了 |

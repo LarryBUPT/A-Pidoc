@@ -1,4 +1,4 @@
-# L-Pilot / API Doctor
+# A-Pidoc / API Doctor
 
 API Doctor 是一个面向初级开发者与 SaaS 实施人员的 API 联调诊断 Agent。它把失败请求、接口规范和运行证据组织成一条可复现链路，并在安全策略约束下执行修正、重试与结果复核。
 

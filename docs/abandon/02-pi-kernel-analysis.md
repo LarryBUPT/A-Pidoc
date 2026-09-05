@@ -8,7 +8,7 @@
 
 Pi 不是一个完整桌面产品，而是一组可组合的 Agent 构件：
 
-| 包 | 职责 | L-Pilot 是否直接使用 |
+| 包 | 职责 | A-Pidoc 是否直接使用 |
 | --- | --- | --- |
 | `pi-ai` | 多 Provider 模型、流式响应、消息格式和用量 | 间接使用 |
 | `pi-agent-core` | Agent loop、tool calling、状态与事件 | 间接使用 |
@@ -18,7 +18,7 @@ Pi 不是一个完整桌面产品，而是一组可组合的 Agent 构件：
 
 ```mermaid
 flowchart TD
-    APP[L-Pilot 产品层]
+    APP[A-Pidoc 产品层]
     CA[pi-coding-agent\nSession / SDK / Tools / Extensions]
     CORE[pi-agent-core\nAgent Loop / Events]
     AI[pi-ai\nProvider / Model / Stream]
@@ -46,7 +46,7 @@ flowchart TD
 
 Pi 将会话保存为 JSONL，每条记录包含 `id` 与 `parentId`，因此一个文件内可以形成分支树。完整历史始终保留，compaction 只改变送给模型的活动上下文，不删除原始 transcript。
 
-这意味着 L-Pilot 无需自建聊天数据库；只需维护一个轻量项目/会话目录缓存，展示层从 JSONL 派生。
+这意味着 A-Pidoc 无需自建聊天数据库；只需维护一个轻量项目/会话目录缓存，展示层从 JSONL 派生。
 
 ### 3.3 资源系统
 
@@ -83,13 +83,13 @@ Pi 自带的 [git-checkpoint 扩展示例](https://github.com/earendil-works/pi/
 | 协议维护 | 内部 API 随版本升级 | RPC 命令面相对稳定 |
 | 官方建议 | Node 应用优先 AgentSession | 非 Node 或明确子进程集成 |
 
-L-Pilot 选择“**SDK 装在独立 Node 子进程**”：既获得 Tether 式故障隔离，又保留 SDK 对工具、事件和会话的精细控制。Main 与 Worker 之间自定义一个很小的 JSONL 协议，而不是把整个 Pi RPC 原样暴露给 Renderer。
+A-Pidoc 选择“**SDK 装在独立 Node 子进程**”：既获得 Tether 式故障隔离，又保留 SDK 对工具、事件和会话的精细控制。Main 与 Worker 之间自定义一个很小的 JSONL 协议，而不是把整个 Pi RPC 原样暴露给 Renderer。
 
 ## 5. Pi 明确不负责的能力
 
-Pi 的设计哲学明确写出“无内置 permission popups”，并建议使用容器或扩展实现自己的确认流。以下能力必须由 L-Pilot 补齐：
+Pi 的设计哲学明确写出“无内置 permission popups”，并建议使用容器或扩展实现自己的确认流。以下能力必须由 A-Pidoc 补齐：
 
-| 缺口 | L-Pilot 责任 |
+| 缺口 | A-Pidoc 责任 |
 | --- | --- |
 | 文件边界 | 规范化路径 + realpath/symlink 检查，只允许 workspace |
 | 写入审批 | Review/Ask/Auto 策略和一次性批准 |
@@ -104,9 +104,9 @@ Pi 的设计哲学明确写出“无内置 permission popups”，并建议使�
 1. 不 fork Pi，不修改其 Agent loop。
 2. `pi-coding-agent` 固定精确版本，由适配器吸收上游变化。
 3. JSONL transcript 保持会话事实来源。
-4. 不直接启用 Pi 的 `write/edit/bash` 内置工具；MVP 用 L-Pilot 安全包装工具替代，避免审批只停留在 UI。
+4. 不直接启用 Pi 的 `write/edit/bash` 内置工具；MVP 用 A-Pidoc 安全包装工具替代，避免审批只停留在 UI。
 5. Project trust 默认拒绝项目动态扩展；用户明确启用后才加载 `.pi` 扩展。
-6. Renderer 只消费 L-Pilot 领域事件，不依赖 Pi 原始事件字段。
+6. Renderer 只消费 A-Pidoc 领域事件，不依赖 Pi 原始事件字段。
 
 ## 7. 升级风险
 
