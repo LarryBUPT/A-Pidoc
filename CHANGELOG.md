@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/LarryBUPT/A-Pidoc/compare/v0.3.0...v0.4.0) (2026-09-05)
+
+
+### Features
+
+* integrate Pi Agent and complete product V1 ([#14](https://github.com/LarryBUPT/A-Pidoc/issues/14)) ([ddfee2e](https://github.com/LarryBUPT/A-Pidoc/commit/ddfee2eb8babd247ac62299769415eca12c4f28d))
+
 ## [0.3.0](https://github.com/LarryBUPT/A-Pidoc/compare/v0.2.0...v0.3.0) (2026-09-05)
 
 
