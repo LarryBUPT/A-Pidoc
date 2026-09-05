@@ -1,0 +1,40 @@
+name: Feature request
+description: 提议一个可验收的功能或工程改进
+title: "feat: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: scenario
+    attributes:
+      label: 用户场景
+      description: 谁在什么情况下遇到了什么问题？
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: 期望结果
+      description: 描述结果，不必预设实现方式。
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 验收标准
+      description: 请列出可自动验证的完成条件。
+    validations:
+      required: true
+  - type: dropdown
+    id: change-source
+    attributes:
+      label: 主要变更源
+      description: AI 相关变更应尽量保持单一来源，便于评测和回滚。
+      options:
+        - 业务代码
+        - Prompt / Skill
+        - 模型 / 参数
+        - Tool / MCP
+        - 评测集 / 数据
+        - 文档 / CI
+    validations:
+      required: true

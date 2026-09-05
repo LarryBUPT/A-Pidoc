@@ -1,0 +1,32 @@
+name: Bug report
+description: 报告可复现的缺陷或回归
+title: "fix: "
+labels: [bug]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: 问题描述
+      description: 实际发生了什么？
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: 复现步骤
+      description: 请提供最小输入、命令和实际输出；不要粘贴密钥。
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望结果
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 验收标准
+      description: 哪些测试或行为可以证明问题已解决？
+    validations:
+      required: true

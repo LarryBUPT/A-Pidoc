@@ -1,0 +1,23 @@
+{
+  "name": "l-pilot-api-doctor",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A deterministic-first API debugging agent harness built for later Pi integration.",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "demo": "npm run build --silent && node dist/src/cli.js all",
+    "serve": "npm run build --silent && node dist/src/server.js",
+    "test:unit": "node --test dist/test/orchestrator.test.js",
+    "test": "npm run build --silent && npm run test:unit",
+    "eval:tier-a": "npm run test:unit",
+    "check": "npm run build --silent && npm run test:unit"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@types/node": "24.3.1",
+    "typescript": "5.9.2"
+  }
+}
