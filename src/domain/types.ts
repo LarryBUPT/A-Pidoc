@@ -116,10 +116,20 @@ export interface HttpTool {
 }
 
 export interface Reasoner {
+  readonly runtime: ReasonerRuntimeMetadata;
   diagnose(input: {
     request: ApiRequest;
     spec: ApiSpec;
     result: HttpResult;
     rules: KnowledgeRule[];
   }): Promise<Diagnosis>;
+}
+
+export interface ReasonerRuntimeMetadata {
+  mode: "deterministic" | "pi";
+  provider?: string;
+  model?: string;
+  promptVersion?: string;
+  timeoutMs?: number;
+  fallback: "none" | "deterministic";
 }
