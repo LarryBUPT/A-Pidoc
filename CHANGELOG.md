@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/LarryBUPT/A-Pidoc/compare/v0.4.0...v0.4.1) (2026-09-05)
+
+
+### Bug Fixes
+
+* harden V1B model and HTTP boundaries ([#19](https://github.com/LarryBUPT/A-Pidoc/issues/19)) ([10c8de0](https://github.com/LarryBUPT/A-Pidoc/commit/10c8de03f8c368d1a811110aa4c04b8fb00dad62))
+
 ## [0.4.0](https://github.com/LarryBUPT/A-Pidoc/compare/v0.3.0...v0.4.0) (2026-09-05)
 
 
