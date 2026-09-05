@@ -53,6 +53,7 @@ async function run(): Promise<void> {
 
   const options = flags(args);
   const allowedHosts = required(options, "allow-host").split(",").map((host) => host.trim()).filter(Boolean);
+  const allowedPorts = required(options, "allow-port").split(",").map((port) => Number(port.trim()));
   const reasoner = createConfiguredReasoner();
   if (mode === "curl") {
     const command = options.has("command")
@@ -63,7 +64,7 @@ async function run(): Promise<void> {
       command,
       spec: await jsonFile(required(options, "spec")) as ApiSpec
     });
-    printReport(await createRealAppWithReasoner({ allowedHosts }, reasoner).run(task));
+    printReport(await createRealAppWithReasoner({ allowedHosts, allowedPorts }, reasoner).run(task));
     return;
   }
   if (mode === "openapi") {
@@ -79,11 +80,11 @@ async function run(): Promise<void> {
     if (parsed.schemaIssues.length > 0) {
       throw new Error(`OpenAPI request validation failed: ${JSON.stringify(parsed.schemaIssues)}`);
     }
-    printReport(await createRealAppWithReasoner({ allowedHosts }, reasoner).run(parsed.task));
+    printReport(await createRealAppWithReasoner({ allowedHosts, allowedPorts }, reasoner).run(parsed.task));
     return;
   }
   throw new Error(
-    "Usage: all | <fixture-id> | curl --input file --spec file --allow-host host | openapi --document file --path /path --method POST --allow-host host"
+    "Usage: all | <fixture-id> | curl --input file --spec file --allow-host host --allow-port port | openapi --document file --path /path --method POST --allow-host host --allow-port port"
   );
 }
 

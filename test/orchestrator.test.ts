@@ -23,7 +23,7 @@ test("a bad host is blocked before the HTTP tool runs", async () => {
   const report = await new DebugOrchestrator(new FixtureHttpTool(item), new DeterministicReasoner()).run(item);
   assert.equal(report.status, "blocked");
   assert.equal(report.attempts.length, 0);
-  assert.match(report.summary, /Blocked host/);
+  assert.match(report.summary, /BLOCKED_HOST.*Blocked host/);
 });
 
 test("the trace uses monotonic sequence numbers", async () => {

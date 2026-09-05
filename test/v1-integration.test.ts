@@ -37,7 +37,7 @@ test("curl input runs through the real diagnose, fix, retry, review, and trace l
     command: `curl -X POST 'http://127.0.0.1:${port}/orders?api_key=query-private' -H 'authorization: Bearer header-private' -H 'content-type: text/plain' -d '{"amount":12}'`,
     spec: jsonSpec()
   });
-  const report = await createRealApp({ allowedHosts: ["127.0.0.1"] }).run(task);
+  const report = await createRealApp({ allowedHosts: ["127.0.0.1"], allowedPorts: [port] }).run(task);
 
   assert.equal(report.status, "resolved");
   assert.equal(report.rootCause, "CONTENT_TYPE_MISMATCH");
@@ -66,7 +66,7 @@ test("real diagnostics reject credentials embedded in a URL", async () => {
     command: "curl http://user:password@127.0.0.1:3001/health",
     spec: { method: "GET", requiredHeaders: {}, requiredBody: {} }
   });
-  const report = await createRealApp({ allowedHosts: ["127.0.0.1"] }).run(task);
+  const report = await createRealApp({ allowedHosts: ["127.0.0.1"], allowedPorts: [3001] }).run(task);
   assert.equal(report.status, "blocked");
   assert.equal(report.attempts.length, 0);
   assert.match(report.summary, /credentials embedded/);
@@ -80,7 +80,7 @@ test("HTTP API accepts curl input while the server controls the host allowlist",
   });
   context.after(() => target.close());
   const targetPort = await listen(target);
-  const api = createApiServer({ allowedHosts: ["127.0.0.1"] });
+  const api = createApiServer({ allowedHosts: ["127.0.0.1"], allowedPorts: [targetPort] });
   context.after(() => api.close());
   const apiPort = await listen(api);
 
@@ -101,7 +101,7 @@ test("HTTP API accepts curl input while the server controls the host allowlist",
 });
 
 test("HTTP API validates OpenAPI request bodies before network execution", async (context) => {
-  const api = createApiServer({ allowedHosts: ["127.0.0.1"] });
+  const api = createApiServer({ allowedHosts: ["127.0.0.1"], allowedPorts: [1] });
   context.after(() => api.close());
   const apiPort = await listen(api);
   const response = await fetch(`http://127.0.0.1:${apiPort}/api/debug`, {
@@ -146,7 +146,7 @@ test("HTTP API executes a valid OpenAPI operation", async (context) => {
   });
   context.after(() => target.close());
   const targetPort = await listen(target);
-  const api = createApiServer({ allowedHosts: ["127.0.0.1"] });
+  const api = createApiServer({ allowedHosts: ["127.0.0.1"], allowedPorts: [targetPort] });
   context.after(() => api.close());
   const apiPort = await listen(api);
   const response = await fetch(`http://127.0.0.1:${apiPort}/api/debug`, {

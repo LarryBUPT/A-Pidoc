@@ -10,7 +10,7 @@ export function createFixtureApp(caseData: DebugCase): DebugOrchestrator {
     new FixtureHttpTool(caseData),
     new DeterministicReasoner(),
     undefined,
-    new RequestPolicy(new Set(["fixture.local"]))
+    new RequestPolicy({ allowedHosts: ["fixture.local"], allowedPorts: [443] })
   );
 }
 
@@ -27,6 +27,9 @@ export function createRealAppWithReasoner(
     new RealHttpTool({ ...options, allowedHosts }),
     reasoner,
     undefined,
-    new RequestPolicy(allowedHosts)
+    new RequestPolicy({
+      allowedHosts,
+      ...(options.allowedPorts ? { allowedPorts: options.allowedPorts } : {})
+    })
   );
 }

@@ -3,6 +3,7 @@ import test, { type TestContext } from "node:test";
 import {
   fauxAssistantMessage,
   registerFauxProvider,
+  streamSimple,
   type Context
 } from "@earendil-works/pi-ai";
 import { DeterministicReasoner } from "../src/agent/deterministic-reasoner.js";
@@ -79,6 +80,30 @@ test("PiReasoner instantiates Pi Agent and accepts a constrained diagnosis", asy
   assert.ok(diagnosis.evidence.every((item) => item.source !== undefined));
 });
 
+test("PiReasoner forwards output, retry, and timeout budgets to the provider", async (context) => {
+  const provider = registerFauxProvider({
+    provider: `a-pidoc-test-${++providerIndex}`,
+    models: [{ id: "bounded-model", input: ["text"] }]
+  });
+  context.after(() => provider.unregister());
+  provider.setResponses([fauxAssistantMessage(validOutput)]);
+  let captured: Parameters<typeof streamSimple>[2];
+  const reasoner = new PiReasoner({
+    model: provider.getModel(),
+    maxOutputTokens: 1024,
+    timeoutMs: 1234,
+    streamFn: (model, agentContext, options) => {
+      captured = options;
+      return streamSimple(model, agentContext, options);
+    }
+  });
+  const diagnosis = await reasoner.diagnose(input());
+  assert.equal(captured?.maxTokens, 1024);
+  assert.equal(captured?.maxRetries, 0);
+  assert.equal(captured?.timeoutMs, 1234);
+  assert.equal(typeof diagnosis.modelUsage?.totalTokens, "number");
+});
+
 test("PiReasoner accepts JSON enclosed in a markdown code fence", async (context) => {
   const { reasoner } = fauxReasoner(context, `\`\`\`json\n${validOutput}\n\`\`\``);
   assert.equal((await reasoner.diagnose(input())).rootCause, "CONTENT_TYPE_MISMATCH");
@@ -139,7 +164,7 @@ test("PiReasoner surfaces model failures when fallback is disabled", async (cont
     stopReason: "error",
     errorMessage: "provider unavailable"
   }));
-  await assert.rejects(() => reasoner.diagnose(input()), /provider unavailable/);
+  await assert.rejects(() => reasoner.diagnose(input()), /provider request failed/);
 });
 
 test("PiReasoner aborts a model call when its diagnosis timeout expires", async (context) => {
@@ -185,7 +210,7 @@ test("Pi Agent runs through Orchestrator, HTTP Tool, Reviewer, and Trace", async
     new FixtureHttpTool(caseData),
     reasoner,
     undefined,
-    new RequestPolicy(new Set(["fixture.local"]))
+    new RequestPolicy({ allowedHosts: ["fixture.local"], allowedPorts: [443] })
   ).run(caseData, { expectedRootCause: caseData.expectedRootCause });
 
   assert.equal(report.status, "resolved");
@@ -198,6 +223,8 @@ test("Pi Agent runs through Orchestrator, HTTP Tool, Reviewer, and Trace", async
     model: "debug-model",
     promptVersion: "v1.0.0",
     timeoutMs: 30000,
+    maxOutputTokens: 2048,
+    maxPromptBytes: 32768,
     fallback: "none"
   });
 });
@@ -210,7 +237,7 @@ test("policy blocks an unlisted host before Pi is called", async (context) => {
     new FixtureHttpTool(caseData),
     harness.reasoner,
     undefined,
-    new RequestPolicy(new Set(["fixture.local"]))
+    new RequestPolicy({ allowedHosts: ["fixture.local"], allowedPorts: [443] })
   ).run(caseData);
 
   assert.equal(report.status, "blocked");
@@ -240,23 +267,24 @@ test("maximum attempt policy still limits Pi retry plans", async (context) => {
     alwaysLimited,
     reasoner,
     undefined,
-    new RequestPolicy(new Set(["fixture.local"]), 3)
+    new RequestPolicy({ allowedHosts: ["fixture.local"], allowedPorts: [443], maxAttempts: 3, maxReasonerCalls: 2 })
   ).run(task);
 
   assert.equal(report.attempts.length, 3);
-  assert.equal(provider.state.callCount, 3);
-  assert.equal(report.status, "unresolved");
+  assert.equal(provider.state.callCount, 2);
+  assert.equal(report.status, "blocked");
+  assert.match(report.summary, /MODEL_CALL_BUDGET_EXCEEDED/);
 });
 
-test("Pi environment configuration fails fast instead of pretending Pi is active", () => {
+test("Pi environment configuration defaults to DeepSeek V4 Pro and fails fast without a credential", () => {
   assert.throws(
     () => createConfiguredReasoner({ A_PIDOC_REASONER: "pi" }),
-    /requires A_PIDOC_PI_PROVIDER and A_PIDOC_PI_MODEL/
+    /requires A_PIDOC_PI_API_KEY or a provider credential for deepseek/
   );
   assert.throws(
     () => createConfiguredReasoner({
       A_PIDOC_REASONER: "pi",
-      A_PIDOC_PI_PROVIDER: "zai",
+      A_PIDOC_PI_PROVIDER: "deepseek",
       A_PIDOC_PI_MODEL: "missing-model"
     }),
     /Unknown Pi model/
@@ -275,24 +303,22 @@ test("Pi environment configuration fails fast instead of pretending Pi is active
   );
   const configured = createConfiguredReasoner({
     A_PIDOC_REASONER: "pi",
-    A_PIDOC_PI_PROVIDER: "zai",
-    A_PIDOC_PI_MODEL: "glm-4.7",
     A_PIDOC_PI_API_KEY: "test-only-key",
     A_PIDOC_PI_FALLBACK: "deterministic"
   });
   assert.deepEqual(configured.runtime, {
     mode: "pi",
-    provider: "zai",
-    model: "glm-4.7",
+    provider: "deepseek",
+    model: "deepseek-v4-pro",
     promptVersion: "v1.0.0",
     timeoutMs: 30000,
+    maxOutputTokens: 2048,
+    maxPromptBytes: 32768,
     fallback: "deterministic"
   });
   assert.throws(
     () => createConfiguredReasoner({
       A_PIDOC_REASONER: "pi",
-      A_PIDOC_PI_PROVIDER: "zai",
-      A_PIDOC_PI_MODEL: "glm-4.7",
       A_PIDOC_PI_API_KEY: "test-only-key",
       A_PIDOC_PI_TIMEOUT_MS: "0"
     }),

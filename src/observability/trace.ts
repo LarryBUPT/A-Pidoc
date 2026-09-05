@@ -1,4 +1,5 @@
 import type { TraceEvent } from "../domain/types.js";
+import { safeError } from "../security/errors.js";
 
 export class TraceRecorder {
   private readonly events: TraceEvent[] = [];
@@ -12,10 +13,12 @@ export class TraceRecorder {
       this.push(stage, "succeeded", { ...metadata, durationMs: Math.round(performance.now() - start) });
       return value;
     } catch (error) {
+      const safe = safeError(error);
       this.push(stage, "failed", {
         ...metadata,
         durationMs: Math.round(performance.now() - start),
-        error: error instanceof Error ? error.message : "unknown error"
+        errorCode: safe.code,
+        error: safe.message
       });
       throw error;
     }

@@ -36,7 +36,7 @@ flowchart LR
 
 ## 运行
 
-要求 Node.js 20+。
+要求 Node.js 20.6+（真实模型脚本使用 Node 内置的 `--env-file`）。
 
 ```bash
 npm ci
@@ -67,30 +67,45 @@ Invoke-RestMethod -Method Post -Uri http://localhost:3000/api/debug -ContentType
 | 变量 | 必需 | 含义 |
 | --- | --- | --- |
 | `A_PIDOC_REASONER=pi` | 是 | 显式启用 Pi，避免静默伪装成模型路径 |
-| `A_PIDOC_PI_PROVIDER` | 是 | Pi provider，例如智谱使用 `zai` |
-| `A_PIDOC_PI_MODEL` | 是 | 锁定模型 ID，例如 `glm-4.7` |
-| `A_PIDOC_PI_API_KEY` | 二选一 | 通用密钥入口；也可使用 Pi 支持的 provider 标准环境变量，如 `ZAI_API_KEY` |
+| `A_PIDOC_PI_PROVIDER` | 否 | Pi provider，默认 `deepseek`；需要时可显式覆盖 |
+| `A_PIDOC_PI_MODEL` | 否 | 模型 ID，默认 `deepseek-v4-pro`（DeepSeek V4 Pro）；需要时可显式覆盖 |
+| `A_PIDOC_PI_API_KEY` | 二选一 | 通用密钥入口；DeepSeek 也可使用标准环境变量 `DEEPSEEK_API_KEY` |
 | `A_PIDOC_PI_FALLBACK` | 否 | `none`（默认）或 `deterministic`；只有显式配置才降级 |
 | `A_PIDOC_PI_TIMEOUT_MS` | 否 | 单次模型诊断超时，默认 30000，允许 100–300000 |
+| `A_PIDOC_PI_MAX_OUTPUT_TOKENS` | 否 | 单次模型最大输出 Token，默认 2048，允许 256–4096 |
+| `A_PIDOC_PI_MAX_PROMPT_BYTES` | 否 | 脱敏后 Prompt 大小上限，默认 32768 字节 |
+| `A_PIDOC_API_TOKEN` | 本机可选 | `/api/debug` 的 Bearer Token；监听非 loopback 地址时必须配置，至少 16 字符 |
+| `A_PIDOC_ALLOWED_PORTS` | 否 | 服务端目标端口白名单，默认 `80,443` |
 
 PowerShell 示例：
 
 ```powershell
 $env:A_PIDOC_REASONER = "pi"
-$env:A_PIDOC_PI_PROVIDER = "zai"
-$env:A_PIDOC_PI_MODEL = "glm-4.7"
-$env:ZAI_API_KEY = "<your-api-key>"
+$env:DEEPSEEK_API_KEY = "<your-api-key>" # 请手动填写，不要提交到仓库
 $env:A_PIDOC_PI_FALLBACK = "deterministic"
 npm run serve
 ```
 
-密钥只由 Pi provider 获取，不写入 Prompt、Trace 或报告。进入模型的请求、响应和规范会先脱敏；模型输出还必须通过 root cause、action、字段类型和敏感操作校验。缺少 provider、model 或 credential 时，Pi 模式会在启动阶段明确失败。
+若要让后续本地测试稳定复用 DeepSeek 配置，请复制项目模板并只在被 Git 忽略的 `.env` 中填写真实密钥：
+
+```powershell
+Copy-Item .env.example .env
+# 用编辑器打开 .env，将 replace-with-your-deepseek-api-key 替换为真实密钥
+npm run test:pi:live # 单次真实模型冒烟测试，明确禁用 deterministic fallback
+npm run serve:pi    # 加载同一份 .env 启动本地服务
+```
+
+普通的 `npm test`、`npm run check` 和 CI 不加载 `.env`，也不会产生公网模型费用。`$env:NAME = "value"` 只对当前 PowerShell 及其子进程生效；不同终端和已经运行的 Codex 进程看不到该变量。
+
+Pi 模式默认使用 DeepSeek V4 Pro；`A_PIDOC_PI_PROVIDER` 和 `A_PIDOC_PI_MODEL` 仅用于有意覆盖默认模型。密钥只由 Pi provider 获取，不写入 Prompt、Trace 或报告。进入模型的请求、响应和规范会先做字段级与自由文本脱敏；provider 原始错误不会返回客户端。模型输出还必须通过 root cause、action、字段类型和敏感操作校验。每个任务最多进行两次模型诊断，provider 自动重试关闭，并记录 Pi 返回的 Token usage 与 SDK 估算费用。SDK 价格元数据可能滞后，不能替代 DeepSeek 账户预算和账单告警。
 
 离线测试并非模拟 `PiReasoner` 接口：它会真实实例化官方 Pi `Agent`，使用 Pi 的 faux provider 产生可控响应，再跑过 Orchestrator、HTTP Tool、Reviewer 和 Trace。`npm run eval:tier-a` 会额外连续运行三次 Pi Tier A 集合。
 
 ## V1 真实输入
 
-V1 支持 curl 与 OpenAPI 3.x operation（接口操作定义）。真实请求必须配置 Host Allowlist（主机白名单）；CLI 通过 `--allow-host` 显式传入，HTTP 服务通过 `A_PIDOC_ALLOWED_HOSTS` 环境变量配置，客户端请求不能扩大服务端权限。工具同时限制超时、请求/响应大小和重定向，并脱敏报告中的凭据字段。
+V1 支持 curl 与 OpenAPI 3.x operation（接口操作定义）。真实请求必须配置 Host Allowlist（主机白名单）和 Port Allowlist（端口白名单）；CLI 通过 `--allow-host`、`--allow-port` 显式传入，HTTP 服务通过 `A_PIDOC_ALLOWED_HOSTS`、`A_PIDOC_ALLOWED_PORTS` 配置，客户端请求不能扩大服务端权限。工具还检查 DNS 解析后的私网地址、限制超时、请求/响应大小与重定向，并脱敏报告中的凭据和基础个人信息。
+
+`/api/debug` 默认拒绝所有带 `Origin` 的浏览器请求，并对每个来源地址执行每分钟 30 次限流和最多 2 个并发任务。设置 `A_PIDOC_API_TOKEN` 后，调用方必须发送 `Authorization: Bearer <token>`。`/health` 不触发模型。生产环境仍需配置 Secret Manager、Key 轮换、账户级余额/账单告警和隐私告知。
 
 请求体和报告使用 JSON（JavaScript Object Notation，JavaScript 对象表示法）；当前 OpenAPI 校验只覆盖项目实现的 JSON Schema（JSON 结构规范）子集。
 
@@ -98,7 +113,7 @@ V1 支持 curl 与 OpenAPI 3.x operation（接口操作定义）。真实请求�
 
 ```bash
 node examples/mock-api.mjs
-node dist/src/cli.js curl --input examples/order.curl --spec examples/order-spec.json --allow-host 127.0.0.1
+node dist/src/cli.js curl --input examples/order.curl --spec examples/order-spec.json --allow-host 127.0.0.1 --allow-port 3001
 ```
 
 HTTP API 同时保留 V0 `{ "caseId": "auth-header" }` 输入，并新增：

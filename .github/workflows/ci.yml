@@ -32,7 +32,10 @@ jobs:
           cache: npm
 
       - name: Install locked dependencies
-        run: npm ci
+        run: npm ci --registry=https://registry.npmjs.org
+
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high --registry=https://registry.npmjs.org
 
       - name: Compile TypeScript
         run: npm run build

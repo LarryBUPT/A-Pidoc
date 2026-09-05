@@ -8,15 +8,17 @@
     "build": "tsc -p tsconfig.json",
     "demo": "npm run build --silent && node dist/src/cli.js all",
     "serve": "npm run build --silent && node dist/src/server.js",
-    "test:unit": "node --test dist/test/*.test.js",
+    "serve:pi": "npm run build --silent && node --env-file=.env dist/src/server.js",
+    "test:unit": "node --test --test-concurrency=1 dist/test/*.test.js",
     "test:pi": "node --test dist/test/pi-reasoner.test.js",
+    "test:pi:live": "npm run build --silent && node --env-file=.env scripts/pi-live-smoke.mjs",
     "test": "npm run build --silent && npm run test:unit",
     "eval:pi:stability": "node scripts/pi-tier-a.mjs",
     "eval:tier-a": "npm run test:unit && npm run eval:pi:stability",
     "check": "npm run build --silent && npm run test:unit"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=20.6"
   },
   "devDependencies": {
     "@types/node": "24.3.1",
