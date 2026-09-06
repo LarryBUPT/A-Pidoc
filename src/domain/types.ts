@@ -8,6 +8,15 @@ export type RootCause =
   | "BODY_TYPE_MISMATCH"
   | "HTTP_METHOD_MISMATCH"
   | "RATE_LIMIT_TRANSIENT"
+  | "AUTH_EXPIRED"
+  | "PERMISSION_DENIED"
+  | "ENDPOINT_NOT_FOUND"
+  | "BODY_FIELD_MISSING"
+  | "BODY_ENUM_MISMATCH"
+  | "SERVER_ERROR"
+  | "REQUEST_TIMEOUT"
+  | "NETWORK_ERROR"
+  | "INVALID_JSON_RESPONSE"
   | "NONE"
   | "UNKNOWN";
 
@@ -30,10 +39,11 @@ export interface HttpResult {
   body: Record<string, unknown>;
   headers: Record<string, string>;
   durationMs: number;
+  errorType?: "REQUEST_TIMEOUT" | "NETWORK_ERROR" | "INVALID_JSON_RESPONSE";
 }
 
 export interface Evidence {
-  source: "http_response" | "api_spec" | "knowledge_rule" | "policy";
+  source: "http_response" | "api_spec" | "knowledge_rule" | "policy" | "tool_error";
   detail: string;
 }
 

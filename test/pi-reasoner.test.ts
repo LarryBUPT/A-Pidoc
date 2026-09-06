@@ -109,9 +109,24 @@ test("PiReasoner accepts JSON enclosed in a markdown code fence", async (context
   assert.equal((await reasoner.diagnose(input())).rootCause, "CONTENT_TYPE_MISMATCH");
 });
 
+test("Pi supports new fault categories and rejects a typed but invented repair value", async (context) => {
+  const invalid = input();
+  invalid.result.status = 422;
+  invalid.request.body = { amount: "12" };
+  const invented = fauxReasoner(context, JSON.stringify({ rootCause: "BODY_TYPE_MISMATCH", summary: "Change amount", action: { kind: "set_body", name: "amount", value: 9000 } }));
+  await assert.rejects(() => invented.reasoner.diagnose(invalid), /actual request evidence/);
+  for (const [status, rootCause] of [[403, "PERMISSION_DENIED"], [404, "ENDPOINT_NOT_FOUND"], [503, "SERVER_ERROR"]] as const) {
+    const failed = input();
+    failed.result.status = status;
+    const safe = fauxReasoner(context, JSON.stringify({ rootCause, summary: "Manual follow-up required", action: { kind: "stop" } }));
+    assert.equal((await safe.reasoner.diagnose(failed)).rootCause, rootCause);
+  }
+});
+
 test("PiReasoner accepts only specification-backed method, body, and auth plans", async (context) => {
   const methodInput = input();
   methodInput.result.status = 405;
+  methodInput.request.method = "GET";
   const method = fauxReasoner(context, JSON.stringify({
     rootCause: "HTTP_METHOD_MISMATCH",
     summary: "Use the documented method.",
@@ -121,6 +136,7 @@ test("PiReasoner accepts only specification-backed method, body, and auth plans"
 
   const bodyInput = input();
   bodyInput.result.status = 422;
+  bodyInput.request.body = { amount: "12" };
   const body = fauxReasoner(context, JSON.stringify({
     rootCause: "BODY_TYPE_MISMATCH",
     summary: "Convert amount to the documented number type.",
@@ -221,7 +237,7 @@ test("Pi Agent runs through Orchestrator, HTTP Tool, Reviewer, and Trace", async
     mode: "pi",
     provider: reasoner.runtime.provider,
     model: "debug-model",
-    promptVersion: "v1.0.0",
+    promptVersion: "v1.1.0",
     timeoutMs: 30000,
     maxOutputTokens: 2048,
     maxPromptBytes: 32768,
@@ -310,7 +326,7 @@ test("Pi environment configuration defaults to DeepSeek V4 Pro and fails fast wi
     mode: "pi",
     provider: "deepseek",
     model: "deepseek-v4-pro",
-    promptVersion: "v1.0.0",
+    promptVersion: "v1.1.0",
     timeoutMs: 30000,
     maxOutputTokens: 2048,
     maxPromptBytes: 32768,
