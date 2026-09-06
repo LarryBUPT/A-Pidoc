@@ -1,5 +1,6 @@
 import type { ApiSpec, DebugTask, HttpMethod } from "../domain/types.js";
 import { parseCurl } from "./curl-parser.js";
+import { assertSupportedSchema } from "./json-schema.js";
 import {
   parseOpenApiOperation,
   type OpenApiOperationOptions,
@@ -49,7 +50,8 @@ export function parseApiSpec(value: unknown): ApiSpec {
     }
     requiredBody[name] = expected as ApiSpec["requiredBody"][string];
   }
-  return { method, requiredHeaders, requiredBody };
+  if (raw.bodySchema !== undefined) assertSupportedSchema(raw.bodySchema);
+  return { method, requiredHeaders, requiredBody, ...(raw.bodySchema ? { bodySchema: raw.bodySchema as JsonObject } : {}) };
 }
 
 export function parseCurlTask(input: CurlDebugInput): DebugTask {

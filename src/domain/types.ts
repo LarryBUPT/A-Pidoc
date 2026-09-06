@@ -22,6 +22,7 @@ export interface ApiSpec {
   method: HttpMethod;
   requiredHeaders: Record<string, string>;
   requiredBody: Record<string, "string" | "number" | "boolean">;
+  bodySchema?: Record<string, unknown>;
 }
 
 export interface HttpResult {

@@ -1,4 +1,6 @@
 import type { ApiSpec, DebugTask, HttpMethod } from "../domain/types.js";
+import { readApiDocument } from "./api-document.js";
+import { assertSupportedSchema, fillDocumentedDefaults, validateSchema } from "./json-schema.js";
 
 type JsonObject = Record<string, unknown>;
 type PrimitiveType = "string" | "number" | "boolean";
@@ -47,24 +49,7 @@ function resolvePath(path: string, values: Record<string, string>): string {
 
 function exampleBody(schema: JsonObject | undefined): Record<string, unknown> | null {
   if (!schema) return null;
-  if (schema.example && typeof schema.example === "object" && !Array.isArray(schema.example)) {
-    return structuredClone(schema.example as Record<string, unknown>);
-  }
-  const properties = schema.properties && typeof schema.properties === "object"
-    ? schema.properties as Record<string, unknown>
-    : {};
-  const required = Array.isArray(schema.required) ? schema.required.filter((item): item is string => typeof item === "string") : [];
-  const body: Record<string, unknown> = {};
-  for (const name of required) {
-    const property = object(properties[name] ?? {}, `schema.properties.${name}`);
-    if ("example" in property) body[name] = property.example;
-    else if ("default" in property) body[name] = property.default;
-    else {
-      const type = primitiveType(property.type);
-      body[name] = type === "number" ? 0 : type === "boolean" ? false : "";
-    }
-  }
-  return body;
+  return object(fillDocumentedDefaults(undefined, { type: "object", ...schema }), "documented body");
 }
 
 export function validateJsonBody(body: Record<string, unknown> | null, schema: unknown): SchemaIssue[] {
@@ -72,32 +57,15 @@ export function validateJsonBody(body: Record<string, unknown> | null, schema: u
   const root = object(schema, "request body schema");
   if ("$ref" in root) throw new Error("OpenAPI $ref is not supported in V1; provide a dereferenced document");
   if (root.type !== undefined && root.type !== "object") throw new Error("V1 supports object request bodies only");
-  const issues: SchemaIssue[] = [];
+  assertSupportedSchema(root);
   if (body === null) {
-    issues.push({ path: "$", message: "request body is required" });
-    return issues;
+    return [{ path: "$", message: "request body is required" }];
   }
-  const required = Array.isArray(root.required) ? root.required.filter((item): item is string => typeof item === "string") : [];
-  const properties = root.properties && typeof root.properties === "object"
-    ? root.properties as Record<string, unknown>
-    : {};
-  for (const name of required) {
-    if (!(name in body)) issues.push({ path: `$.${name}`, message: "required property is missing" });
-  }
-  for (const [name, value] of Object.entries(body)) {
-    if (!(name in properties)) continue;
-    const property = object(properties[name], `schema.properties.${name}`);
-    if ("$ref" in property) throw new Error("OpenAPI $ref is not supported in V1; provide a dereferenced document");
-    const expected = primitiveType(property.type);
-    if (expected && typeof value !== expected) {
-      issues.push({ path: `$.${name}`, message: `expected ${expected}, received ${typeof value}` });
-    }
-  }
-  return issues;
+  return validateSchema(body, root);
 }
 
 export function parseOpenApiOperation(document: unknown, options: OpenApiOperationOptions): ParsedOpenApiOperation {
-  const root = object(document, "OpenAPI document");
+  const root = readApiDocument(document);
   if (typeof root.openapi !== "string" || !root.openapi.startsWith("3.")) {
     throw new Error("Only OpenAPI 3.x documents are supported");
   }
@@ -147,6 +115,7 @@ export function parseOpenApiOperation(document: unknown, options: OpenApiOperati
     if (!mediaType) throw new Error("V1 supports JSON OpenAPI request bodies only");
     const media = object(content[mediaType], `OpenAPI media type ${mediaType}`);
     bodySchema = media.schema === undefined ? undefined : object(media.schema, "OpenAPI request body schema");
+    if (bodySchema) assertSupportedSchema(bodySchema);
     requiredHeaders["Content-Type"] = mediaType;
     headers["Content-Type"] ??= mediaType;
     if (options.body === undefined) {
@@ -168,8 +137,7 @@ export function parseOpenApiOperation(document: unknown, options: OpenApiOperati
     for (const name of required) {
       const property = object(properties[name] ?? {}, `schema.properties.${name}`);
       const type = primitiveType(property.type);
-      if (!type) throw new Error(`Unsupported or missing type for required body property: ${name}`);
-      requiredBody[name] = type;
+      if (type) requiredBody[name] = type;
     }
   }
 
@@ -179,7 +147,7 @@ export function parseOpenApiOperation(document: unknown, options: OpenApiOperati
       title: typeof operation.summary === "string" ? operation.summary : `${method} ${options.path}`,
       source: "openapi",
       request: { method, url: url.toString(), headers, body },
-      spec: { method, requiredHeaders, requiredBody }
+      spec: { method, requiredHeaders, requiredBody, ...(bodySchema ? { bodySchema } : {}) }
     },
     schemaIssues: body === null && !bodyRequired ? [] : validateJsonBody(body, bodySchema)
   };
