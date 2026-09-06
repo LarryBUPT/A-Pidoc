@@ -5,6 +5,7 @@ import type { ApiSpec } from "./domain/types.js";
 import { cases, getCase } from "./fixtures/cases.js";
 import { parseCurlTask } from "./input/debug-input.js";
 import { parseOpenApiOperation } from "./input/openapi-parser.js";
+import { readApiDocument } from "./input/api-document.js";
 import { scanRepository } from "./repository/scanner.js";
 
 function flags(args: string[]): Map<string, string> {
@@ -78,7 +79,7 @@ async function run(): Promise<void> {
     return;
   }
   if (mode === "openapi") {
-    const document = await jsonFile(required(options, "document"));
+    const document = readApiDocument(await readFile(required(options, "document"), "utf8"));
     const body = options.has("body")
       ? await jsonFile(required(options, "body")) as Record<string, unknown>
       : undefined;

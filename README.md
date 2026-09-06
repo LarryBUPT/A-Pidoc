@@ -24,7 +24,7 @@ flowchart LR
     K --> L[结构化报告与 Trace]
 ```
 
-覆盖 6 个固定诊断案例和 1 个固定仓库案例。当前共有 49 项自动化测试；Pi Tier A（每个 PR 必须通过的最小 Agent 评测层）会连续运行 3 次。另有接口滥用、网络越权、敏感信息、预算、超时和非法模型输出测试。
+覆盖 6 个固定诊断案例和 1 个固定仓库案例。当前共有 55 项自动化测试；Pi Tier A（每个 PR 必须通过的最小 Agent 评测层）会连续运行 3 次。自动测试数量不等于业务故障案例数量。另有文档解析、嵌套 Schema、接口滥用、网络越权、敏感信息、预算、超时和非法模型输出测试。
 
 ## V0 → V2 的真实迭代
 
@@ -35,6 +35,7 @@ flowchart LR
 | V1-B | `v0.4.0` | Pi 能否通过同一 Reasoner 接口生成受约束计划，并保留确定性安全与复核 | 公网模型评测、Skill 动态加载、仓库级诊断 |
 | V1-B 安全补丁 | `v0.4.1` | 模型与 HTTP 边界能否阻断凭据泄漏、滥用和无上限调用 | 云端账户预算、Key 轮换、隐私同意 |
 | V2 | `v0.5.0` | 能否从本地仓库定位字面量 fetch、规范差异和环境变量缺口 | 动态 URL、Axios、跨文件数据流、自动执行 |
+| V1 文档补齐 | Issue #24 | Swagger 2、本地引用、Markdown/HTML 规范块、递归 Schema 校验 | 任意自然语言文档推断、完整 JSON Schema、非 JSON body |
 
 完整证据和每阶段的“改了什么、为什么、怎么证明、尚未解决”见 [构建日志](docs/build-log.md)。
 
@@ -49,7 +50,7 @@ npm run demo
 npm run eval:tier-a
 ```
 
-预期结果：49 项测试全部通过，6 个固定诊断案例全部显示 `passed: true`，Pi Tier A 显示 `3/3 runs passed`。
+预期结果：55 项测试全部通过，6 个固定诊断案例全部显示 `passed: true`，Pi Tier A 显示 `3/3 runs passed`。
 
 运行 V2 固定仓库预检：
 
@@ -185,7 +186,11 @@ docs/                可由仓库事实验证的公开文档
 
 ## 支持范围
 
+文档输入支持 OpenAPI 3.x / Swagger 2.0 JSON，也支持 Markdown 中唯一的 JSON fenced block 或 HTML 的 `<pre><code>` JSON 规范块。CLI 的 `openapi --document` 可直接接收这些文件；HTTP API 的 `document` 可传对象或文档字符串。系统不会执行 HTML，也不会抓取外部引用。示例操作参数仍使用 `--path /orders --method POST`。
+
+请求 Schema 支持本地 `$ref`、嵌套对象/数组、必填项、enum/const、integer、nullable、数值上下界和字符串/数组长度。缺少值时仅使用明确 example/default；未知值保留缺失错误。循环引用、外部引用、组合 Schema、pattern、format 等未支持断言会明确拒绝，不能把未知约束当作校验通过。
+
 - 稳定能力：确定性 Reasoner、Fixture 回归集、规则检索、安全策略、重试、Reviewer、Trace 与离线评测。
 - V1 能力：官方 Pi Agent 运行时、版本化 Debug Prompt、受约束的模型修复计划、显式降级、curl/OpenAPI、JSON Schema 基线校验、受限真实 HTTP、CLI/HTTP API、调用预算和全链路脱敏。
 - V2 能力：受限扫描 JavaScript/TypeScript，定位字面量 `fetch`、方法、源码行号、OpenAPI operation 匹配和 `.env.example` 声明缺口；扫描默认无网络和模型调用。
-- 暂不支持：OpenAPI `$ref`、非 JSON request body、动态 URL/跨文件数据流、Axios/自定义客户端、文档 RAG（Retrieval-Augmented Generation，检索增强生成）/rerank、Skill 动态加载、Pi 工具自主调用、自动执行扫描请求、生产部署和公网模型在线 CI。
+- 暂不支持：OpenAPI 外部/循环 `$ref`、非 JSON request body、动态 URL/跨文件数据流、Axios/自定义客户端、文档 RAG（Retrieval-Augmented Generation，检索增强生成）/rerank、Skill 动态加载、Pi 工具自主调用、自动执行扫描请求、生产部署和公网模型在线 CI。

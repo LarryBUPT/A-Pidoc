@@ -48,6 +48,8 @@ flowchart LR
 
 ## 核心数据流
 
+文档入口先经 `readApiDocument`：JSON / Markdown / HTML → 唯一规范块 → 有预算的本地 `$ref` 展开 → Swagger 2 转换 → OpenAPI operation。`json-schema.ts` 在网络执行前递归检查对象、数组、枚举和基础约束，错误保留字段路径，例如 `$.items[0].quantity`。只接受明确的规范数据，不能从任意自然语言页面猜测接口；不支持的 Schema 断言直接报错。`ApiSpec.bodySchema` 保留完整的受支持请求约束，原 `requiredBody` 继续作为兼容的基本字段索引。
+
 ```mermaid
 flowchart LR
     A[curl / OpenAPI / Fixture] --> B[输入解析]
@@ -138,7 +140,7 @@ Axios、自定义 HTTP 客户端、模板字符串、变量拼接、跨文件值
 
 **这一步还没有解决什么**
 
-OpenAPI `$ref`、非 JSON request body、Markdown/HTML 接口文档和 Postman Collection 尚未支持。
+本地 `$ref` 和 Markdown/HTML 的明确 JSON 规范块已接入；外部/循环引用、非 JSON request body、任意自然语言文档与 Postman Collection 尚未支持。
 
 ### 第 2 步：执行前先做安全检查
 
