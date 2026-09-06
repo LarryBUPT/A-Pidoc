@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.0](https://github.com/LarryBUPT/A-Pidoc/compare/v0.6.0...v0.7.0) (2026-09-06)
+
+
+### Features
+
+* verify fault repairs with frozen HTTP business evaluation ([#28](https://github.com/LarryBUPT/A-Pidoc/issues/28)) ([aac0394](https://github.com/LarryBUPT/A-Pidoc/commit/aac03941b77cf5b32d5304a8d9fabd675b2de03c))
+
 ## [0.6.0](https://github.com/LarryBUPT/A-Pidoc/compare/v0.5.0...v0.6.0) (2026-09-06)
 
 
