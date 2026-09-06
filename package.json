@@ -1,6 +1,6 @@
 {
   "name": "a-pidoc",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "private": true,
   "type": "module",
   "description": "A Pi-powered API debugging agent with deterministic safety and evaluation gates.",

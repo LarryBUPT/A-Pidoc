@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0](https://github.com/LarryBUPT/A-Pidoc/compare/v0.5.0...v0.6.0) (2026-09-06)
+
+
+### Features
+
+* support bounded API documents and recursive request schemas ([#25](https://github.com/LarryBUPT/A-Pidoc/issues/25)) ([70483f5](https://github.com/LarryBUPT/A-Pidoc/commit/70483f5afc1f8b70ff5f3a71bca50ff7de4b057d))
+
 ## [0.5.0](https://github.com/LarryBUPT/A-Pidoc/compare/v0.4.1...v0.5.0) (2026-09-05)
 
 
