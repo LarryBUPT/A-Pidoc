@@ -6,6 +6,7 @@ import { cases, getCase } from "./fixtures/cases.js";
 import { parseCurlTask } from "./input/debug-input.js";
 import { parseOpenApiOperation } from "./input/openapi-parser.js";
 import { readApiDocument } from "./input/api-document.js";
+import { evaluateBusinessCases } from "./evaluation/business-eval.js";
 import { scanRepository } from "./repository/scanner.js";
 
 function flags(args: string[]): Map<string, string> {
@@ -36,6 +37,12 @@ function printReport(report: Awaited<ReturnType<ReturnType<typeof createRealAppW
 
 async function run(): Promise<void> {
   const [mode = "all", ...args] = process.argv.slice(2);
+  if (mode === "eval") {
+    const evaluation = await evaluateBusinessCases();
+    console.log(JSON.stringify(evaluation, null, 2));
+    if (evaluation.passed !== evaluation.total) process.exitCode = 1;
+    return;
+  }
   if (mode === "all" || cases.some((item) => item.id === mode)) {
     const selected = mode === "all" ? cases : [getCase(mode)];
     const reports = [];

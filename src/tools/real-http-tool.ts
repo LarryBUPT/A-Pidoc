@@ -1,6 +1,7 @@
 import type { ApiRequest, HttpResult, HttpTool } from "../domain/types.js";
 import { RequestPolicy } from "../security/request-policy.js";
 import { isSensitiveKey, redactValue } from "../security/redaction.js";
+import { PublicError } from "../security/errors.js";
 
 async function readLimitedBody(response: Response, limit: number): Promise<string> {
   const declaredSize = Number(response.headers.get("content-length"));
@@ -53,22 +54,35 @@ export class RealHttpTool implements HttpTool {
   }
 
   async execute(request: ApiRequest): Promise<HttpResult> {
-    await this.policy.assertResolvedAddressAllowed(request);
+    try { await this.policy.assertResolvedAddressAllowed(request); } catch (error) {
+      if (error instanceof PublicError) throw error;
+      throw new PublicError("NETWORK_ERROR", "HTTP address resolution failed", 502);
+    }
     const started = performance.now();
-    const response = await fetch(request.url, {
+    let response: Response;
+    try { response = await fetch(request.url, {
       method: request.method,
       headers: request.headers,
       ...(request.body === null ? {} : { body: JSON.stringify(request.body) }),
       signal: AbortSignal.timeout(this.timeoutMs),
       redirect: "error"
-    });
-    const raw = await readLimitedBody(response, this.maxResponseBytes);
+    }); } catch (error) {
+      if (error instanceof Error && ["TimeoutError", "AbortError"].includes(error.name)) throw new PublicError("REQUEST_TIMEOUT", "HTTP timeout", 504);
+      throw new PublicError("NETWORK_ERROR", "HTTP connection failed", 502);
+    }
+    let raw: string;
+    try { raw = await readLimitedBody(response, this.maxResponseBytes); } catch (error) {
+      if (error instanceof Error && ["TimeoutError", "AbortError"].includes(error.name)) throw new PublicError("REQUEST_TIMEOUT", "HTTP response timeout", 504);
+      throw error;
+    }
     let parsed: unknown = raw;
-    if (raw && response.headers.get("content-type")?.includes("application/json")) {
+    let errorType: HttpResult["errorType"];
+    if (raw && /(?:application\/json|\+json)(?:\s*;|$)/i.test(response.headers.get("content-type") ?? "")) {
       try {
         parsed = JSON.parse(raw);
       } catch {
         parsed = raw;
+        errorType = "INVALID_JSON_RESPONSE";
       }
     }
     const body = parsed && typeof parsed === "object" && !Array.isArray(parsed)
@@ -81,7 +95,8 @@ export class RealHttpTool implements HttpTool {
       status: response.status,
       body,
       headers,
-      durationMs: Math.max(1, Math.round(performance.now() - started))
+      durationMs: Math.max(1, Math.round(performance.now() - started)),
+      ...(errorType ? { errorType } : {})
     };
   }
 }

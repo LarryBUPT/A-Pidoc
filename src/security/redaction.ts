@@ -51,7 +51,7 @@ export function redactRequest(request: ApiRequest): ApiRequest {
 }
 
 export function redactDiagnosis(diagnosis: Diagnosis): Diagnosis {
-  const clone = structuredClone(diagnosis);
+  const clone = redactValue(structuredClone(diagnosis)) as Diagnosis;
   if (clone.action.kind === "set_header" && isSensitiveKey(clone.action.name)) {
     clone.action.value = REDACTED;
   }

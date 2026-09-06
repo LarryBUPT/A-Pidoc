@@ -11,6 +11,8 @@ import type {
 import { isSensitiveKey, redactRequest, redactText, redactValue, REDACTED } from "../security/redaction.js";
 import { DEBUG_AGENT_PROMPT_VERSION, DEBUG_AGENT_SYSTEM_PROMPT } from "./prompts/debug-agent.js";
 import { PublicError } from "../security/errors.js";
+import { classifyFault, actionIsSupported, proposedRepair } from "./fault-analysis.js";
+import { validateSchema } from "../input/json-schema.js";
 
 const ROOT_CAUSES = new Set<RootCause>([
   "AUTH_HEADER_FORMAT",
@@ -18,16 +20,10 @@ const ROOT_CAUSES = new Set<RootCause>([
   "BODY_TYPE_MISMATCH",
   "HTTP_METHOD_MISMATCH",
   "RATE_LIMIT_TRANSIENT",
+  "AUTH_EXPIRED", "PERMISSION_DENIED", "ENDPOINT_NOT_FOUND", "BODY_FIELD_MISSING",
+  "BODY_ENUM_MISMATCH", "SERVER_ERROR", "REQUEST_TIMEOUT", "NETWORK_ERROR", "INVALID_JSON_RESPONSE",
   "NONE",
   "UNKNOWN"
-]);
-
-const EXPECTED_CAUSE = new Map<number, RootCause>([
-  [401, "AUTH_HEADER_FORMAT"],
-  [405, "HTTP_METHOD_MISMATCH"],
-  [415, "CONTENT_TYPE_MISMATCH"],
-  [422, "BODY_TYPE_MISMATCH"],
-  [429, "RATE_LIMIT_TRANSIENT"]
 ]);
 
 export class PiReasonerError extends PublicError {
@@ -106,7 +102,8 @@ function parseAction(value: unknown, spec: ApiSpec, status: number): FixAction {
       throw new PiReasonerError("set_body requires a non-sensitive field name");
     }
     const expectedType = spec.requiredBody[action.name];
-    if (!expectedType || typeof action.value !== expectedType) {
+    const property = (spec.bodySchema?.properties as Record<string, unknown> | undefined)?.[action.name];
+    if (property ? validateSchema(action.value, property).length > 0 : !expectedType || typeof action.value !== expectedType) {
       throw new PiReasonerError("set_body must match a required field and its specified type");
     }
     return { kind, name: action.name, value: action.value };
@@ -114,14 +111,13 @@ function parseAction(value: unknown, spec: ApiSpec, status: number): FixAction {
   throw new PiReasonerError("unknown or missing action kind");
 }
 
-function parseDiagnosis(text: string, spec: ApiSpec, status: number): Omit<Diagnosis, "evidence"> {
+function parseDiagnosis(text: string, spec: ApiSpec, status: number, expected: RootCause): Omit<Diagnosis, "evidence"> {
   const value = object(parseJson(text), "diagnosis");
   onlyKeys(value, ["rootCause", "summary", "action"], "diagnosis");
   if (typeof value.rootCause !== "string" || !ROOT_CAUSES.has(value.rootCause as RootCause)) {
     throw new PiReasonerError("unknown rootCause");
   }
   const rootCause = value.rootCause as RootCause;
-  const expected = EXPECTED_CAUSE.get(status) ?? "UNKNOWN";
   if (rootCause !== expected) {
     throw new PiReasonerError(`rootCause must be ${expected} for HTTP ${status}`);
   }
@@ -194,7 +190,8 @@ export class PiReasoner implements Reasoner {
           name,
           isSensitiveKey(name) ? REDACTED : redactText(value)
         ])),
-        requiredBody: input.spec.requiredBody
+        requiredBody: input.spec.requiredBody,
+        bodySchema: redactValue(input.spec.bodySchema)
       };
       const prompt = JSON.stringify({
         promptVersion: DEBUG_AGENT_PROMPT_VERSION,
@@ -205,6 +202,8 @@ export class PiReasoner implements Reasoner {
           headers: redactValue(input.result.headers)
         },
         apiSpec: safeSpec,
+        supportedRootCause: classifyFault(input),
+        supportedAction: redactValue(proposedRepair(input)),
         knowledgeRules: input.rules.map(({ id, statuses, keywords, guidance }) => ({ id, statuses, keywords, guidance }))
       });
       if (Buffer.byteLength(prompt, "utf8") > this.maxPromptBytes) {
@@ -247,11 +246,16 @@ export class PiReasoner implements Reasoner {
       const diagnosis = parseDiagnosis(
         message.content.map((item) => item.type === "text" ? item.text : "").join(""),
         input.spec,
-        input.result.status
+        input.result.status,
+        classifyFault(input)
       );
+      if (!actionIsSupported(input, diagnosis.action)) throw new PiReasonerError("action is not supported by the actual request evidence");
       return {
         ...diagnosis,
-        evidence: localEvidence(input.result.status, input.result.body, input.spec, input.rules),
+        evidence: input.result.errorType ? [
+          { source: "tool_error", detail: input.result.errorType },
+          { source: "api_spec", detail: `规范方法 ${input.spec.method}` }
+        ] : localEvidence(input.result.status, input.result.body, input.spec, input.rules),
         modelUsage: {
           inputTokens: message.usage.input,
           outputTokens: message.usage.output,
