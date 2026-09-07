@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.0](https://github.com/LarryBUPT/A-Pidoc/compare/v0.7.0...v0.8.0) (2026-09-07)
+
+
+### Features
+
+* complete v2 repository diagnosis workflow ([#31](https://github.com/LarryBUPT/A-Pidoc/issues/31)) ([3a41fc9](https://github.com/LarryBUPT/A-Pidoc/commit/3a41fc9956437e497480b6b4486005877b7b0f30))
+
 ## [0.7.0](https://github.com/LarryBUPT/A-Pidoc/compare/v0.6.0...v0.7.0) (2026-09-06)
 
 
