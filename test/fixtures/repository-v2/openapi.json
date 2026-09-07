@@ -1,0 +1,9 @@
+{
+  "openapi": "3.0.3",
+  "servers": [{"url": "https://api.example.test"}],
+  "paths": {
+    "/orders": {"post": {"summary": "Create order", "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "required": ["sku"], "properties": {"sku": {"type": "string"}}}}}}}},
+    "/users": {"get": {"summary": "List users"}},
+    "/health": {"get": {"summary": "Health"}}
+  }
+}

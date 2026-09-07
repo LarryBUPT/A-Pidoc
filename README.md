@@ -2,7 +2,7 @@
 
 API Doctor 是一个面向初级开发者与 SaaS（Software as a Service，软件即服务）实施人员的 HTTP API（Hypertext Transfer Protocol Application Programming Interface，基于超文本传输协议的应用程序编程接口）联调诊断 Agent（智能体）。它把失败请求、接口规范和运行证据组织成一条可复现链路，并在安全策略约束下执行修正、重试与结果复核。
 
-产品 V2 包含两条互补链路：Repository Preflight（仓库预检）先静态扫描源码中的 API 调用和环境变量，并与 OpenAPI 规范比对；单请求 Debug Agent 再使用 **Pi Agent + deterministic safety baseline（确定性安全基线）** 生成受约束修复计划、执行、重试并复核证据。仓库预检默认不执行网络、不调用模型。
+产品 V2 包含两条互补链路：Repository Preflight（仓库预检）先静态扫描源码中的 API 调用和环境变量，并与 OpenAPI 规范比对，再生成可审阅的 DebugTask、测试计划与补丁计划；单请求 Debug Agent 再使用 **Pi Agent + deterministic safety baseline（确定性安全基线）** 生成受约束修复计划、执行、重试并复核证据。仓库预检和批处理默认 dry-run，不执行网络、不调用模型。
 
 ## 已完成的最小闭环
 
@@ -24,7 +24,7 @@ flowchart LR
     K --> L[结构化报告与 Trace]
 ```
 
-保留 6 个入门 Fixture 和 1 个固定仓库样例，另有 26 个本地真实 HTTP 业务评测案例。当前共有 59 项自动化测试；Pi Tier A（每个 PR 必须通过的最小 Agent 评测层）会连续运行 3 次。自动测试数量不等于业务故障案例数量。业务评测包含主动停止的案例，不以所有请求都成功作为目标。
+保留 6 个入门 Fixture、两个固定仓库样例和 26 个本地真实 HTTP 业务评测案例。V2 新增 Fetch、Axios、Requests、OkHttp 四类字面量调用识别，以及默认 dry-run 的任务/测试/补丁计划。自动测试数量以 CI 实际输出为准；业务评测包含主动停止的案例，不以所有请求都成功作为目标。
 
 ## V0 → V2 的真实迭代
 
@@ -34,7 +34,7 @@ flowchart LR
 | V1-A | `v0.2.0`～`v0.3.0` | curl 和 OpenAPI（OpenAPI Specification，开放接口规范）能否进入受控真实 HTTP 闭环 | Pi 模型路径 |
 | V1-B | `v0.4.0` | Pi 能否通过同一 Reasoner 接口生成受约束计划，并保留确定性安全与复核 | 公网模型评测、Skill 动态加载、仓库级诊断 |
 | V1-B 安全补丁 | `v0.4.1` | 模型与 HTTP 边界能否阻断凭据泄漏、滥用和无上限调用 | 云端账户预算、Key 轮换、隐私同意 |
-| V2 | `v0.5.0` | 能否从本地仓库定位字面量 fetch、规范差异和环境变量缺口 | 动态 URL、Axios、跨文件数据流、自动执行 |
+| V2 | `v0.8.0` | 能否从本地仓库定位四类客户端调用、规范差异和环境变量缺口，并生成可审阅任务与计划 | 任意 AST、完整跨文件数据流、自动写回源码、未知目标执行 |
 | V1 文档补齐 | Issue #24 | Swagger 2、本地引用、Markdown/HTML 规范块、递归 Schema 校验 | 任意自然语言文档推断、完整 JSON Schema、非 JSON body |
 | V1 故障评测补齐 | Issue #26 | 26 个本地 HTTP 案例、14 类明确故障及 UNKNOWN、安全转换、请求变化复核 | 真实用户效果、任意语义修复、完整 V2 |
 
@@ -55,11 +55,12 @@ npm run eval:tier-a
 
 运行冻结业务集：`npm run eval:business`。它启动临时 loopback HTTP 服务，运行 26 个案例并输出 JSON 指标；不需要 Key，不调用公网模型。`passed` 检查根因、预期状态、尝试数和证据，`resolvedRate` 单独统计请求恢复比例。403、过期凭据、长时间限流和写请求超时应停止，不能算作自动修复成功。时延是当前机器的合成评测耗时，不能代表生产 p95；模型费用 0 是因为此评测使用确定性 Reasoner。
 
-运行 V2 固定仓库预检：
+运行 V2 固定仓库预检与计划生成：
 
 ```bash
 npm run build
 node dist/src/cli.js repo --root test/fixtures/repository --document test/fixtures/repository/openapi.json
+node dist/src/cli.js repo-plan --root test/fixtures/repository-v2 --document test/fixtures/repository-v2/openapi.json
 ```
 
 该 fixture 故意包含一个 OpenAPI 未声明调用和两个未声明环境变量，因此命令返回退出码 1，并输出带文件与行号的 JSON 报告。这是预期的“发现问题”，不是扫描器崩溃。

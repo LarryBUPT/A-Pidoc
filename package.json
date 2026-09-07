@@ -15,6 +15,7 @@
     "test": "npm run build --silent && npm run test:unit",
     "eval:pi:stability": "node scripts/pi-tier-a.mjs",
     "eval:business": "npm run build --silent && node dist/src/cli.js eval",
+    "repo:plan": "npm run build --silent && node dist/src/cli.js repo-plan",
     "eval:tier-a": "npm run test:unit && npm run eval:pi:stability",
     "check": "npm run build --silent && npm run test:unit"
   },
