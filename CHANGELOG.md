@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.0](https://github.com/LarryBUPT/A-Pidoc/compare/v0.9.0...v0.10.0) (2026-09-08)
+
+
+### Features
+
+* analyze and verify contract migrations ([#37](https://github.com/LarryBUPT/A-Pidoc/issues/37)) ([98bc847](https://github.com/LarryBUPT/A-Pidoc/commit/98bc847cc445a4242bfc4ed797212c316bfef4c6))
+
 ## [0.9.0](https://github.com/LarryBUPT/A-Pidoc/compare/v0.8.0...v0.9.0) (2026-09-08)
 
 
