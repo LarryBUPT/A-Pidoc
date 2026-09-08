@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.0](https://github.com/LarryBUPT/A-Pidoc/compare/v0.8.0...v0.9.0) (2026-09-08)
+
+
+### Features
+
+* verify repository repairs in isolation ([#34](https://github.com/LarryBUPT/A-Pidoc/issues/34)) ([deb3765](https://github.com/LarryBUPT/A-Pidoc/commit/deb3765eeb2692016eea6ce5709b15ec0f8b2a63))
+
 ## [0.8.0](https://github.com/LarryBUPT/A-Pidoc/compare/v0.7.0...v0.8.0) (2026-09-07)
 
 
