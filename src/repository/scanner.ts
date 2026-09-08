@@ -2,6 +2,7 @@ import { readdir, readFile, realpath } from "node:fs/promises";
 import { dirname, extname, relative, resolve, sep } from "node:path";
 import type { HttpMethod } from "../domain/types.js";
 import { PublicError } from "../security/errors.js";
+import { redactRequest, redactText, REDACTED } from "../security/redaction.js";
 import type { DiscoveredApiCall, EnvironmentReference, RepositoryFinding, RepositoryReport, UnresolvedApiCall, ValueSource } from "./types.js";
 
 const SOURCE_EXTENSIONS = new Set([".js", ".jsx", ".ts", ".tsx", ".py", ".java"]);
@@ -83,11 +84,23 @@ function resolveExpression(expression: string, file: string, constants: Map<stri
   return { value: null, source: { kind: "unresolved", expression: trimmed, chain: [] } };
 }
 
-function inlineObject(source: string): Record<string, string> { const result: Record<string, string> = {}; for (const match of source.matchAll(/["']?([A-Za-z][\w-]*)["']?\s*:\s*["']([^"']*)["']/g)) if (match[1] && match[2] !== undefined) result[match[1]] = match[2]; return result; }
+function inlineHeaders(source: string): Record<string, string> { const result: Record<string, string> = {}; for (const match of source.matchAll(/["']?([A-Za-z][\w-]*)["']?\s*:\s*["']([^"']*)["']/g)) if (match[1] && match[2] !== undefined) result[match[1]] = match[2]; return result; }
+function inlineBody(source: string): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  for (const match of source.matchAll(/["']?([A-Za-z][\w-]*)["']?\s*:\s*(?:["']([^"']*)["']|(-?\d+(?:\.\d+)?)|(true|false|null))/g)) {
+    if (!match[1]) continue;
+    result[match[1]] = match[2] !== undefined ? match[2] : match[3] !== undefined ? Number(match[3]) : match[4] === "null" ? null : match[4] === "true";
+  }
+  return result;
+}
+function redactSource(source: string): string {
+  return redactText(source).replace(/(["']?(?:authorization|api[-_]?key|token|secret|password|cookie)["']?\s*:\s*["'])[^"']*(["'])/gi, `$1${REDACTED}$2`);
+}
 function callSnippet(source: string, index: number): string { const end = source.indexOf(");", index); return source.slice(index, end < 0 ? index + 900 : Math.min(end + 2, index + 900)); }
 function sourceCall(client: DiscoveredApiCall["client"], unit: SourceUnit, index: number, verb: HttpMethod, snippet: string, operations: OpenApiOperation[], resolved: { value: string; source: ValueSource }): DiscoveredApiCall {
   const operation = matchOperation(operations, resolved.value, verb); const headersMatch = snippet.match(/headers\s*:\s*\{([^}]*)\}/s); const bodyMatch = snippet.match(/body\s*:\s*JSON\.stringify\(\s*\{([^}]*)\}\s*\)/s);
-  return { client, file: unit.file, line: lineAt(unit.source, index), method: verb, url: resolved.value, openApiOperation: operation?.id ?? null, headers: headersMatch?.[1] ? inlineObject(headersMatch[1]) : {}, body: bodyMatch?.[1] ? inlineObject(bodyMatch[1]) : null, sources: { url: resolved.source, method: { kind: "literal", expression: verb, chain: [] }, headers: { kind: headersMatch ? "literal" : "unresolved", expression: headersMatch?.[0] ?? "", chain: [] }, body: { kind: bodyMatch ? "literal" : "unresolved", expression: bodyMatch?.[0] ?? "", chain: [] } }, sourceText: snippet.slice(0, 400) };
+  const request = redactRequest({ method: verb, url: resolved.value, headers: headersMatch?.[1] ? inlineHeaders(headersMatch[1]) : {}, body: bodyMatch?.[1] ? inlineBody(bodyMatch[1]) : null });
+  return { client, file: unit.file, line: lineAt(unit.source, index), method: verb, url: request.url, openApiOperation: operation?.id ?? null, headers: request.headers, body: request.body, sources: { url: resolved.source, method: { kind: "literal", expression: verb, chain: [] }, headers: { kind: headersMatch ? "literal" : "unresolved", expression: headersMatch ? redactSource(headersMatch[0]) : "", chain: [] }, body: { kind: bodyMatch ? "literal" : "unresolved", expression: bodyMatch ? redactSource(bodyMatch[0]) : "", chain: [] } }, sourceText: redactSource(snippet.slice(0, 400)) };
 }
 
 function scanSource(unit: SourceUnit, operations: OpenApiOperation[], declared: Set<string>, constants: Map<string, ConstantDefinition>, imports: Map<string, ImportDefinition>): { calls: DiscoveredApiCall[]; unresolved: UnresolvedApiCall[]; environment: EnvironmentReference[]; findings: RepositoryFinding[] } {

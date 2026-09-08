@@ -2,7 +2,7 @@
 
 API Doctor 是一个面向初级开发者与 SaaS（Software as a Service，软件即服务）实施人员的 HTTP API（Hypertext Transfer Protocol Application Programming Interface，基于超文本传输协议的应用程序编程接口）联调诊断 Agent（智能体）。它把失败请求、接口规范和运行证据组织成一条可复现链路，并在安全策略约束下执行修正、重试与结果复核。
 
-产品 V2 包含两条互补链路：Repository Preflight（仓库预检）先静态扫描源码中的 API 调用和环境变量，并与 OpenAPI 规范比对，再生成可审阅的 DebugTask、测试计划与补丁计划；显式批准后，只在新建的隔离副本里应用确定性补丁、重新扫描并运行生成的契约测试。单请求 Debug Agent 使用 **Pi Agent + deterministic safety baseline（确定性安全基线）** 生成受约束修复计划、执行、重试并复核证据。仓库预检默认 dry-run，不执行网络、不调用模型。
+当前 V3 在两条 V2 链路之上增加契约迁移：先对比新旧 OpenAPI，生成带稳定 ID、breaking 标记和高中低风险的语义 Diff，再把变更映射到源码调用点。对于可证明无损的字面量类型转换，显式批准后只在新建隔离副本中应用补丁、重新分析并运行生成的契约测试。单请求 Debug Agent 继续使用 **Pi Agent + deterministic safety baseline（确定性安全基线）** 完成受控诊断闭环；仓库与契约分析默认不执行网络、不调用模型。
 
 ## 已完成的最小闭环
 
@@ -26,7 +26,7 @@ flowchart LR
 
 保留 6 个入门 Fixture、3 个固定仓库样例和 26 个本地真实 HTTP 业务评测案例。V2 覆盖 Fetch、Axios、Requests、OkHttp 四类受限语法、JS/TS 同文件及具名导入常量、环境变量引用、任务/测试/补丁计划和隔离验证。业务评测包含主动停止的案例，不以所有请求都成功作为目标。
 
-## V0 → V2 的真实迭代
+## V0 → V3 的真实迭代
 
 | 阶段 | 发布版本 | 只解决一个问题 | 明确未解决 |
 | --- | --- | --- | --- |
@@ -34,7 +34,8 @@ flowchart LR
 | V1-A | `v0.2.0`～`v0.3.0` | curl 和 OpenAPI（OpenAPI Specification，开放接口规范）能否进入受控真实 HTTP 闭环 | Pi 模型路径 |
 | V1-B | `v0.4.0` | Pi 能否通过同一 Reasoner 接口生成受约束计划，并保留确定性安全与复核 | 公网模型评测、Skill 动态加载、仓库级诊断 |
 | V1-B 安全补丁 | `v0.4.1` | 模型与 HTTP 边界能否阻断凭据泄漏、滥用和无上限调用 | 云端账户预算、Key 轮换、隐私同意 |
-| V2 | `v0.8.0` 起 | 能否从本地仓库定位四类客户端调用、追踪有限配置来源，并在隔离副本应用补丁和运行契约测试 | 任意 AST、完整跨文件数据流、原仓库自动写回、未知目标执行 |
+| V2 | `v0.8.0`～`v0.9.0` | 能否从本地仓库定位四类客户端调用、追踪有限配置来源，并在隔离副本应用补丁和运行契约测试 | 任意 AST、完整跨文件数据流、原仓库自动写回、未知目标执行 |
+| V3 | `v0.10.0` | 能否比较 OpenAPI 版本、定位真实受影响调用，并验证一类无损迁移 | 全量 OpenAPI/JSON Schema、字段重命名推断、历史持久化、PR 集成 |
 | V1 文档补齐 | Issue #24 | Swagger 2、本地引用、Markdown/HTML 规范块、递归 Schema 校验 | 任意自然语言文档推断、完整 JSON Schema、非 JSON body |
 | V1 故障评测补齐 | Issue #26 | 26 个本地 HTTP 案例、14 类明确故障及 UNKNOWN、安全转换、请求变化复核 | 真实用户效果、任意语义修复、完整 V2 |
 
@@ -73,6 +74,16 @@ node dist/src/cli.js repo-verify --root test/fixtures/repository-v2-repair --doc
 ```
 
 `repo-verify` 只应用确定性且可唯一定位的 URL 替换与 `.env.example` 追加；复杂表达式继续输出 Finding。输出目录必须不存在且位于源仓库之外，防止覆盖用户工作区。
+
+运行 V3 契约 Diff、影响分析与冻结评测：
+
+```bash
+node dist/src/cli.js contract-diff --previous test/fixtures/repository-v3-impact/old.json --next test/fixtures/repository-v3-impact/new.json
+node dist/src/cli.js contract-impact --root test/fixtures/repository-v3-impact --previous test/fixtures/repository-v3-impact/old.json --next test/fixtures/repository-v3-impact/new.json
+npm run eval:contract
+```
+
+前两个命令发现 breaking change 或受影响调用时返回退出码 1，这是供 CI 使用的风险门禁。`contract-verify` 还需提供不存在的 `--workspace` 和 `--approved true`；它只处理可证明无损的字符串/数字/布尔字面量转换，未知值不猜测。
 
 启动本地服务：
 
@@ -160,7 +171,7 @@ HTTP API 同时保留 V0 `{ "caseId": "auth-header" }` 输入，并新增：
 ## 文档导航
 
 - [架构与核心链路](docs/architecture.md)：数据流、模块边界、关键取舍和当前风险。
-- [V0 → V2 构建日志](docs/build-log.md)：按真实提交、Issue、PR 和测试记录迭代。
+- [V0 → V3 构建日志](docs/build-log.md)：按真实提交、Issue、PR 和测试记录迭代。
 - [贡献与发布工作流](CONTRIBUTING.md)：Issue、分支、CI/CD（Continuous Integration / Continuous Delivery，持续集成与持续交付）和 Release 规则。
 
 个人求职分析、JD、废弃方案和未来规划保存在本地 `.private/planning-docs/`，由 `.gitignore` 排除，不进入 GitHub。
