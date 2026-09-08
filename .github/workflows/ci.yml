@@ -43,6 +43,9 @@ jobs:
       - name: Run unit tests and offline Pi Tier A stability eval
         run: npm run eval:tier-a
 
+      - name: Run frozen repository repair evaluation
+        run: npm run eval:repository
+
       - name: Verify generated output is reproducible
         run: git diff --exit-code
 
