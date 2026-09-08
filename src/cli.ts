@@ -8,7 +8,7 @@ import { parseOpenApiOperation } from "./input/openapi-parser.js";
 import { readApiDocument } from "./input/api-document.js";
 import { evaluateBusinessCases } from "./evaluation/business-eval.js";
 import { scanRepository } from "./repository/scanner.js";
-import { buildRepositoryTasks, generateRepositoryPatchPlans, generateRepositoryTestPlans, runRepositoryTasks } from "./repository/workflow.js";
+import { buildRepositoryTasks, generateRepositoryPatchPlans, generateRepositoryTestPlans, runRepositoryTasks, verifyRepositoryPlan } from "./repository/workflow.js";
 
 function flags(args: string[]): Map<string, string> {
   const result = new Map<string, string>();
@@ -79,8 +79,20 @@ async function run(): Promise<void> {
     const document = await jsonFile(required(options, "document"));
     const tasks = buildRepositoryTasks(report, document);
     const batch = await runRepositoryTasks(tasks);
-    console.log(JSON.stringify({ report, tasks, tests: generateRepositoryTestPlans(tasks), patches: generateRepositoryPatchPlans(report), batch }, null, 2));
+    console.log(JSON.stringify({ report, tasks, tests: generateRepositoryTestPlans(tasks), patches: generateRepositoryPatchPlans(report, document), batch }, null, 2));
     if (report.summary.errors > 0) process.exitCode = 1;
+    return;
+  }
+  if (mode === "repo-verify") {
+    const document = await jsonFile(required(options, "document"));
+    const verification = await verifyRepositoryPlan({
+      root: required(options, "root"),
+      workspace: required(options, "workspace"),
+      openApiDocument: document,
+      approved: required(options, "approved") === "true"
+    });
+    console.log(JSON.stringify(verification, null, 2));
+    if (!verification.passed) process.exitCode = 1;
     return;
   }
   const allowedHosts = required(options, "allow-host").split(",").map((host) => host.trim()).filter(Boolean);
@@ -115,7 +127,7 @@ async function run(): Promise<void> {
     return;
   }
   throw new Error(
-    "Usage: all | <fixture-id> | repo --root dir --document openapi.json | repo-plan --root dir --document openapi.json | curl --input file --spec file --allow-host host --allow-port port | openapi --document file --path /path --method POST --allow-host host --allow-port port"
+    "Usage: all | <fixture-id> | repo --root dir --document openapi.json | repo-plan --root dir --document openapi.json | repo-verify --root dir --document openapi.json --workspace isolated-dir --approved true | curl --input file --spec file --allow-host host --allow-port port | openapi --document file --path /path --method POST --allow-host host --allow-port port"
   );
 }
 

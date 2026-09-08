@@ -1,0 +1,7 @@
+{
+  "openapi": "3.0.3",
+  "paths": {
+    "/v2/orders": {"post": {"summary": "Create order v2"}},
+    "/users": {"get": {"summary": "List users"}}
+  }
+}

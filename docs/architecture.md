@@ -1,6 +1,6 @@
 # A-Pidoc 架构与核心链路
 
-本文只描述 V2 已实现并由测试覆盖的代码。规划中的文档检索、动态代码数据流、持久化、前端界面和生产部署不在当前架构中。
+本文只描述 V2 已实现并由测试覆盖的代码。规划中的任意 AST/动态数据流、持久化、前端界面和生产部署不在当前架构中。
 
 ## 一句话概括
 
@@ -35,16 +35,20 @@ A-Pidoc 先从本地源码定位 API 调用、规范差异和配置缺口；对�
 ```mermaid
 flowchart LR
     A[仓库根目录] --> B[目录与文件预算]
-    B --> C[JS/TS 只读扫描<br/>你在这里]
+    B --> C[四类客户端受限扫描<br/>你在这里]
     D[OpenAPI 3.x] --> E[Operation 索引]
     F[.env.example 变量名] --> C
-    C --> G[字面量 fetch + 环境变量]
+    C --> G[字面量 + 有限常量链 + 环境变量]
     E --> H[方法与路径比对]
     G --> H
-    H --> I[RepositoryReport<br/>文件 + 行号 + Finding]
+    H --> I[RepositoryReport<br/>来源链 + Finding]
+    I --> J[可审阅任务 / 测试 / 补丁]
+    J --> K[显式批准的隔离副本验证]
 ```
 
-扫描器不读取 `.env`，不跟随符号链接，忽略 `.git`、`node_modules`、`dist`、`build`、`coverage`，并限制文件数和单文件大小。它只识别字面量 HTTP(S) `fetch`；动态目标会输出 `DYNAMIC_FETCH_UNSUPPORTED`，不会猜测。
+扫描器不读取 `.env`，不跟随符号链接，忽略依赖、构建输出和 `.a-pidoc` 生成目录，并限制文件数和单文件大小。它识别 Fetch、Axios、Python Requests、Java OkHttp 的文档化子集；JS/TS URL 可来自字面量、同文件常量或具名导入常量，报告保留定义文件和行号。环境值、函数返回值和更复杂表达式会进入 `unresolvedCalls` 与 Finding，不会猜测。
+
+隔离验证将源仓库复制到一个必须不存在且位于源仓库之外的新目录，只应用需显式批准、能唯一定位的补丁。随后重新扫描并使用 Node 内置 test runner 执行生成的无网络契约测试。这个闭环证明“发现—修改—回归”，但不等于任意 Coding Agent：它不会直接改用户仓库，也不会执行项目自带的任意脚本。
 
 ## 核心数据流
 

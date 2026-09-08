@@ -221,7 +221,7 @@ V0 只能证明算法骨架；V1-A 要证明用户自己的请求能进入相同
 
 - `.gitignore` 从忽略整个 `docs/` 改为忽略 `.private/`。
 - 原 `docs/` 的 11 个个人、JD、废弃方案和路线规划文件原样移动到 `.private/planning-docs/`。
-- 新建公开的 `architecture.md`、`build-log.md` 和 `interview.md`。
+- 新建公开的 `architecture.md`、`build-log.md`；面试练习册后来移入被 Git 忽略的 `.private`，避免把个人准备内容当作产品文档发布。
 
 ### 为什么这样改
 
@@ -324,8 +324,6 @@ V1 已能诊断一条明确请求，但用户仍需先在陌生仓库中定位�
 
 Prompt 升到 v1.1.0 后，两个 Trace 元数据测试仍期望 v1.0.0；更新固定期望并复核配置和 Agent 全链路。新增修复限制后，原 Pi 方法/金额测试输入本来已经符合规范，需改成真实错误输入，才能验证“修复有证据”而不只是“类型正确”。模型、依赖版本不变；Prompt 与动作契约在同一行为 PR 内同步，避免半套契约进入主分支。
 
-## 从这条迭代得到的方法
-
 ## 2026-09-07：V2 仓库诊断工作流
 
 证据：Issue #30、`src/repository/scanner.ts`、`src/repository/workflow.ts`、`test/repository-v2.test.ts`。
@@ -347,6 +345,32 @@ V1 只能回答“哪里有问题”，V2 需要把证据组织成下一步可�
 ### 这一步还没有解决什么
 
 仍不是完整 AST 或跨文件数据流分析；动态 URL、自定义客户端、未知目标和自动源码写回均保留为 Finding/待审阅项。显式 execute 需要调用方提供已经配置好的 Orchestrator，仓库 CLI 默认不执行。
+
+## 2026-09-08：V2 隔离修复与真实回归补齐
+
+证据：[Issue #33](https://github.com/LarryBUPT/A-Pidoc/issues/33)、`src/repository/scanner.ts`、`src/repository/workflow.ts`、`src/evaluation/repository-eval.ts`、`test/fixtures/repository-v2-repair`。
+
+### 改了什么
+
+增加有限数据流解析，能追踪 JS/TS 同文件常量和具名导入常量，并在调用报告中保存 URL、方法、Header、Body 的来源。增加第三个冻结仓库、Repository 评测入口，以及要求显式批准的隔离验证：复制仓库、应用唯一 URL 替换和环境模板补丁、重新扫描、落盘并运行生成的 Node 契约测试。
+
+### 为什么这样改
+
+只生成字符串不是测试，只输出补丁也不是修复闭环。《方案》要求修改后运行测试验证；隔离副本既留下真实执行证据，也避免覆盖用户工作区或执行未知项目脚本。
+
+### 怎么证明它有效
+
+- 第三个 fixture 的 `POST /v1/orders` 在修改前产生 1 个 OpenAPI 错误，修改后匹配唯一的 `POST /v2/orders`。
+- `USERS_URL` 从 `src/client.ts` 追踪到 `src/shared.ts:1`，证明有限跨文件来源链。
+- 隔离验证同时补 `.env.example`，前后结果从 1 error / 1 warning 变为 0 / 0；生成的两个 `.test.mjs` 由真实 Node test runner 执行通过。
+- `npm run eval:repository` 固定验证 3 个仓库、8 个已解析调用、2 个明确未解析动态调用和 4 类客户端。
+- required CI 在单测和 Pi Tier A 之后运行同一 Repository 评测，避免隔离修复回归只在开发机验证。
+
+### 这一步还没有解决什么
+
+扫描仍是保守语法子集，不支持别名重导出、函数间参数传播、运行时配置或任意语言 AST。补丁只在隔离副本中应用，且仅覆盖唯一可判定的 URL 与环境模板；不运行被扫描仓库的任意脚本，不自动提交代码。
+
+## 从这条迭代得到的方法
 
 1. **一次只增加一个不稳定源**：先固定数据，再真实网络，最后真实 Agent 运行时。
 2. **每个阶段必须有反例**：不仅测试能修好，也测试危险 Host、畸形输出、超时和无降级。
