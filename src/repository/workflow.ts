@@ -5,6 +5,7 @@ import type { DebugReport, DebugTask } from "../domain/types.js";
 import { DebugOrchestrator } from "../core/orchestrator.js";
 import { parseOpenApiOperation } from "../input/openapi-parser.js";
 import { scanRepository } from "./scanner.js";
+import { redactRequest } from "../security/redaction.js";
 import type { RepositoryFindingCode, RepositoryPatchPlan, RepositoryReport, RepositoryTask, RepositoryTestPlan, RepositoryTestRun, RepositoryVerificationReport } from "./types.js";
 
 export interface RepositoryBatchResult {
@@ -24,7 +25,7 @@ export function buildRepositoryTasks(report: RepositoryReport, document: unknown
 
 export function generateRepositoryTestPlans(tasks: RepositoryTask[]): RepositoryTestPlan[] {
   return tasks.filter((task) => task.debugTask).map((task) => {
-    const safe = task.id.replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "").toLowerCase(); const request = JSON.stringify(task.debugTask!.request, null, 2);
+    const safe = task.id.replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "").toLowerCase(); const request = JSON.stringify(redactRequest(task.debugTask!.request), null, 2);
     return { path: `.a-pidoc/generated/${safe}.test.mjs`, callId: task.id, rationale: "Generated from a resolved client call matched to an OpenAPI operation; it checks the normalized contract without network access.", content: `import test from "node:test";\nimport assert from "node:assert/strict";\n\ntest(${JSON.stringify(task.debugTask!.title)}, () => {\n  const request = ${request};\n  assert.match(request.url, /^https?:\\/\\//);\n  assert.equal(request.method, ${JSON.stringify(task.debugTask!.request.method)});\n  assert.equal(new URL(request.url).pathname, ${JSON.stringify(new URL(task.debugTask!.request.url).pathname)});\n});\n` };
   });
 }
@@ -68,6 +69,7 @@ async function applyPatch(workspaceRoot: string, plan: RepositoryPatchPlan): Pro
 
 async function runGeneratedTests(workspaceRoot: string, tests: string[], timeoutMs: number): Promise<RepositoryTestRun> {
   const started = Date.now(); const args = ["--test", ...tests.map((file) => workspaceFile(workspaceRoot, file))];
+  if (tests.length === 0) return { command: [process.execPath, ...args], exitCode: null, durationMs: 0, stdout: "", stderr: "No repository tests were generated", passed: false };
   return await new Promise((resolveResult) => {
     const child = spawn(process.execPath, args, { cwd: workspaceRoot, windowsHide: true }); let stdout = ""; let stderr = ""; let timedOut = false;
     const timer = setTimeout(() => { timedOut = true; child.kill(); }, timeoutMs);

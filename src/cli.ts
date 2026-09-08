@@ -6,6 +6,9 @@ import { cases, getCase } from "./fixtures/cases.js";
 import { parseCurlTask } from "./input/debug-input.js";
 import { parseOpenApiOperation } from "./input/openapi-parser.js";
 import { readApiDocument } from "./input/api-document.js";
+import { diffOpenApi } from "./contract/openapi-diff.js";
+import { analyzeContractImpact } from "./contract/impact-analysis.js";
+import { verifyContractMigration } from "./contract/migration.js";
 import { evaluateBusinessCases } from "./evaluation/business-eval.js";
 import { scanRepository } from "./repository/scanner.js";
 import { buildRepositoryTasks, generateRepositoryPatchPlans, generateRepositoryTestPlans, runRepositoryTasks, verifyRepositoryPlan } from "./repository/workflow.js";
@@ -95,6 +98,24 @@ async function run(): Promise<void> {
     if (!verification.passed) process.exitCode = 1;
     return;
   }
+  if (mode === "contract-diff") {
+    const report = diffOpenApi(await jsonFile(required(options, "previous")), await jsonFile(required(options, "next")));
+    console.log(JSON.stringify(report, null, 2));
+    if (report.summary.breaking > 0) process.exitCode = 1;
+    return;
+  }
+  if (mode === "contract-impact") {
+    const report = await analyzeContractImpact({ root: required(options, "root"), previousDocument: await jsonFile(required(options, "previous")), nextDocument: await jsonFile(required(options, "next")) });
+    console.log(JSON.stringify(report, null, 2));
+    if (report.impacts.length > 0) process.exitCode = 1;
+    return;
+  }
+  if (mode === "contract-verify") {
+    const report = await verifyContractMigration({ root: required(options, "root"), workspace: required(options, "workspace"), previousDocument: await jsonFile(required(options, "previous")), nextDocument: await jsonFile(required(options, "next")), approved: required(options, "approved") === "true" });
+    console.log(JSON.stringify(report, null, 2));
+    if (!report.passed) process.exitCode = 1;
+    return;
+  }
   const allowedHosts = required(options, "allow-host").split(",").map((host) => host.trim()).filter(Boolean);
   const allowedPorts = required(options, "allow-port").split(",").map((port) => Number(port.trim()));
   const reasoner = createConfiguredReasoner();
@@ -127,7 +148,7 @@ async function run(): Promise<void> {
     return;
   }
   throw new Error(
-    "Usage: all | <fixture-id> | repo --root dir --document openapi.json | repo-plan --root dir --document openapi.json | repo-verify --root dir --document openapi.json --workspace isolated-dir --approved true | curl --input file --spec file --allow-host host --allow-port port | openapi --document file --path /path --method POST --allow-host host --allow-port port"
+    "Usage: all | <fixture-id> | repo --root dir --document openapi.json | repo-plan --root dir --document openapi.json | repo-verify --root dir --document openapi.json --workspace isolated-dir --approved true | contract-diff --previous old.json --next new.json | contract-impact --root dir --previous old.json --next new.json | contract-verify --root dir --previous old.json --next new.json --workspace isolated-dir --approved true | curl --input file --spec file --allow-host host --allow-port port | openapi --document file --path /path --method POST --allow-host host --allow-port port"
   );
 }
 

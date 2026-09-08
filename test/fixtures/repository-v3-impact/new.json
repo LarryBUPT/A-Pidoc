@@ -1,0 +1,12 @@
+{
+  "openapi": "3.0.3",
+  "paths": {
+    "/orders": {
+      "post": {
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "required": ["customer_id", "amount"], "properties": {"customer_id": {"type": "string"}, "amount": {"type": "number"}, "note": {"type": "string"}}}}}},
+        "responses": {"200": {"content": {"application/json": {"schema": {"type": "object", "properties": {"request_id": {"type": "string"}, "status": {"type": "string"}}}}}}}
+      }
+    },
+    "/health": {"get": {"responses": {"200": {"description": "ok"}}}}
+  }
+}

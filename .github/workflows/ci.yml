@@ -46,6 +46,9 @@ jobs:
       - name: Run frozen repository repair evaluation
         run: npm run eval:repository
 
+      - name: Run frozen contract migration evaluation
+        run: npm run eval:contract
+
       - name: Verify generated output is reproducible
         run: git diff --exit-code
 

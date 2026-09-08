@@ -27,7 +27,8 @@ test("V2 builds reviewable debug tasks, test plans and patch plans", async () =>
   assert.equal(generateRepositoryTestPlans(tasks).length, 4);
   assert.equal(generateRepositoryPatchPlans(report).length, 1);
   assert.match(generateRepositoryTestPlans(tasks)[0]!.content, /assert\.match/);
-  assert.equal(report.apiCalls.find((call) => call.client === "fetch")?.headers.Authorization, "Bearer token");
+  assert.equal(report.apiCalls.find((call) => call.client === "fetch")?.headers.Authorization, "[REDACTED]");
+  assert.doesNotMatch(JSON.stringify(report), /Bearer token/);
   assert.equal(report.apiCalls.find((call) => call.client === "fetch")?.body?.sku, "A-1");
 });
 
