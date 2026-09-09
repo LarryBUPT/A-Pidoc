@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.1](https://github.com/LarryBUPT/A-Pidoc/compare/v0.10.0...v0.10.1) (2026-09-09)
+
+
+### Bug Fixes
+
+* align v3 documentation with released behavior ([#40](https://github.com/LarryBUPT/A-Pidoc/issues/40)) ([c377b2c](https://github.com/LarryBUPT/A-Pidoc/commit/c377b2c1ced924c673acf0a4a13c39e76823c6bd))
+
 ## [0.10.0](https://github.com/LarryBUPT/A-Pidoc/compare/v0.9.0...v0.10.0) (2026-09-08)
 
 
