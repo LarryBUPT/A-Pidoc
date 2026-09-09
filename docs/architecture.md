@@ -131,7 +131,7 @@ sequenceDiagram
 
 **改了什么**
 
-- `src/repository/scanner.ts` 受限遍历源码，提取字面量 `fetch` 和环境变量引用。
+- `src/repository/scanner.ts` 受限遍历源码，识别 Fetch、Axios、Python Requests、Java OkHttp，并提取 URL、方法、Header、Body 和环境变量的可证明来源。
 - `src/repository/types.ts` 定义带源码位置、规范匹配和 Finding 的 `RepositoryReport`。
 - CLI 新增 `repo --root --document`，且在创建 Pi Reasoner 之前返回扫描结果。
 
@@ -145,7 +145,7 @@ V1 要求用户先手工找到失败请求。V2 把入口前移到仓库，但�
 
 **这一步还没有解决什么**
 
-Axios、自定义 HTTP 客户端、模板字符串、变量拼接、跨文件值传播和自动生成 `DebugTask` 尚未实现。
+自定义 HTTP 客户端、模板表达式、函数间参数传播、运行时配置和任意语言 AST 尚未实现。JS/TS 只支持同文件常量和具名导入常量等有限来源链；不能把它描述为完整跨文件数据流。
 
 ### 第 1 步：把明确输入变成统一任务
 
@@ -265,6 +265,7 @@ Reviewer 当前是确定性类，不是 Pi 子 Agent；它检查成功状态、�
 | --- | --- | --- | --- |
 | 输入层 | 解析 curl/OpenAPI，生成统一任务 | 不执行网络请求 | `src/input/*` |
 | 仓库预检层 | 只读扫描源码并与 OpenAPI/.env.example 比对，生成 RepositoryTask、测试计划和补丁计划 | 不执行网络、不调用模型、不自动写回 | `src/repository/*` |
+| 契约迁移层 | 比较 OpenAPI 版本、映射调用影响、生成无损迁移计划并在隔离副本验证 | 不推断字段重命名/业务值，不修改源仓库 | `src/contract/*` |
 | 编排层 | 控制阶段顺序、重试预算和报告 | 不直接判断具体根因 | `src/core/orchestrator.ts` |
 | 安全层 | Host、协议、凭据和脱敏 | 不进行模型推理 | `src/security/*` |
 | 工具层 | 固定或真实执行 HTTP | 不决定下一步修复 | `src/tools/*` |
@@ -272,6 +273,7 @@ Reviewer 当前是确定性类，不是 Pi 子 Agent；它检查成功状态、�
 | 推理层 | 生成诊断和单步动作 | 不能绕过策略直接执行 | `src/agent/*reasoner.ts` |
 | 复核层 | 检查成功、根因和证据 | 不修改请求 | `src/agent/reviewer.ts` |
 | 观测层 | 记录顺序、状态和耗时 | 不保存到外部数据库 | `src/observability/trace.ts` |
+| 评测层 | 固定业务、仓库和契约数据集并输出可比较指标 | 不代表真实用户效果或生产性能 | `src/evaluation/*`、`scripts/*eval*.mjs` |
 | 入口层 | 提供命令行和 HTTP API | 不复制核心诊断逻辑 | `src/cli.ts`、`src/server.ts` |
 
 ## 关键取舍
@@ -283,22 +285,23 @@ Reviewer 当前是确定性类，不是 Pi 子 Agent；它检查成功状态、�
 5. **显式降级**：模型失败不会悄悄伪装成 Pi 成功；是否退回确定性路径由部署者决定。
 6. **仓库扫描默认无副作用**：先定位证据，暂不自动执行；牺牲一步自动化，避免误请求和模型费用。
 7. **计划与执行分离**：V2 先输出可审阅任务、测试和补丁计划；只有显式注入受策略保护的 Orchestrator 才能执行。
+8. **契约风险门禁与迁移执行分离**：Diff/impact 发现风险时用非零退出码阻断 CI；只有显式批准且补丁可证明无损时，才在外部隔离副本执行迁移。
 
 ## 推荐阅读顺序
 
 | 顺序 | 文件 | 为什么先看 |
 | --- | --- | --- |
-| 1 | `src/repository/types.ts` | 先认识 V2 仓库报告契约 |
-| 2 | `src/repository/scanner.ts` | 看仓库怎样变成调用点和 Finding |
-| 3 | `src/domain/types.ts` | 再认识单请求、诊断、动作和报告契约 |
-| 4 | `src/core/orchestrator.ts` | 看单请求主循环和每个决策点 |
-| 5 | `src/input/debug-input.ts` | 看明确输入怎样进入主循环 |
-| 6 | `src/security/request-policy.ts` | 看网络和预算边界 |
-| 7 | `src/agent/pi-reasoner.ts` | 看 Pi、脱敏、校验和降级 |
-| 8 | `test/repository-scanner.test.ts` | 用固定仓库反推 V2 实际承诺 |
+| 1 | `src/contract/types.ts` | 先认识 V3 的变更、影响、补丁和验证报告契约 |
+| 2 | `src/contract/openapi-diff.ts` | 看两份 OpenAPI 怎样变成稳定风险项 |
+| 3 | `src/repository/scanner.ts` | 看仓库怎样变成可映射的真实调用点 |
+| 4 | `src/contract/impact-analysis.ts` | 看风险怎样与请求事实相交，而不是把所有 Diff 都报错 |
+| 5 | `src/contract/migration.ts` | 看显式批准、隔离复制、补丁、前后分析与生成测试 |
+| 6 | `test/contract-v3.test.ts` | 用反例确认未知值不会被猜测、源仓库不会被修改 |
+| 7 | `src/domain/types.ts`、`src/core/orchestrator.ts` | 再进入 V0/V1 单请求诊断主链 |
+| 8 | `src/security/request-policy.ts`、`src/agent/pi-reasoner.ts` | 看网络、模型、脱敏、输出校验和降级边界 |
 
 ## 动手验证
 
-先运行 README 中的 `repo` 命令，观察文件/行号、规范缺失和环境变量缺口；再运行 `npm run demo`，观察六个固定诊断案例。
+按 [验证指南](verification.md) 先运行 `contract-diff` 和 `contract-impact`，观察“发现风险时退出码为 1”；再换用迁移 fixture 运行 `contract-verify`，确认补丁只写入新 workspace、影响从 1 降到 0、生成测试通过。最后运行 `npm run demo`，对照单请求链与契约迁移链的职责差异。
 
-验证理解：为什么 Pi 生成了一个 `set_header` 动作后，仍然不能直接发送请求？答案应能同时提到 Orchestrator、RequestPolicy 和 HttpTool。
+验证理解：为什么 `contract-impact` 能定位风险却不能直接修改源码？答案应能同时提到有限静态证据、显式批准、隔离 workspace 和未知业务值不推断。

@@ -54,6 +54,8 @@ npm run eval:tier-a
 
 预期结果以命令实际输出为准；6 个入门案例全部显示 `passed: true`，Pi Tier A 显示 `3/3 runs passed`。
 
+上面是最短入门路径，不等于完整质量门禁。与 required CI 对齐的本地命令、各版本冻结指标和故障排查见 [V0 → V3 验证指南](docs/verification.md)。
+
 运行冻结业务集：`npm run eval:business`。它启动临时 loopback HTTP 服务，运行 26 个案例并输出 JSON 指标；不需要 Key，不调用公网模型。`passed` 检查根因、预期状态、尝试数和证据，`resolvedRate` 单独统计请求恢复比例。403、过期凭据、长时间限流和写请求超时应停止，不能算作自动修复成功。时延是当前机器的合成评测耗时，不能代表生产 p95；模型费用 0 是因为此评测使用确定性 Reasoner。
 
 运行 V2 固定仓库预检与计划生成：
@@ -80,10 +82,11 @@ node dist/src/cli.js repo-verify --root test/fixtures/repository-v2-repair --doc
 ```bash
 node dist/src/cli.js contract-diff --previous test/fixtures/repository-v3-impact/old.json --next test/fixtures/repository-v3-impact/new.json
 node dist/src/cli.js contract-impact --root test/fixtures/repository-v3-impact --previous test/fixtures/repository-v3-impact/old.json --next test/fixtures/repository-v3-impact/new.json
+node dist/src/cli.js contract-verify --root test/fixtures/repository-v3-migration --previous test/fixtures/repository-v3-migration/old.json --next test/fixtures/repository-v3-migration/new.json --workspace ../a-pidoc-v3-workspace --approved true
 npm run eval:contract
 ```
 
-前两个命令发现 breaking change 或受影响调用时返回退出码 1，这是供 CI 使用的风险门禁。`contract-verify` 还需提供不存在的 `--workspace` 和 `--approved true`；它只处理可证明无损的字符串/数字/布尔字面量转换，未知值不猜测。
+前两个命令发现 breaking change 或受影响调用时返回退出码 1，这是供 CI 使用的风险门禁，不是程序崩溃。`contract-verify` 的 `--workspace` 必须是源仓库之外且尚不存在的新目录；它只处理可证明无损的字符串/数字/布尔字面量转换，未知值不猜测。重复运行示例时请换一个新的 workspace 路径。
 
 启动本地服务：
 
@@ -172,13 +175,14 @@ HTTP API 同时保留 V0 `{ "caseId": "auth-header" }` 输入，并新增：
 
 - [架构与核心链路](docs/architecture.md)：数据流、模块边界、关键取舍和当前风险。
 - [V0 → V3 构建日志](docs/build-log.md)：按真实提交、Issue、PR 和测试记录迭代。
+- [V0 → V3 验证指南](docs/verification.md)：从干净安装到契约迁移的命令、预期信号、退出码和排错入口。
 - [贡献与发布工作流](CONTRIBUTING.md)：Issue、分支、CI/CD（Continuous Integration / Continuous Delivery，持续集成与持续交付）和 Release 规则。
 
 个人求职分析、JD、废弃方案和未来规划保存在本地 `.private/planning-docs/`，由 `.gitignore` 排除，不进入 GitHub。
 
 ## 开发与发布
 
-需求通过 Issue 发起，改动通过关联 PR 合并；PR 中填写 `Closes #<issue>` 后，合并会自动关闭需求。CI 在 PR 和 `main` 上执行 TypeScript 构建、单元测试、确定性基线与三轮离线 Pi Tier A 稳定性评测。
+需求通过 Issue 发起，改动通过关联 PR 合并；PR 中填写 `Closes #<issue>` 后，合并会自动关闭需求。CI 在 PR 和 `main` 上执行依赖审计、TypeScript 构建、单元测试、三轮离线 Pi Tier A、Repository 修复评测、Contract 迁移评测和生成物一致性检查。
 
 提交信息采用 Conventional Commits。Release Please 会根据 `feat:`、`fix:` 和 `BREAKING CHANGE:` 创建 Release PR；合并该 PR 后自动生成版本 tag、CHANGELOG 和 GitHub Release。完整约定见 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
@@ -188,8 +192,10 @@ HTTP API 同时保留 V0 `{ "caseId": "auth-header" }` 输入，并新增：
 src/
   agent/             Pi/确定性诊断器、版本化 Prompt、独立证据 Reviewer
   config/            Pi provider/model/fallback 运行配置
+  contract/          V3 OpenAPI Diff、影响分析、迁移补丁与隔离验证
   core/              Agent 编排主循环
   domain/            稳定 JSON/TypeScript 契约
+  evaluation/        业务、仓库和契约冻结评测
   fixtures/          可重复的故障案例
   input/             curl 等真实输入解析器
   knowledge/         MVP 规则检索
@@ -199,8 +205,8 @@ src/
   tools/             Fixture 与受限真实 HTTP 工具
   cli.ts             固定数据演示入口
   server.ts          HTTP API 服务入口
-scripts/             Pi Tier A 多轮稳定性评测
-test/                核心链路、Pi 输出校验、权限和 Trace 测试
+scripts/             Pi、仓库与契约评测入口
+test/                核心链路、仓库/契约、Pi 输出、权限和 Trace 测试
 examples/            本地 Mock API 与 V1 可复现输入
 .pi/skills/          领域工作流说明；当前 PiReasoner 尚未动态加载
 docs/                可由仓库事实验证的公开文档
@@ -215,5 +221,6 @@ docs/                可由仓库事实验证的公开文档
 
 - 稳定能力：确定性 Reasoner、Fixture 回归集、规则检索、安全策略、重试、Reviewer、Trace 与离线评测。
 - V1 能力：官方 Pi Agent 运行时、版本化 Debug Prompt、受约束的模型修复计划、显式降级、curl/OpenAPI、JSON Schema 基线校验、受限真实 HTTP、CLI/HTTP API、调用预算和全链路脱敏。
-- V2 能力：受限扫描 JavaScript/TypeScript，定位字面量 `fetch`、方法、源码行号、OpenAPI operation 匹配和 `.env.example` 声明缺口；扫描默认无网络和模型调用。
-- 暂不支持：OpenAPI 外部/循环 `$ref`、非 JSON request body、动态 URL/跨文件数据流、Axios/自定义客户端、文档 RAG（Retrieval-Augmented Generation，检索增强生成）/rerank、Skill 动态加载、Pi 工具自主调用、自动执行扫描请求、生产部署和公网模型在线 CI。
+- V2 能力：在文档化语法子集内扫描 Fetch、Axios、Python Requests 和 Java OkHttp；定位方法与源码行号，追踪 JS/TS 同文件或具名导入常量及环境引用，并在隔离副本执行唯一可判定的 URL/环境模板补丁和生成测试。扫描默认无网络和模型调用。
+- V3 能力：比较 OpenAPI operation 与 JSON request/response 字段的增删、类型和 required 变化；将风险映射到 V2 已解析调用点，并在显式批准的隔离副本验证一类无损字面量迁移。
+- 暂不支持：OpenAPI 外部/循环 `$ref`、非 JSON request body、完整 AST 与函数间/运行时数据流、自定义客户端、字段重命名或业务值推断、响应字段使用级追踪、历史持久化/回放、PR 评论集成、文档 RAG（Retrieval-Augmented Generation，检索增强生成）/rerank、Skill 动态加载、Pi 工具自主调用、生产部署和公网模型在线 CI。

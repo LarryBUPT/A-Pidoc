@@ -231,7 +231,7 @@ V0 只能证明算法骨架；V1-A 要证明用户自己的请求能进入相同
 
 - 移动前后递归文件数均为 11。
 - `git check-ignore` 确认 `.private/planning-docs/方案.md` 被 `.private/` 规则忽略。
-- 最终应由 `git ls-files docs` 只列出三份公开文档。
+- 当前 `git ls-files docs` 只列出产品架构、构建日志和验证指南；面试练习册已移入被 Git 忽略的 `.private`，不属于公开产品文档。
 
 ### 这一步还没有解决什么
 
@@ -394,6 +394,28 @@ V2 解决“当前项目哪里不符合一份规范”，V3 解决“规范升�
 ### 这一步还没有解决什么
 
 当前是 OpenAPI/JSON Schema 的文档化子集，不比较参数、状态码、security、enum 收缩等全部语义；不推断字段重命名或业务默认值。响应影响采用保守调用点映射，尚未追踪代码读取了哪些响应字段。没有 Postgres 历史回放、PR 评论或生产仓库自动修改，这些仍属于后续产品化范围。
+
+## 2026-09-09：V3 公开文档一致性补丁
+
+证据：[Issue #39](https://github.com/LarryBUPT/A-Pidoc/issues/39)、`README.md`、`docs/architecture.md`、`docs/verification.md`、`test/documentation.test.ts`。
+
+### 改了什么
+
+修正 README 与架构文档中仍停留在早期 V2 的 Fetch/Axios/跨文件能力描述；补入 V3 Contract/Evaluation 模块、阅读顺序、隔离迁移命令和完整验证矩阵。贡献指南同步实际 `codex/<issue>-<topic>` 分支命名与当前 required CI；自动测试检查公开 Markdown 的本地链接和 V3 CLI 文档入口。
+
+### 为什么这样改
+
+代码已经发布不代表文档可信。互相矛盾的“已支持/未支持”会让使用者无法判断产品边界，也无法把仓库里的实现、测试和发布陈述对应起来。集中验证指南让每个能力动词都能回到一条命令和一个可观察结果。
+
+### 怎么证明它有效
+
+- 文档链接测试从 README、CONTRIBUTING、examples 和 `docs/*.md` 出发，拒绝不存在的本地目标。
+- V3 文档入口测试确认 Diff、impact、verify 和冻结 Contract eval 四个入口均公开可发现。
+- 完整本地 CI 等价命令与 GitHub required check 使用同一组锁定依赖、单测和离线评测。
+
+### 这一步还没有解决什么
+
+本次不新增 V4 能力，也没有把历史持久化、PR 评论、完整 AST/JSON Schema、生产部署或真实用户指标写成已完成。命令行 JSON 报告仍缺少可视化界面；公网模型效果仍需独立人工评测。
 
 ## 从这条迭代得到的方法
 
