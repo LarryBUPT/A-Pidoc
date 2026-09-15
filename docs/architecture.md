@@ -1,10 +1,10 @@
 # A-Pidoc 架构与核心链路
 
-本文只描述 V3 已实现并由测试覆盖的代码。规划中的任意 AST/动态数据流、历史持久化、PR 集成、前端界面和生产部署不在当前架构中。
+本文只描述 V4 已实现并由测试覆盖的代码。平台适配器解析固定载荷并构造回复请求，冻结评测使用内存 Connector；真实企业账号、生产 Webhook、异步队列、任意 AST/动态数据流、向量知识库、前端界面和生产部署不在当前架构中。
 
 ## 一句话概括
 
-A-Pidoc 能比较 OpenAPI 版本并把破坏性变化映射到本地源码调用点；对可证明无损的迁移在隔离副本执行和回归。对用户明确提交的单条请求，才进入受控 HTTP 诊断、修复和证据复核链路。
+A-Pidoc 能比较 OpenAPI 版本并把破坏性变化映射到本地源码调用点；对可证明无损的迁移在隔离副本执行和回归。V4 又把平台工单、关联日志、既有诊断链、受审批的平台回复和结构化知识连成团队竖切；对用户明确提交的单条请求，才进入受控 HTTP 诊断、修复和证据复核链路。
 
 ## 先认识术语
 
@@ -25,10 +25,30 @@ A-Pidoc 能比较 OpenAPI 版本并把破坏性变化映射到本地源码调用
 | MCP | Model Context Protocol，模型上下文协议 | 用统一协议连接模型与外部工具或数据源 |
 | Static Analysis | 静态分析 | 只读代码文本推断结构，不运行被扫描项目 |
 | Repository Preflight | 仓库预检 | 在真实调试前先列出调用点、规范和配置问题 |
+| Connector | 连接器 | 隔离平台读写或日志查询接口；冻结评测只使用内存实现 |
+| RBAC | Role-Based Access Control，基于角色的访问控制 | 用 viewer、operator、reviewer、admin 限制查询、发布和知识入库 |
 
 ## 用户场景
 
 > 作为刚接触陌生项目的开发者，我想先指定源码目录和 OpenAPI 文档找到可疑调用点；确认单条请求后，再让系统用真实响应证明失败原因和修复结果。
+
+## V4 团队协作数据流
+
+```mermaid
+flowchart LR
+    A[GitHub/GitLab/Jira/Slack/飞书] --> B[统一 WorkItem]
+    B --> C[角色 + 租户校验]
+    C --> D[关联日志与同租户案例]
+    D --> E[V1 证据诊断<br/>你在这里]
+    E --> F{显式批准?}
+    F -- 发布 --> G[平台回复载荷]
+    F -- 入库 --> H[结构化知识 JSON]
+    I[Postman Collection] --> J[受限请求导入/脱敏导出]
+```
+
+`CollaborationWorkflow` 先通过 Connector 读取统一工单，再按租户检索历史案例和只读日志，随后复用 `DebugOrchestrator` 运行真实的固定请求诊断。发布结果与保存知识是两个独立副作用，分别要求 `publish` 与 `saveKnowledge` 批准；平台适配器只构造 GitHub/GitLab/Jira/Slack/飞书回复载荷，冻结评测不会向真实平台发送请求。
+
+结构化知识只保存错误特征、operation、根因、有效修复、验证方式、适用版本和证据来源，所有内容先脱敏，并按租户与 operation 查询。JSON 文件采用临时文件加 rename 写入，适合作为可审计竖切，不等于支持并发写入、语义向量召回或生产数据库。Postman 只接受至多 100 个 HTTP(S) 请求、五种方法和 raw JSON body；不支持的 item 会显式列出。
 
 ## V2 仓库预检数据流
 
@@ -165,7 +185,7 @@ V1 要求用户先手工找到失败请求。V2 把入口前移到仓库，但�
 
 **这一步还没有解决什么**
 
-本地 `$ref` 和 Markdown/HTML 的明确 JSON 规范块已接入；外部/循环引用、非 JSON request body、任意自然语言文档与 Postman Collection 尚未支持。
+本地 `$ref` 和 Markdown/HTML 的明确 JSON 规范块已接入；外部/循环引用、非 JSON request body 与任意自然语言文档尚未支持。V4 的 Postman 入口是独立受限转换器，尚未直接进入这条单请求 CLI。
 
 ### 第 2 步：执行前先做安全检查
 
@@ -201,7 +221,7 @@ Agent 生成的计划不能直接获得网络执行权。每一次初始请求�
 
 **这一步还没有解决什么**
 
-没有持久化历史执行、并发任务管理、真实日志平台查询和跨服务调用链追踪。
+没有持久化完整历史执行、并发任务管理、真实日志平台传输和跨服务调用链追踪。V4 只用 Connector 接口与固定日志证明关联查询、租户隔离和脱敏。
 
 ### 第 4 步：检索规则并生成单步修复
 
@@ -266,6 +286,7 @@ Reviewer 当前是确定性类，不是 Pi 子 Agent；它检查成功状态、�
 | 输入层 | 解析 curl/OpenAPI，生成统一任务 | 不执行网络请求 | `src/input/*` |
 | 仓库预检层 | 只读扫描源码并与 OpenAPI/.env.example 比对，生成 RepositoryTask、测试计划和补丁计划 | 不执行网络、不调用模型、不自动写回 | `src/repository/*` |
 | 契约迁移层 | 比较 OpenAPI 版本、映射调用影响、生成无损迁移计划并在隔离副本验证 | 不推断字段重命名/业务值，不修改源仓库 | `src/contract/*` |
+| 团队协作层 | 归一化五类平台载荷，实施 RBAC/租户/双审批，查询日志、发布回复并保存结构化案例 | 不持有真实平台 Token，不提供生产 Webhook、队列或向量检索 | `src/collaboration/*` |
 | 编排层 | 控制阶段顺序、重试预算和报告 | 不直接判断具体根因 | `src/core/orchestrator.ts` |
 | 安全层 | Host、协议、凭据和脱敏 | 不进行模型推理 | `src/security/*` |
 | 工具层 | 固定或真实执行 HTTP | 不决定下一步修复 | `src/tools/*` |
@@ -286,22 +307,24 @@ Reviewer 当前是确定性类，不是 Pi 子 Agent；它检查成功状态、�
 6. **仓库扫描默认无副作用**：先定位证据，暂不自动执行；牺牲一步自动化，避免误请求和模型费用。
 7. **计划与执行分离**：V2 先输出可审阅任务、测试和补丁计划；只有显式注入受策略保护的 Orchestrator 才能执行。
 8. **契约风险门禁与迁移执行分离**：Diff/impact 发现风险时用非零退出码阻断 CI；只有显式批准且补丁可证明无损时，才在外部隔离副本执行迁移。
+9. **平台协议与传输分离**：适配器把五种载荷归一化并构造回复请求，Connector 决定是否真的传输；冻结评测因此无需凭据且可重复，但不能证明真实平台兼容性。
+10. **结构化案例替代完整对话归档**：只保留可检索的根因、修复、验证、版本和证据，降低敏感数据与噪声；代价是没有全文会话和语义向量召回。
 
 ## 推荐阅读顺序
 
 | 顺序 | 文件 | 为什么先看 |
 | --- | --- | --- |
-| 1 | `src/contract/types.ts` | 先认识 V3 的变更、影响、补丁和验证报告契约 |
-| 2 | `src/contract/openapi-diff.ts` | 看两份 OpenAPI 怎样变成稳定风险项 |
-| 3 | `src/repository/scanner.ts` | 看仓库怎样变成可映射的真实调用点 |
-| 4 | `src/contract/impact-analysis.ts` | 看风险怎样与请求事实相交，而不是把所有 Diff 都报错 |
-| 5 | `src/contract/migration.ts` | 看显式批准、隔离复制、补丁、前后分析与生成测试 |
-| 6 | `test/contract-v3.test.ts` | 用反例确认未知值不会被猜测、源仓库不会被修改 |
-| 7 | `src/domain/types.ts`、`src/core/orchestrator.ts` | 再进入 V0/V1 单请求诊断主链 |
-| 8 | `src/security/request-policy.ts`、`src/agent/pi-reasoner.ts` | 看网络、模型、脱敏、输出校验和降级边界 |
+| 1 | `src/collaboration/types.ts`、`policy.ts` | 先认识 V4 的统一对象、角色、租户和副作用权限 |
+| 2 | `src/collaboration/workflow.ts` | 看工单、日志、诊断、发布与知识怎样组成六阶段 Trace |
+| 3 | `src/collaboration/adapters.ts`、`connectors.ts` | 区分平台载荷协议、内存评测实现与真实传输边界 |
+| 4 | `src/collaboration/knowledge-store.ts`、`postman.ts` | 看结构化知识和受限 Postman 往返怎样脱敏与限量 |
+| 5 | `test/collaboration-v4.test.ts` | 用反例确认无审批无副作用、跨租户阻断与敏感信息不落盘 |
+| 6 | `src/contract/openapi-diff.ts`、`impact-analysis.ts` | 回看 V3 风险怎样映射到源码调用点 |
+| 7 | `src/repository/scanner.ts` | 回看 V2 仓库怎样变成可映射事实 |
+| 8 | `src/domain/types.ts`、`src/core/orchestrator.ts` | 最后进入 V0/V1 单请求诊断主链 |
 
 ## 动手验证
 
-按 [验证指南](verification.md) 先运行 `contract-diff` 和 `contract-impact`，观察“发现风险时退出码为 1”；再换用迁移 fixture 运行 `contract-verify`，确认补丁只写入新 workspace、影响从 1 降到 0、生成测试通过。最后运行 `npm run demo`，对照单请求链与契约迁移链的职责差异。
+按 [验证指南](verification.md) 先运行 `npm run demo:team`，观察五类平台、一次发布、一次知识入库和六阶段 Trace；再分别运行归一化与 Postman 示例，确认真实平台不会被调用、敏感 Header 被脱敏。随后运行 V3 的 `contract-diff`、`contract-impact` 与 `contract-verify`，对照团队编排、契约迁移和单请求诊断三条链的职责差异。
 
-验证理解：为什么 `contract-impact` 能定位风险却不能直接修改源码？答案应能同时提到有限静态证据、显式批准、隔离 workspace 和未知业务值不推断。
+验证理解：为什么 `CollaborationWorkflow` 能生成平台回复，却不能据此宣称已接通真实 Jira？答案应能同时提到平台适配器、Connector、内存 fixture、显式批准和真实传输不在冻结评测中。

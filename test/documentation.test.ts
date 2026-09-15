@@ -24,10 +24,14 @@ test("public Markdown links resolve to tracked workspace files", async () => {
   }
 });
 
-test("public docs expose the complete V3 verification entry points", async () => {
+test("public docs expose the complete V3 and V4 verification entry points", async () => {
   const readme = await readFile(resolve("README.md"), "utf8");
   const guide = await readFile(resolve("docs/verification.md"), "utf8");
   for (const command of ["contract-diff", "contract-impact", "contract-verify", "eval:contract"]) {
+    assert.match(readme, new RegExp(command));
+    assert.match(guide, new RegExp(command));
+  }
+  for (const command of ["collaboration-demo", "collaboration-normalize", "postman-import", "postman-export", "eval:collaboration"]) {
     assert.match(readme, new RegExp(command));
     assert.match(guide, new RegExp(command));
   }

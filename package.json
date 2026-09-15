@@ -17,6 +17,8 @@
     "eval:business": "npm run build --silent && node dist/src/cli.js eval",
     "eval:repository": "npm run build --silent && node scripts/repository-eval.mjs",
     "eval:contract": "npm run build --silent && node scripts/contract-eval.mjs",
+    "eval:collaboration": "npm run build --silent && node scripts/collaboration-eval.mjs",
+    "demo:team": "npm run build --silent && node dist/src/cli.js collaboration-demo",
     "repo:plan": "npm run build --silent && node dist/src/cli.js repo-plan",
     "eval:tier-a": "npm run test:unit && npm run eval:pi:stability",
     "check": "npm run build --silent && npm run test:unit"
