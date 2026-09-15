@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.0](https://github.com/LarryBUPT/A-Pidoc/compare/v0.10.1...v0.11.0) (2026-09-15)
+
+
+### Features
+
+* add V4 team collaboration knowledge workflow ([#43](https://github.com/LarryBUPT/A-Pidoc/issues/43)) ([f7dd1ce](https://github.com/LarryBUPT/A-Pidoc/commit/f7dd1cefbb0b9de58f038c1fc7a5275ad915d4ef))
+
 ## [0.10.1](https://github.com/LarryBUPT/A-Pidoc/compare/v0.10.0...v0.10.1) (2026-09-09)
 
 
