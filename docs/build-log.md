@@ -1,4 +1,4 @@
-# A-Pidoc 构建日志：V0 → V1-A → V1-B → V2
+# A-Pidoc 构建日志：V0 → V1-A → V1-B → V2 → V3 → V4
 
 本文是事实日志，不是产品规划。版本、提交、Issue、Pull Request（拉取请求，简称 PR）和 Release（发布版本）均来自当前 Git 历史或 GitHub 记录。HTTP（Hypertext Transfer Protocol，超文本传输协议）、JSON（JavaScript Object Notation，JavaScript 对象表示法）、OpenAPI（OpenAPI Specification，开放接口规范）、Agent（智能体）和 Reasoner（推理器）沿用项目代码中的含义。
 
@@ -416,6 +416,33 @@ V2 解决“当前项目哪里不符合一份规范”，V3 解决“规范升�
 ### 这一步还没有解决什么
 
 本次不新增 V4 能力，也没有把历史持久化、PR 评论、完整 AST/JSON Schema、生产部署或真实用户指标写成已完成。命令行 JSON 报告仍缺少可视化界面；公网模型效果仍需独立人工评测。
+
+## 2026-09-16：V4 团队协作与结构化知识竖切
+
+证据：[Issue #42](https://github.com/LarryBUPT/A-Pidoc/issues/42)、`src/collaboration/*`、`src/evaluation/collaboration-eval.ts`、`test/collaboration-v4.test.ts`。
+
+### 改了什么
+
+新增 GitHub PR、GitLab MR、Jira Issue、Slack 和飞书五类载荷归一化与回复请求构造；增加 viewer/operator/reviewer/admin 的角色权限、租户隔离和发布/知识入库双审批。`CollaborationWorkflow` 串联工单读取、同租户案例、关联日志、既有 V1 诊断、平台回复与结构化知识；知识以脱敏 JSON 保存错误特征、operation、根因、有效修复、验证方式、适用版本和证据来源。Postman Collection v2.1 可受限导入 HTTP(S) raw JSON 请求并脱敏导出。
+
+### 为什么这样改
+
+V3 能回答“契约升级会影响哪里”，但团队处理故障还要在工单、日志、诊断结论和复用经验之间人工搬运。V4 选择一条 Jira 固定竖切证明这些边界可以组合，同时把真实平台传输放在 Connector 后面，避免离线测试依赖企业 Token 或把未联调的账号能力写成完成。
+
+### 怎么证明它有效
+
+- 83 项自动测试全部通过，V4 新增 8 项覆盖五平台、畸形载荷、角色权限、跨租户阻断、双审批、Postman、知识持久化、完整 Jira 工作流和 CLI。
+- `npm run eval:collaboration` 固定输出 `passed: true`、5 platforms、1 publication、1 stored/1 retrieved case、1 Postman request、回归状态断言生成成功、日志脱敏成功和六阶段 Trace 完整。
+- 完整工作流不是字符串拼接：Jira fixture 的 415 会复用 `DebugOrchestrator`，执行 `set_header(Content-Type)` 后得到 200，再由 Reviewer 复核。
+- 未批准的运行仍可生成诊断证据，但平台发布和知识写入均为 0；viewer、跨租户访问和含原始 Token 的输出由反例测试阻断。
+
+### 这一步还没有解决什么
+
+五个平台只有载荷适配与回复构造，没有真实账号鉴权、SDK/HTTP 传输、Webhook 验签、异步队列或生产重试。JSON 知识库不支持并发事务、语义向量检索和完整会话回放；日志 Connector 只证明只读查询、关联 ID、租户与脱敏契约。没有管理 UI、生产部署或真实团队采纳指标。
+
+### 遇到的问题与判断
+
+最初冻结工作流引用了不存在的 `media-type` fixture，评测因此在进入协作链前失败；核对固定案例清单后改用真实存在且同样覆盖 415 的 `content-type`，避免复制另一套诊断数据。这个问题说明组合评测必须复用公开 fixture ID，并让 CI 对完整入口做一次真实运行，而不能只依赖各模块单测。
 
 ## 从这条迭代得到的方法
 

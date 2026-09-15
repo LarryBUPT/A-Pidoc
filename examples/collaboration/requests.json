@@ -1,0 +1,13 @@
+[
+  {
+    "method": "POST",
+    "url": "https://api.example.test/orders",
+    "headers": {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer example-secret"
+    },
+    "body": {
+      "amount": 42
+    }
+  }
+]

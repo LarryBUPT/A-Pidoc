@@ -1,0 +1,10 @@
+{
+  "issue": {
+    "key": "API-42",
+    "fields": {
+      "summary": "Order API returns 415",
+      "description": "Content-Type mismatch; correlation corr-42",
+      "correlationId": "corr-42"
+    }
+  }
+}

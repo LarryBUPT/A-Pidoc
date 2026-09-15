@@ -1,0 +1,24 @@
+{
+  "info": {
+    "name": "A-Pidoc order example",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Create order",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"amount\":42}"
+        },
+        "url": {
+          "raw": "https://api.example.test/orders"
+        }
+      }
+    }
+  ]
+}

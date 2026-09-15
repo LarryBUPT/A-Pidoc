@@ -2,12 +2,15 @@
 
 API Doctor 是一个面向初级开发者与 SaaS（Software as a Service，软件即服务）实施人员的 HTTP API（Hypertext Transfer Protocol Application Programming Interface，基于超文本传输协议的应用程序编程接口）联调诊断 Agent（智能体）。它把失败请求、接口规范和运行证据组织成一条可复现链路，并在安全策略约束下执行修正、重试与结果复核。
 
-当前 V3 在两条 V2 链路之上增加契约迁移：先对比新旧 OpenAPI，生成带稳定 ID、breaking 标记和高中低风险的语义 Diff，再把变更映射到源码调用点。对于可证明无损的字面量类型转换，显式批准后只在新建隔离副本中应用补丁、重新分析并运行生成的契约测试。单请求 Debug Agent 继续使用 **Pi Agent + deterministic safety baseline（确定性安全基线）** 完成受控诊断闭环；仓库与契约分析默认不执行网络、不调用模型。
+当前 V4 把 V0～V3 的单请求、仓库与契约能力接入一条受控团队工作流：GitHub/GitLab、Jira、Slack/飞书载荷先归一化，随后按租户和角色读取关联日志与结构化历史案例，再执行既有诊断闭环。发布结果和保存知识分别需要显式批准，所有进入报告、平台回复和知识库的数据都会脱敏。Postman Collection v2.1 的受限 JSON 请求可导入并脱敏导出；冻结评测不访问真实企业账号、不调用公网模型。
 
 ## 已完成的最小闭环
 
 ```mermaid
 flowchart LR
+    W[PR / 工单 / 聊天 / Postman] --> X[统一协作工单]
+    X --> Y[租户 + 角色 + 审批]
+    Y --> R
     R[源码仓库 + OpenAPI] --> S[受限静态扫描]
     S --> T[调用点 / 规范差异 / 环境变量报告]
     A[curl / OpenAPI / 固定请求] --> B[规范化]
@@ -22,11 +25,12 @@ flowchart LR
     J -- 否且有预算 --> C
     J -- 是/预算耗尽 --> K[独立 Reviewer]
     K --> L[结构化报告与 Trace]
+    L --> Z[平台回复 + 结构化知识案例]
 ```
 
 保留 6 个入门 Fixture、3 个固定仓库样例和 26 个本地真实 HTTP 业务评测案例。V2 覆盖 Fetch、Axios、Requests、OkHttp 四类受限语法、JS/TS 同文件及具名导入常量、环境变量引用、任务/测试/补丁计划和隔离验证。业务评测包含主动停止的案例，不以所有请求都成功作为目标。
 
-## V0 → V3 的真实迭代
+## V0 → V4 的真实迭代
 
 | 阶段 | 发布版本 | 只解决一个问题 | 明确未解决 |
 | --- | --- | --- | --- |
@@ -36,6 +40,7 @@ flowchart LR
 | V1-B 安全补丁 | `v0.4.1` | 模型与 HTTP 边界能否阻断凭据泄漏、滥用和无上限调用 | 云端账户预算、Key 轮换、隐私同意 |
 | V2 | `v0.8.0`～`v0.9.0` | 能否从本地仓库定位四类客户端调用、追踪有限配置来源，并在隔离副本应用补丁和运行契约测试 | 任意 AST、完整跨文件数据流、原仓库自动写回、未知目标执行 |
 | V3 | `v0.10.0` | 能否比较 OpenAPI 版本、定位真实受影响调用，并验证一类无损迁移 | 全量 OpenAPI/JSON Schema、字段重命名推断、历史持久化、PR 集成 |
+| V4 | `v0.11.0` | 能否把工单、日志、诊断、平台回复和结构化知识连成受权限约束的团队闭环 | 真实企业账号、异步队列、生产部署、向量知识库、管理 UI |
 | V1 文档补齐 | Issue #24 | Swagger 2、本地引用、Markdown/HTML 规范块、递归 Schema 校验 | 任意自然语言文档推断、完整 JSON Schema、非 JSON body |
 | V1 故障评测补齐 | Issue #26 | 26 个本地 HTTP 案例、14 类明确故障及 UNKNOWN、安全转换、请求变化复核 | 真实用户效果、任意语义修复、完整 V2 |
 
@@ -54,7 +59,7 @@ npm run eval:tier-a
 
 预期结果以命令实际输出为准；6 个入门案例全部显示 `passed: true`，Pi Tier A 显示 `3/3 runs passed`。
 
-上面是最短入门路径，不等于完整质量门禁。与 required CI 对齐的本地命令、各版本冻结指标和故障排查见 [V0 → V3 验证指南](docs/verification.md)。
+上面是最短入门路径，不等于完整质量门禁。与 required CI 对齐的本地命令、各版本冻结指标和故障排查见 [V0 → V4 验证指南](docs/verification.md)。
 
 运行冻结业务集：`npm run eval:business`。它启动临时 loopback HTTP 服务，运行 26 个案例并输出 JSON 指标；不需要 Key，不调用公网模型。`passed` 检查根因、预期状态、尝试数和证据，`resolvedRate` 单独统计请求恢复比例。403、过期凭据、长时间限流和写请求超时应停止，不能算作自动修复成功。时延是当前机器的合成评测耗时，不能代表生产 p95；模型费用 0 是因为此评测使用确定性 Reasoner。
 
@@ -87,6 +92,29 @@ npm run eval:contract
 ```
 
 前两个命令发现 breaking change 或受影响调用时返回退出码 1，这是供 CI 使用的风险门禁，不是程序崩溃。`contract-verify` 的 `--workspace` 必须是源仓库之外且尚不存在的新目录；它只处理可证明无损的字符串/数字/布尔字面量转换，未知值不猜测。重复运行示例时请换一个新的 workspace 路径。
+
+## V4 团队协作与知识积累
+
+运行不联网的完整团队工作流演示：
+
+```bash
+npm run demo:team
+npm run eval:collaboration
+npm run build && node dist/src/cli.js collaboration-demo
+```
+
+V4 冻结竖切从 Jira 工单开始，先查关联日志和同租户结构化案例，再复用 V1 的诊断/复核链，最后在显式批准后生成 Jira 回复载荷、带状态断言的脱敏 Postman 回归 Collection，并把成功案例写入临时 JSON 知识库。评测同时验证五类平台载荷、Postman 往返、凭据脱敏和六阶段 Trace。
+
+单独检查 Jira webhook 或 Postman：
+
+```bash
+npm run build
+node dist/src/cli.js collaboration-normalize --platform jira --input examples/collaboration/jira-issue.json --tenant team-a
+node dist/src/cli.js postman-import --input examples/collaboration/postman-collection.json
+node dist/src/cli.js postman-export --input examples/collaboration/requests.json
+```
+
+GitHub/GitLab、Jira、Slack 和飞书适配器只解析文档化载荷并构造回复请求；冻结评测使用内存平台 Connector，不持有或调用真实平台 Token。知识库只保存错误特征、operation、根因、有效修复、验证方式、适用版本和证据来源，不保存完整对话。当前没有异步任务队列、生产 Webhook 服务、真实平台写回或管理界面。
 
 启动本地服务：
 
@@ -174,15 +202,15 @@ HTTP API 同时保留 V0 `{ "caseId": "auth-header" }` 输入，并新增：
 ## 文档导航
 
 - [架构与核心链路](docs/architecture.md)：数据流、模块边界、关键取舍和当前风险。
-- [V0 → V3 构建日志](docs/build-log.md)：按真实提交、Issue、PR 和测试记录迭代。
-- [V0 → V3 验证指南](docs/verification.md)：从干净安装到契约迁移的命令、预期信号、退出码和排错入口。
+- [V0 → V4 构建日志](docs/build-log.md)：按真实提交、Issue、PR 和测试记录迭代。
+- [V0 → V4 验证指南](docs/verification.md)：从干净安装到团队协作闭环的命令、预期信号、退出码和排错入口。
 - [贡献与发布工作流](CONTRIBUTING.md)：Issue、分支、CI/CD（Continuous Integration / Continuous Delivery，持续集成与持续交付）和 Release 规则。
 
 个人求职分析、JD、废弃方案和未来规划保存在本地 `.private/planning-docs/`，由 `.gitignore` 排除，不进入 GitHub。
 
 ## 开发与发布
 
-需求通过 Issue 发起，改动通过关联 PR 合并；PR 中填写 `Closes #<issue>` 后，合并会自动关闭需求。CI 在 PR 和 `main` 上执行依赖审计、TypeScript 构建、单元测试、三轮离线 Pi Tier A、Repository 修复评测、Contract 迁移评测和生成物一致性检查。
+需求通过 Issue 发起，改动通过关联 PR 合并；PR 中填写 `Closes #<issue>` 后，合并会自动关闭需求。CI 在 PR 和 `main` 上执行依赖审计、TypeScript 构建、单元测试、三轮离线 Pi Tier A、Repository 修复评测、Contract 迁移评测、Collaboration 团队工作流评测和生成物一致性检查。
 
 提交信息采用 Conventional Commits。Release Please 会根据 `feat:`、`fix:` 和 `BREAKING CHANGE:` 创建 Release PR；合并该 PR 后自动生成版本 tag、CHANGELOG 和 GitHub Release。完整约定见 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
@@ -191,11 +219,12 @@ HTTP API 同时保留 V0 `{ "caseId": "auth-header" }` 输入，并新增：
 ```text
 src/
   agent/             Pi/确定性诊断器、版本化 Prompt、独立证据 Reviewer
+  collaboration/     V4 平台适配、权限、日志、Postman、知识库和团队工作流
   config/            Pi provider/model/fallback 运行配置
   contract/          V3 OpenAPI Diff、影响分析、迁移补丁与隔离验证
   core/              Agent 编排主循环
   domain/            稳定 JSON/TypeScript 契约
-  evaluation/        业务、仓库和契约冻结评测
+  evaluation/        业务、仓库、契约和团队协作冻结评测
   fixtures/          可重复的故障案例
   input/             curl 等真实输入解析器
   knowledge/         MVP 规则检索
@@ -205,8 +234,8 @@ src/
   tools/             Fixture 与受限真实 HTTP 工具
   cli.ts             固定数据演示入口
   server.ts          HTTP API 服务入口
-scripts/             Pi、仓库与契约评测入口
-test/                核心链路、仓库/契约、Pi 输出、权限和 Trace 测试
+scripts/             Pi、仓库、契约与团队协作评测入口
+test/                核心链路、仓库/契约/协作、Pi 输出、权限和 Trace 测试
 examples/            本地 Mock API 与 V1 可复现输入
 .pi/skills/          领域工作流说明；当前 PiReasoner 尚未动态加载
 docs/                可由仓库事实验证的公开文档
@@ -223,4 +252,5 @@ docs/                可由仓库事实验证的公开文档
 - V1 能力：官方 Pi Agent 运行时、版本化 Debug Prompt、受约束的模型修复计划、显式降级、curl/OpenAPI、JSON Schema 基线校验、受限真实 HTTP、CLI/HTTP API、调用预算和全链路脱敏。
 - V2 能力：在文档化语法子集内扫描 Fetch、Axios、Python Requests 和 Java OkHttp；定位方法与源码行号，追踪 JS/TS 同文件或具名导入常量及环境引用，并在隔离副本执行唯一可判定的 URL/环境模板补丁和生成测试。扫描默认无网络和模型调用。
 - V3 能力：比较 OpenAPI operation 与 JSON request/response 字段的增删、类型和 required 变化；将风险映射到 V2 已解析调用点，并在显式批准的隔离副本验证一类无损字面量迁移。
-- 暂不支持：OpenAPI 外部/循环 `$ref`、非 JSON request body、完整 AST 与函数间/运行时数据流、自定义客户端、字段重命名或业务值推断、响应字段使用级追踪、历史持久化/回放、PR 评论集成、文档 RAG（Retrieval-Augmented Generation，检索增强生成）/rerank、Skill 动态加载、Pi 工具自主调用、生产部署和公网模型在线 CI。
+- V4 能力：归一化 GitHub PR、GitLab MR、Jira Issue、Slack/飞书消息，构造对应回复载荷；导入/导出受限 Postman JSON 请求；以角色、租户和双审批约束日志查询、诊断、发布与结构化知识入库。
+- 暂不支持：OpenAPI 外部/循环 `$ref`、非 JSON request body、完整 AST 与函数间/运行时数据流、自定义客户端、字段重命名或业务值推断、响应字段使用级追踪、任务历史回放、真实企业平台账号与网络写回、异步队列、向量知识检索、管理 UI、Skill 动态加载、Pi 工具自主调用、生产部署和公网模型在线 CI。

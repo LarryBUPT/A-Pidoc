@@ -10,6 +10,10 @@ import { diffOpenApi } from "./contract/openapi-diff.js";
 import { analyzeContractImpact } from "./contract/impact-analysis.js";
 import { verifyContractMigration } from "./contract/migration.js";
 import { evaluateBusinessCases } from "./evaluation/business-eval.js";
+import { evaluateCollaboration } from "./evaluation/collaboration-eval.js";
+import { normalizeCollaborationPayload } from "./collaboration/adapters.js";
+import { exportPostmanCollection, importPostmanCollection, parseApiRequestArray } from "./collaboration/postman.js";
+import type { CollaborationPlatform } from "./collaboration/types.js";
 import { scanRepository } from "./repository/scanner.js";
 import { buildRepositoryTasks, generateRepositoryPatchPlans, generateRepositoryTestPlans, runRepositoryTasks, verifyRepositoryPlan } from "./repository/workflow.js";
 
@@ -47,6 +51,12 @@ async function run(): Promise<void> {
     if (evaluation.passed !== evaluation.total) process.exitCode = 1;
     return;
   }
+  if (mode === "collaboration-demo") {
+    const evaluation = await evaluateCollaboration();
+    console.log(JSON.stringify(evaluation, null, 2));
+    if (!evaluation.passed) process.exitCode = 1;
+    return;
+  }
   if (mode === "all" || cases.some((item) => item.id === mode)) {
     const selected = mode === "all" ? cases : [getCase(mode)];
     const reports = [];
@@ -65,6 +75,20 @@ async function run(): Promise<void> {
   }
 
   const options = flags(args);
+  if (mode === "collaboration-normalize") {
+    const platform = required(options, "platform") as CollaborationPlatform;
+    if (!["github", "gitlab", "jira", "slack", "feishu"].includes(platform)) throw new Error(`Unsupported collaboration platform: ${platform}`);
+    console.log(JSON.stringify(normalizeCollaborationPayload(platform, await jsonFile(required(options, "input")), required(options, "tenant")), null, 2));
+    return;
+  }
+  if (mode === "postman-import") {
+    console.log(JSON.stringify(importPostmanCollection(await jsonFile(required(options, "input"))), null, 2));
+    return;
+  }
+  if (mode === "postman-export") {
+    console.log(JSON.stringify(exportPostmanCollection(parseApiRequestArray(await jsonFile(required(options, "input")))), null, 2));
+    return;
+  }
   if (mode === "repo") {
     const report = await scanRepository({
       root: required(options, "root"),
@@ -148,7 +172,7 @@ async function run(): Promise<void> {
     return;
   }
   throw new Error(
-    "Usage: all | <fixture-id> | repo --root dir --document openapi.json | repo-plan --root dir --document openapi.json | repo-verify --root dir --document openapi.json --workspace isolated-dir --approved true | contract-diff --previous old.json --next new.json | contract-impact --root dir --previous old.json --next new.json | contract-verify --root dir --previous old.json --next new.json --workspace isolated-dir --approved true | curl --input file --spec file --allow-host host --allow-port port | openapi --document file --path /path --method POST --allow-host host --allow-port port"
+    "Usage: all | <fixture-id> | collaboration-demo | collaboration-normalize --platform github|gitlab|jira|slack|feishu --input payload.json --tenant tenant-id | postman-import --input collection.json | postman-export --input requests.json | repo --root dir --document openapi.json | repo-plan --root dir --document openapi.json | repo-verify --root dir --document openapi.json --workspace isolated-dir --approved true | contract-diff --previous old.json --next new.json | contract-impact --root dir --previous old.json --next new.json | contract-verify --root dir --previous old.json --next new.json --workspace isolated-dir --approved true | curl --input file --spec file --allow-host host --allow-port port | openapi --document file --path /path --method POST --allow-host host --allow-port port"
   );
 }
 

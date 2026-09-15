@@ -7,7 +7,7 @@
 1. 新建 Issue，写清场景与可自动验证的验收标准。
 2. 从 `main` 创建短生命周期分支：`codex/<issue>-<topic>`；topic 用短横线描述本次唯一目标。
 3. 修改代码，同时补充测试；AI 行为变更至少补一个固定评测 Case。
-4. 本地运行 `npm ci`、`npm run check`、`npm run eval:pi:stability`、`npm run eval:repository` 和 `npm run eval:contract`；生产依赖审计使用官方 npm registry。
+4. 本地运行 `npm ci`、`npm run check`、`npm run eval:pi:stability`、`npm run eval:repository`、`npm run eval:contract` 和 `npm run eval:collaboration`；生产依赖审计使用官方 npm registry。
 5. 使用 Conventional Commits 提交，例如 `feat: parse curl input`、`fix: block redirect to untrusted host`。
 6. 创建 PR，在正文中填写 `Closes #<issue>`。CI 必须通过后才能合并。
 7. PR 合并后关联 Issue 自动关闭；Release Please 更新或创建 Release PR。
@@ -27,7 +27,7 @@ PR 被放弃时应直接关闭，并保留 Issue；需求只有在验收完成�
 ## AI 变更约束
 
 - 代码、模型/参数、Prompt/Skill、Tool/MCP、评测集/数据应尽量拆成不同 PR。
-- 当前 required Gate 包含全部自动测试、三轮离线 Pi Tier A、冻结 Repository 修复评测与 Contract 迁移评测，必须全部通过。
+- 当前 required Gate 包含全部自动测试、三轮离线 Pi Tier A、冻结 Repository 修复评测、Contract 迁移评测与 Collaboration 团队闭环评测，必须全部通过。
 - Pi 行为变更必须使用官方 Agent 运行时与可控 provider 离线复现；Tier A 至少连续运行 3 次并保持 100%，较大回归集放到 nightly。
 - 公网模型只做人工验收或独立的可选评测，不作为 required CI，避免密钥暴露、费用失控和外部服务波动阻断合并。
 - 模型与外部服务必须锁定明确版本，Prompt、Skill 和评测集必须进入 Git。

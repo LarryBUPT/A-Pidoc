@@ -49,6 +49,9 @@ jobs:
       - name: Run frozen contract migration evaluation
         run: npm run eval:contract
 
+      - name: Run frozen team collaboration evaluation
+        run: npm run eval:collaboration
+
       - name: Verify generated output is reproducible
         run: git diff --exit-code
 
