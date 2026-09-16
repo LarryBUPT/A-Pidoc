@@ -1,6 +1,6 @@
-# A-Pidoc V0 → V4 验证指南
+# A-Pidoc V0 → V4.5 验证指南
 
-V4.5 的分批门禁与尚未实现项见 [Harness 迁移文档](agentic-harness.md)。PR-1 新增旧行为冻结测试，现有 83 项基线保持；测试总数以实际输出为准。
+V4.5 正式受控版本 `v0.16.0` 的 144 项测试、54 条配对结果和最终 live 证据见 [发布审计](v45-release-audit.md)。分批合同与边界见 [Harness 迁移文档](agentic-harness.md)；V4 的 83 项行为基线保留，测试总数以实际输出为准。
 
 本文回答三个问题：怎样从干净仓库复现当前能力、什么输出才算通过、遇到非零退出码时怎样区分“发现风险”和“程序故障”。所有冻结评测默认不访问公网 API、不加载 `.env`、不调用真实模型。
 
@@ -12,11 +12,13 @@ flowchart LR
     B --> C[Pi Tier A 3 轮]
     C --> D[V2 仓库修复评测]
     D --> E[V3 契约迁移评测]
-    E --> F[V4 团队闭环评测<br/>你在这里]
-    F --> G[生成物一致性]
+    E --> F[V4 团队闭环评测]
+    F --> H[Harness 合同 3 轮]
+    H --> I[54 条 Raw/Harness 配对]
+    I --> G[生成物一致性]
 ```
 
-`v0.10.1` 的 V3 基线是 75 项；V4 增加 8 项团队协作、权限、Postman、知识存储、竖切评测和 CLI 测试，因此当前为 83 项。后续版本仍应以实际命令输出为准，不能把历史数字写成永久门槛。
+`v0.10.1` 的 V3 基线是 75 项；V4 增加 8 项后为 83 项，V4.5 完整版本为 144 项。不能把历史数字写成永久门槛。
 
 ## 1. 从干净环境运行 required CI 等价门禁
 
@@ -30,6 +32,8 @@ npm run eval:tier-a
 npm run eval:repository
 npm run eval:contract
 npm run eval:collaboration
+npm run eval:harness
+npm run eval:agentic
 git diff --exit-code
 ```
 
@@ -43,6 +47,8 @@ git diff --exit-code
 | Repository eval | 3 仓库、8 resolved、2 explicit unresolved、4 clients；修复前 1 error → 后 0 | 有限扫描与隔离修复闭环可重复 | 不代表完整 AST 召回率 |
 | Contract eval | 7 changes、5 breaking；5 impacts/2 calls；迁移前 1 → 后 0 | V3 竖切的 Diff、影响、迁移和测试闭环 | 不代表完整 OpenAPI/JSON Schema |
 | Collaboration eval | 5 platforms、1 publication、1 stored/1 retrieved case、1 Postman request、1 regression assertion，日志已脱敏、Trace 完整 | V4 固定 Jira→日志→诊断→回复/回归测试→知识闭环与权限边界 | 不代表真实企业账号、网络传输或并发生产负载 |
+| Harness eval | JSON 的 `passed: true`，`results` 中3轮均通过 | 低层循环、审批、事实门禁、实际工具与 Reviewer 合同稳定 | 不代表外部模型泛化成功率 |
+| Agentic eval | 54条、paired/passed 为 true；未授权实际执行0、正常误拦0 | 同条件 Raw/Harness 固定安全与完成合同 | faux Token/费用不是实际模型收益 |
 | Git diff | 无输出，退出码 0 | 构建/评测没有改写受跟踪源码 | 不检查被忽略的临时文件 |
 
 `npm run eval:business` 是更完整的 V1 业务评测，但目前不是 required CI。它运行 26 个 loopback HTTP 案例，不调用公网模型；主动停止的危险或不可证明场景属于正确结果。

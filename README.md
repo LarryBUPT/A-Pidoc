@@ -1,6 +1,6 @@
 # A-Pidoc / API Doctor
 
-V4 已发布基线是 `v0.11.0`。后续按 [V4.5 Harness 迁移与验证](docs/agentic-harness.md) 建立模型工具控制面；基础 PR 发布与完整 V4.5 验收分别记录。
+V4 历史基线是 `v0.11.0`；V4.5 完整受控版本是 `v0.16.0`。六批改动、CI、版本 PR、tag/Release 与 offline/live 验收见 [发布审计](docs/v45-release-audit.md)，模型工具控制面见 [Harness 迁移与验证](docs/agentic-harness.md)。
 
 API Doctor 是一个面向初级开发者与 SaaS（Software as a Service，软件即服务）实施人员的 HTTP API（Hypertext Transfer Protocol Application Programming Interface，基于超文本传输协议的应用程序编程接口）联调诊断 Agent（智能体）。它把失败请求、接口规范和运行证据组织成一条可复现链路，并在安全策略约束下执行修正、重试与结果复核。
 
@@ -46,7 +46,7 @@ flowchart LR
 | V1 文档补齐 | Issue #24 | Swagger 2、本地引用、Markdown/HTML 规范块、递归 Schema 校验 | 任意自然语言文档推断、完整 JSON Schema、非 JSON body |
 | V1 故障评测补齐 | Issue #26 | 26 个本地 HTTP 案例、14 类明确故障及 UNKNOWN、安全转换、请求变化复核 | 真实用户效果、任意语义修复、完整 V2 |
 
-完整证据和每阶段的“改了什么、为什么、怎么证明、尚未解决”见 [构建日志](docs/build-log.md)。
+V4.5 在 V4 后补齐自主工具循环、领域护栏、审批恢复、收敛工作区、硬证据门禁、两个实际工具族和独立 Reviewer；完整版本不以 PR-1～PR-4 的基础治理替代。完整证据和每阶段的“改了什么、为什么、怎么证明、尚未解决”见 [构建日志](docs/build-log.md)。
 
 ## 运行
 
@@ -61,7 +61,7 @@ npm run eval:tier-a
 
 预期结果以命令实际输出为准；6 个入门案例全部显示 `passed: true`，Pi Tier A 显示 `3/3 runs passed`。
 
-上面是最短入门路径，不等于完整质量门禁。与 required CI 对齐的本地命令、各版本冻结指标和故障排查见 [V0 → V4 验证指南](docs/verification.md)。
+上面是最短入门路径，不等于完整质量门禁。与 required CI 对齐的本地命令、各版本冻结指标和故障排查见 [V0 → V4.5 验证指南](docs/verification.md)。
 
 运行冻结业务集：`npm run eval:business`。它启动临时 loopback HTTP 服务，运行 26 个案例并输出 JSON 指标；不需要 Key，不调用公网模型。`passed` 检查根因、预期状态、尝试数和证据，`resolvedRate` 单独统计请求恢复比例。403、过期凭据、长时间限流和写请求超时应停止，不能算作自动修复成功。时延是当前机器的合成评测耗时，不能代表生产 p95；模型费用 0 是因为此评测使用确定性 Reasoner。
 
@@ -168,7 +168,7 @@ npm run serve:pi    # 加载同一份 .env 启动本地服务
 
 普通的 `npm test`、`npm run check` 和 CI 不加载 `.env`，也不会产生公网模型费用。`$env:NAME = "value"` 只对当前 PowerShell 及其子进程生效；不同终端和已经运行的 Codex 进程看不到该变量。
 
-Pi 模式默认使用 DeepSeek V4 Pro；`A_PIDOC_PI_PROVIDER` 和 `A_PIDOC_PI_MODEL` 仅用于有意覆盖默认模型。密钥只由 Pi provider 获取，不写入 Prompt、Trace 或报告。进入模型的请求、响应和规范会先做字段级与自由文本脱敏；provider 原始错误不会返回客户端。模型输出还必须通过 root cause、action、字段类型和敏感操作校验。每个任务最多进行两次模型诊断，provider 自动重试关闭，并记录 Pi 返回的 Token usage 与 SDK 估算费用。SDK 价格元数据可能滞后，不能替代 DeepSeek 账户预算和账单告警。
+Pi 模式默认使用 DeepSeek V4 Pro；`A_PIDOC_PI_PROVIDER` 和 `A_PIDOC_PI_MODEL` 仅用于有意覆盖默认模型。密钥只由 Pi provider 获取，不写入 Prompt、Trace 或报告。进入模型的请求、响应和规范会先做字段级与自由文本脱敏；provider 原始错误不会返回客户端。模型输出还必须通过 root cause、action、字段类型和敏感操作校验。旧 PiReasoner 路径每个任务最多进行两次模型诊断；新 agent-run 路径采用任务级模型/工具/Token/费用/时长与 Reviewer 共用预算。provider 自动重试关闭，并记录 Pi 返回的 Token usage 与 SDK 估算费用。SDK 价格元数据可能滞后，不能替代 DeepSeek 账户预算和账单告警。
 
 离线测试并非模拟 `PiReasoner` 接口：它会真实实例化官方 Pi `Agent`，使用 Pi 的 faux provider 产生可控响应，再跑过 Orchestrator、HTTP Tool、Reviewer 和 Trace。`npm run eval:tier-a` 会额外连续运行三次 Pi Tier A 集合。
 
@@ -204,8 +204,9 @@ HTTP API 同时保留 V0 `{ "caseId": "auth-header" }` 输入，并新增：
 ## 文档导航
 
 - [架构与核心链路](docs/architecture.md)：数据流、模块边界、关键取舍和当前风险。
-- [V0 → V4 构建日志](docs/build-log.md)：按真实提交、Issue、PR 和测试记录迭代。
-- [V0 → V4 验证指南](docs/verification.md)：从干净安装到团队协作闭环的命令、预期信号、退出码和排错入口。
+- [V0 → V4.5 构建日志](docs/build-log.md)：按真实提交、Issue、PR 和测试记录迭代。
+- [V0 → V4.5 验证指南](docs/verification.md)：从干净安装到团队协作闭环的命令、预期信号、退出码和排错入口。
+- [V4.5 完整发布审计](docs/v45-release-audit.md)：六批交付、正式版本一致性、offline/live 指标、失败记录与生产边界。
 - [贡献与发布工作流](CONTRIBUTING.md)：Issue、分支、CI/CD（Continuous Integration / Continuous Delivery，持续集成与持续交付）和 Release 规则。
 
 个人求职分析、JD、废弃方案和未来规划保存在本地 `.private/planning-docs/`，由 `.gitignore` 排除，不进入 GitHub。
@@ -224,7 +225,9 @@ src/
   collaboration/     V4 平台适配、权限、日志、Postman、知识库和团队工作流
   config/            Pi provider/model/fallback 运行配置
   contract/          V3 OpenAPI Diff、影响分析、迁移补丁与隔离验证
-  core/              Agent 编排主循环
+  core/              V0～V4 兼容编排主循环
+  harness/           Pi 低层适配、工具注册、持久轨迹、审批协议与预算
+  api-harness/       API 护栏、事实工作区、投影、硬门禁、工具族与独立 Reviewer
   domain/            稳定 JSON/TypeScript 契约
   evaluation/        业务、仓库、契约和团队协作冻结评测
   fixtures/          可重复的故障案例
@@ -255,6 +258,7 @@ docs/                可由仓库事实验证的公开文档
 - V2 能力：在文档化语法子集内扫描 Fetch、Axios、Python Requests 和 Java OkHttp；定位方法与源码行号，追踪 JS/TS 同文件或具名导入常量及环境引用，并在隔离副本执行唯一可判定的 URL/环境模板补丁和生成测试。扫描默认无网络和模型调用。
 - V3 能力：比较 OpenAPI operation 与 JSON request/response 字段的增删、类型和 required 变化；将风险映射到 V2 已解析调用点，并在显式批准的隔离副本验证一类无损字面量迁移。
 - V4 能力：归一化 GitHub PR、GitLab MR、Jira Issue、Slack/飞书消息，构造对应回复载荷；导入/导出受限 Postman JSON 请求；以角色、租户和双审批约束日志查询、诊断、发布与结构化知识入库。
-- 暂不支持：OpenAPI 外部/循环 `$ref`、非 JSON request body、完整 AST 与函数间/运行时数据流、自定义客户端、字段重命名或业务值推断、响应字段使用级追踪、任务历史回放、真实企业平台账号与网络写回、异步队列、向量知识检索、管理 UI、Skill 动态加载、Pi 工具自主调用、生产部署和公网模型在线 CI。
+- V4.5 能力：复杂任务由 Pi 自主选择注册工具，支持 runtime-api 调查与有限 repository-contract 隔离迁移；持久轨迹、准确批准后的模型重发、事实投影、硬 Gate 与独立 Reviewer 约束执行和完成。简单固定 case 保留零模型路径，发布仅为批准后的本地 fixture 草稿。
+- 暂不支持：OpenAPI 外部/循环 `$ref`、非 JSON request body、完整 AST 与函数间/运行时数据流、自定义客户端、字段重命名或业务值推断、响应字段使用级追踪、自动历史副作用回放、真实企业平台账号与网络写回、异步队列、向量知识检索、管理 UI、Skill 动态加载、生产部署和公网模型在线 CI。
 
 复杂 API 调查的新入口是 `agent-run`（Pi 低层循环、实际工具、审批恢复、收敛状态、硬证据门禁与独立 Reviewer）；简单已知 case 保留零模型的确定性路径。使用方式见 [API 工具族](docs/api-tool-bundles.md)，验收与边界见 [Reviewer/配对评测](docs/reviewer-evaluation.md)。`eval:agentic` 为离线 required gate，`eval:agentic:live` 为私有凭据的发布前验收。

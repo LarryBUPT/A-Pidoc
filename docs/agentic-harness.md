@@ -23,7 +23,7 @@ PR-1 保持 Pi `0.74.2`，通过 characterization tests 冻结公开报告字段
 
 ## 尚未解决
 
-PR-1～PR-5 已逐批发布；PR-6 完成独立 Reviewer、54 条配对结果与两个真实 DeepSeek 任务的发布前验收，实际版本发布仍需 required CI、版本 PR、tag/Release/main 核对。公开证据见 [offline](evidence/v45-paired.json) 与 [live](evidence/v45-live.json)。并发契约仅预留，首版全局 sequential。无真实企业采纳率、生产部署、向量数据库、端边云推理或高并发效果证据。
+PR-1～PR-6 已完成完整受控 V4.5，正式版本为 `v0.16.0`；required CI、版本 PR #61、tag/Release/main 一致性见 [发布审计](v45-release-audit.md)。公开证据见 [offline](evidence/v45-paired.json) 与最终07的 [live](evidence/v45-live.json)。并发契约仅预留，首版全局 sequential。无真实企业采纳率、生产部署、向量数据库、端边云推理或高并发效果证据。
 ## PR-3 审批治理
 
 完整状态机、作用范围、精确重入与失败合同见 [审批协议](approval-protocol.md)。批准只创建 Grant；模型必须重新调用原工具。执行结果不明保留接管标记，不能用自然语言或授权消费代替执行证据。
