@@ -1,5 +1,7 @@
 # A-Pidoc / API Doctor
 
+V4 已发布基线是 `v0.11.0`。后续按 [V4.5 Harness 迁移与验证](docs/agentic-harness.md) 建立模型工具控制面；基础 PR 发布与完整 V4.5 验收分别记录。
+
 API Doctor 是一个面向初级开发者与 SaaS（Software as a Service，软件即服务）实施人员的 HTTP API（Hypertext Transfer Protocol Application Programming Interface，基于超文本传输协议的应用程序编程接口）联调诊断 Agent（智能体）。它把失败请求、接口规范和运行证据组织成一条可复现链路，并在安全策略约束下执行修正、重试与结果复核。
 
 当前 V4 把 V0～V3 的单请求、仓库与契约能力接入一条受控团队工作流：GitHub/GitLab、Jira、Slack/飞书载荷先归一化，随后按租户和角色读取关联日志与结构化历史案例，再执行既有诊断闭环。发布结果和保存知识分别需要显式批准，所有进入报告、平台回复和知识库的数据都会脱敏。Postman Collection v2.1 的受限 JSON 请求可导入并脱敏导出；冻结评测不访问真实企业账号、不调用公网模型。

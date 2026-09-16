@@ -328,3 +328,6 @@ Reviewer 当前是确定性类，不是 Pi 子 Agent；它检查成功状态、�
 按 [验证指南](verification.md) 先运行 `npm run demo:team`，观察五类平台、一次发布、一次知识入库和六阶段 Trace；再分别运行归一化与 Postman 示例，确认真实平台不会被调用、敏感 Header 被脱敏。随后运行 V3 的 `contract-diff`、`contract-impact` 与 `contract-verify`，对照团队编排、契约迁移和单请求诊断三条链的职责差异。
 
 验证理解：为什么 `CollaborationWorkflow` 能生成平台回复，却不能据此宣称已接通真实 Jira？答案应能同时提到平台适配器、Connector、内存 fixture、显式批准和真实传输不在冻结评测中。
+# V4.5 迁移入口
+
+当前 V4 确定性工作流保留；新运行契约与分批验收见 [Harness 迁移文档](agentic-harness.md)。Pi 薄适配层隔离 SDK；API 厚约束层拥有领域策略、事实状态和证据门禁。

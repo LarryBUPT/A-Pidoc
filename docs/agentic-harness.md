@@ -1,0 +1,26 @@
+# V4.5 Agentic Harness 迁移与验证
+
+## 改了什么
+
+V4 `v0.11.0` 保留为已发布的团队协作技术验证。新增 A-Pidoc 自有 Task、Tool、Budget、Trajectory、Approval 与 API 状态/证据契约；领域工具不依赖 Pi 消息类型。
+
+## 为什么
+
+V4 的 `PiReasoner` 注册空工具，并接收唯一预计算根因/动作；Repository、Contract、Collaboration 仍是确定性工作流。Pi SDK 契约通过不能证明模型自主调查。迁移让 Pi 负责规划、工具选择和观察后修正，让 API 约束层负责权限、审批、预算、状态和完成条件。
+
+## 怎么证明
+
+PR-1 保持 Pi `0.74.2`，通过 characterization tests 冻结公开报告字段、`415 → 200` 和 V2～V4 输出。旧 CLI 和既有 eval 保留。
+
+| 批次 | 交付 | 完整版本依赖 |
+| --- | --- | --- |
+| PR-1 | 自有契约、旧行为冻结 | 不改变运行时、不升级依赖 |
+| PR-2 | 精确 Pi `0.85.1`、RFC、低层 loop、registry、awaited trajectory | release 实际契约与多轮 faux 轨迹 |
+| PR-3 | API Guardrail、审批挂起与精确重入 | 原子落盘、有效期/防重放/前置条件、最多一次纠偏 |
+| PR-4 | 收敛工作区、临时上下文投影、Evidence Gate | 状态版本分离、缺证拒绝 resolved |
+| PR-5 | HTTP 诊断与仓库契约迁移工具 | 两类任务复用同一运行带、真实工具结果 |
+| PR-6 | 独立 Reviewer、配对评测、受预算 live | 逐例指标、真实 DeepSeek 轨迹、完整发布审计 |
+
+## 尚未解决
+
+当前只开始 PR-1。PR-1～PR-4 是基础治理节点；完成它们不等于 V4.5 整体完成。未完成两任务族、独立 Reviewer、Raw Pi/Harness-Pi 同条件实验与真实 DeepSeek 发布前验证，不得宣称完整 V4.5。并发契约仅预留，首版全局 sequential。无真实企业采纳率、生产部署、向量数据库、端边云推理或高并发效果证据。
