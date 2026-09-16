@@ -9,7 +9,7 @@ export class ContextProjector {
       const s = await this.store.load(), state = workspaceState(s), b = s.run.task.budget, u = s.run.usage;
       const board = { goal: s.run.task.goal, stage: state.stage, stateRevision: s.stateRevision, workspaceRevision: s.workspaceRevision, evidenceSequence: s.evidenceSequence,
         remaining: { modelCalls: b.maxModelCalls - u.modelCalls, toolCalls: b.maxToolCalls - u.toolCalls, tokens: b.maxTokens - u.tokens, estimatedCostUsd: b.maxCostUsd - u.estimatedCostUsd },
-        evidence: s.run.evidence.slice(-24).map(ref => { const a = resolveEvidence(s, ref.id); return { id: ref.id, kind: ref.kind, sha256: ref.sha256, valid: !!a }; }),
+        evidence: s.run.evidence.slice(-24).map(ref => { const a = resolveEvidence(s, ref.id); return { id: ref.id, kind: ref.kind, sha256: ref.sha256, valid: !!a, observation: a ? JSON.stringify(a.data).slice(0, 1024) : null }; }),
         openHypotheses: state.openHypotheses.slice(0, 8), rejectedHypotheses: state.rejectedHypotheses.slice(-8), noProgressCount: state.noProgressCount,
         pending: s.pendingApproval ? { toolName: s.pendingApproval.toolName, actionDigest: s.pendingApproval.normalizedArgsDigest, status: s.pendingApproval.status } : null,
         instruction: "Evidence IDs refer to persisted tool results. Read evidence by ID if needed. Never claim unexecuted changes or tests. A success proposal must pass the task Evidence Gate." };
@@ -21,7 +21,7 @@ export class ContextProjector {
         const assistant = safe[index];
         if (assistant?.role === "assistant") {
           tail.push(assistant);
-          for (const m of safe.slice(index + 1)) tail.push({ ...m, content: [{ type: "text", text: "Observation persisted in the evidence board. Use evidence IDs for details." }], details: undefined });
+          for (const m of safe.slice(index + 1)) tail.push({ ...m, content: m.toolName === "read_evidence" && Buffer.byteLength(JSON.stringify(m.content)) <= 8192 ? m.content : [{ type: "text", text: "Observation persisted in the evidence board. Use evidence IDs for details." }], details: undefined });
         }
       }
       const projected = [{ role: "user", timestamp: Date.now(), content: `API WORKSPACE BOARD\n${JSON.stringify(board)}` }, ...tail];
