@@ -2,7 +2,7 @@
 
 ## 改了什么
 
-V4.5 `v0.16.0` 的模型工具控制面保留；V5 增加计划、确定性探测、异常分流、持久队列和 Worker。当前发布状态以 CHANGELOG 与正式 tag/Release 为准，功能 PR 不是发布凭证。
+V4.5 `v0.16.0` 的模型工具控制面保留；V5增加计划、确定性探测、异常分流、持久队列和Worker，完整受控版本已发布 `v0.17.0@423142e`，见 [发布审计](v5-release-audit.md)。功能PR不是发布凭证，正式tag/Release和版本文件已核对一致。
 
 ```mermaid
 flowchart LR

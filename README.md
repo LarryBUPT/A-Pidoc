@@ -1,6 +1,6 @@
 # A-Pidoc / API Doctor
 
-V4 历史基线是 `v0.11.0`；V4.5 完整受控版本是 `v0.16.0`。六批改动、CI、版本 PR、tag/Release 与 offline/live 验收见 [发布审计](docs/v45-release-audit.md)，模型工具控制面见 [Harness 迁移与验证](docs/agentic-harness.md)。
+当前完整受控V5已发布 `v0.17.0`，计划探测、异常分流、持久队列与Harness Worker的实现、CI、版本PR、tag/Release和offline/live证据见 [V5发布审计](docs/v5-release-audit.md)。V4历史基线 `v0.11.0`、V4.5 `v0.16.0` 保留，六批治理改动见 [V4.5发布审计](docs/v45-release-audit.md)，模型工具控制面见 [Harness迁移与验证](docs/agentic-harness.md)。
 
 API Doctor 是一个面向初级开发者与 SaaS（Software as a Service，软件即服务）实施人员的 HTTP API（Hypertext Transfer Protocol Application Programming Interface，基于超文本传输协议的应用程序编程接口）联调诊断 Agent（智能体）。它把失败请求、接口规范和运行证据组织成一条可复现链路，并在安全策略约束下执行修正、重试与结果复核。
 
@@ -61,7 +61,7 @@ npm run eval:tier-a
 
 预期结果以命令实际输出为准；6 个入门案例全部显示 `passed: true`，Pi Tier A 显示 `3/3 runs passed`。
 
-上面是最短入门路径，不等于完整质量门禁。与 required CI 对齐的本地命令、各版本冻结指标和故障排查见 [V0 → V4.5 验证指南](docs/verification.md)。
+上面是最短入门路径，不等于完整质量门禁。与required CI对齐的本地命令、各版本冻结指标和故障排查见 [V0 → V5验证指南](docs/verification.md)。
 
 运行冻结业务集：`npm run eval:business`。它启动临时 loopback HTTP 服务，运行 26 个案例并输出 JSON 指标；不需要 Key，不调用公网模型。`passed` 检查根因、预期状态、尝试数和证据，`resolvedRate` 单独统计请求恢复比例。403、过期凭据、长时间限流和写请求超时应停止，不能算作自动修复成功。时延是当前机器的合成评测耗时，不能代表生产 p95；模型费用 0 是因为此评测使用确定性 Reasoner。
 
