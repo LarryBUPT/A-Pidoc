@@ -185,3 +185,6 @@ GitHub/GitLab PR、Jira Issue、Slack/飞书消息均有载荷归一化器和回
 ## V4.5 PR-2 运行契约
 
 运行 `npm run build` 后执行 `node --test dist/test/pi-loop-contract.test.js`。它验证稳定 release 的多轮工具观察、awaited 持久化、混合批次停止、消息恢复、串行、预算和错误脱敏，不能替代后续 API 任务或公网模型评测。详见 [Pi 0.85.1 RFC](pi-0.85.1-rfc.md)。
+## V4.5 PR-3 审批与安全合同
+
+`node --test dist/test/approval-contract.test.js` 覆盖原子挂起、精确调用、一次纠偏、错误参数/工具/Schema、混合批次、过期/拒绝/权限、日志与关键前置条件、TOCTOU、消费后崩溃、租户/环境/敏感参数和预算。`npm run eval:harness` 对 loop + approval 连续三轮通过才可合并。详见 [审批协议](approval-protocol.md)。

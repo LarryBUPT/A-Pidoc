@@ -331,3 +331,6 @@ Reviewer 当前是确定性类，不是 Pi 子 Agent；它检查成功状态、�
 # V4.5 迁移入口
 
 当前 V4 确定性工作流保留；新运行契约与分批验收见 [Harness 迁移文档](agentic-harness.md)。Pi 薄适配层隔离 SDK；API 厚约束层拥有领域策略、事实状态和证据门禁。
+## V4.5 API Guardrail 与 ApprovalProtocol
+
+PiLoopAdapter 的前置、执行和完成 hooks 接入 ApiGuardrail；可信后端描述 OpenAPI operation、请求目标/身份/环境与副作用，ApprovalProtocol 用持久化事务控制挂起、授权和重入。工具实现仍通过 ToolRegistry 转为 Pi AgentTool；执行前在后端锁内重检，结果不明不重放。详见 [审批协议](approval-protocol.md)。
