@@ -13,7 +13,12 @@ export interface RunSnapshot {
   domainState?: unknown;
 }
 export function appendStep(s: RunSnapshot, kind: TrajectoryStep["kind"], data: unknown): void {
-  s.run.steps.push({ seq: s.run.steps.length + 1, at: new Date().toISOString(), kind, data: redactValue(data) });
+  const safe = redactValue(data);
+  if (kind === "model_turn" && data && typeof data === "object" && safe && typeof safe === "object") {
+    const count = (data as { totalTokens?: number }).totalTokens;
+    if (typeof count === "number" && Number.isSafeInteger(count) && count >= 0) (safe as { totalTokens?: number }).totalTokens = count;
+  }
+  s.run.steps.push({ seq: s.run.steps.length + 1, at: new Date().toISOString(), kind, data: safe });
 }
 // An exclusive mkdir lock rejects concurrent processes. Stale locks fail closed;
 // recovery requires inspection, never silently stealing a lock or replaying writes.

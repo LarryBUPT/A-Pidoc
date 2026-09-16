@@ -1,6 +1,6 @@
 import { runAgentLoop, runAgentLoopContinue, type AgentContext, type AgentEvent, type AgentLoopConfig, type AgentMessage, type StreamFn } from "@earendil-works/pi-agent-core";
 import { createAssistantMessageEventStream, type AssistantMessage, type Message, type Model } from "@earendil-works/pi-ai";
-import type { AgentTask, RunState } from "./contracts.js";
+import type { AgentTask, RunState, ToolResult } from "./contracts.js";
 import { appendStep, TrajectoryStore, type RunSnapshot } from "./trajectory-store.js";
 import { ToolRegistry } from "./tool-registry.js";
 import { redactValue } from "../security/redaction.js";
@@ -9,6 +9,7 @@ import { dirname } from "node:path";
 
 export interface ToolInvocation { id: string; name: string; args: unknown }
 export interface LoopHooks {
+  executeTool?: (call: ToolInvocation, execute: () => Promise<ToolResult>) => Promise<ToolResult>;
   beforeTool?: (call: ToolInvocation) => Promise<{ block: true; terminate: true; reason: string } | undefined>;
   afterTool?: (call: ToolInvocation, result: unknown, isError: boolean) => Promise<void>;
   onEvent?: (event: AgentEvent) => Promise<void>;
@@ -55,7 +56,7 @@ export class PiLoopAdapter {
       }
       if (budgetExceeded(s)) return await this.store.transact(v => { v.run.state = "blocked"; appendStep(v, "state_transition", { code: "RUN_BUDGET_EXHAUSTED" }); });
       const hooks = this.options.hooks ?? {};
-      const context: AgentContext = { systemPrompt: this.options.prompt, messages: structuredClone(s.messages) as AgentMessage[], tools: this.registry.toPiTools(s.run.task) };
+      const context: AgentContext = { systemPrompt: this.options.prompt, messages: structuredClone(s.messages) as AgentMessage[], tools: this.registry.toPiTools(s.run.task, hooks.executeTool) };
       const config: AgentLoopConfig = {
         model: this.options.model, toolExecution: "sequential", maxRetries: 0,
         maxTokens: this.options.maxOutputTokens ?? 2048,

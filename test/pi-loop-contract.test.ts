@@ -23,6 +23,7 @@ test("Pi 0.85.1 chooses its next tool from real preceding observations", async t
   assert.equal(h.provider.state.callCount, 3);
   assert.deepEqual(s.run.steps.filter(v => v.kind === "tool_call").map(v => (v.data as { name: string }).name), ["observe", "read_spec"]);
   assert.equal(s.run.usage.modelCalls, 3); assert.equal(s.run.usage.toolCalls, 2);
+  assert.ok(s.run.steps.filter(v => v.kind === "model_turn").every(v => Number.isSafeInteger((v.data as { totalTokens: number }).totalTokens)));
   assert.equal(s.messages.length, 6);
   assert.ok(s.run.steps.every((v, i) => v.seq === i + 1));
 });
