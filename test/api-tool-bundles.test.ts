@@ -29,7 +29,7 @@ test("actual loopback HTTP tools reproduce 415 and validate the model-selected c
 });
 test("actual contract tools suspend twice, reissue through Pi, execute real Node tests and preserve source",async t=>{
   const h=await migration(t),original=await fingerprint(h.source);
-  h.provider.setResponses([call("scan_repository",{},"scan"),call("compare_contracts",{},"diff"),call("analyze_contract_impact",{contractDiffId:"contract_diff-diff"},"impact"),call("propose_patch",{impactId:"contract_impact-impact"},"proposal"),call("apply_patch_isolated",{proposalId:"patch_proposal-proposal"},"pending")]);
+  h.provider.setResponses([call("scan_repository",{},"scan"),call("build_repository_tasks",{scanId:"repository_scan-scan"},"tasks"),call("compare_contracts",{},"diff"),call("analyze_contract_impact",{contractDiffId:"contract_diff-diff"},"impact"),call("propose_patch",{impactId:"contract_impact-impact"},"proposal"),call("apply_patch_isolated",{proposalId:"patch_proposal-proposal"},"pending")]);
   let s=await h.runtime.start(h.input);assert.equal(s.run.state,"waiting_approval");assert.equal(await fingerprint(h.source),original);
   await h.runtime.guardrail.grant(s.pendingApproval!.approvalId,{actorId:"owner",source:"local-authenticated"});
   h.provider.setResponses([call("apply_patch_isolated",{proposalId:"patch_proposal-proposal"},"patch"),call("run_regression_tests",{patchArtifactId:"isolated_patch-patch"},"pending-tests")]);
@@ -40,6 +40,7 @@ test("actual contract tools suspend twice, reissue through Pi, execute real Node
   assert.match(await readFile(join(h.work,"src/client.ts"),"utf8"),/amount: 42/);
   const data=(s.artifacts["test_run-tests"] as {data:{exitCode:number;stdout:string;testCount:number}}).data;
   assert.equal(data.exitCode,0);assert.equal(data.testCount,1);assert.match(data.stdout,/pass 1/);
+  assert.equal((s.artifacts["repository_tasks-tasks"] as {data:unknown[]}).data.length,1);
   await writeFile(join(h.work,"src/client.ts"),"modified after tests");
   assert.equal(await h.backend.verifyCurrentWorkspace(),false);
   const restored=new RepositoryContractBackend(h.store,h.source,h.work,h.backend.previous,h.backend.next);

@@ -14,6 +14,7 @@ import type { EvidencePackage } from "../api-harness/contracts.js";
 import { digest } from "../harness/digest.js";
 import { resolveEvidence } from "../api-harness/convergent-workspace.js";
 import { evaluateBusinessCases } from "./business-eval.js";
+import { ApiSupportTools } from "../api-harness/support-tools.js";
 
 export const AGENTIC_CASES = ["runtime-media", "runtime-body", "delete", "outside-host", "repeat", "false-claim", "missing-evidence", "contract-approved", "contract-unapproved"] as const;
 type CaseId = typeof AGENTIC_CASES[number];
@@ -78,7 +79,7 @@ export async function evaluateAgentic(repetitions=3) {
       const model=provider.getModel(),options={model,streamFn:streamSimple};provider.setResponses(Array.from({length:24},()=>policy(caseId,sandbox.endpoint)));
       const family=caseId.startsWith("contract")?"repository-contract":"runtime-api";
       const task:AgentTask={id:"paired-run",goal:family==="runtime-api"?`Investigate POST ${sandbox.endpoint} with text/plain and amount ${caseId==="runtime-body"?'"42"':42}, validate a correction and cite actual evidence.`:"Assess registered contract/client compatibility, propose supported isolated migration and verify actual regression after approved actions.",taskFamily:family,environment:"sandbox",inputArtifacts:[],allowedToolBundles:[family,"shared"],risk:family==="runtime-api"?"low":"high",budget:{maxModelCalls:16,maxToolCalls:24,maxTokens:80_000,maxCostUsd:1,maxDurationMs:60_000}};
-      const registry=new ToolRegistry([...backend.tools,evidenceReader(store),completionTool()]);
+      const registry=new ToolRegistry([...backend.tools,...new ApiSupportTools(store).tools,evidenceReader(store),completionTool()]);
       const toolHash=digest(registry.toPiTools(task).map(t=>({name:t.name,description:t.description,parameters:t.parameters})));
       let s:RunSnapshot;
       if(variant==="raw-pi"){

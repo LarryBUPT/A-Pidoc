@@ -14,6 +14,10 @@ import { applyMigrationPatch, testContent, runTests } from "../contract/migratio
 import type { MigrationPatchPlan, ContractImpactReport } from "../contract/types.js";
 import { scanRepository } from "../repository/scanner.js";
 import type { ApiRequest, HttpMethod } from "../domain/types.js";
+import { buildRepositoryTasks } from "../repository/workflow.js";
+import type { RepositoryReport } from "../repository/types.js";
+import { readApiDocument } from "../input/api-document.js";
+import { RealHttpTool } from "../tools/real-http-tool.js";
 
 export const closed = (properties: Record<string, unknown> = {}, required: string[] = []) => ({ type: "object", properties, required, additionalProperties: false });
 const id = { type: "string", minLength: 1, maxLength: 160 };
@@ -69,6 +73,7 @@ export class RepositoryContractBackend implements ToolBackend {
     const load = async (artifactId: string, kind: string) => { const a = resolveEvidence(await store.load(), artifactId); if (!a || a.ref.kind !== kind) throw new Error("WRONG_ARTIFACT_KIND"); return a; };
     this.tools = [
       defineTool("scan_repository", bundle, "Scan the registered source repository and match concrete API calls. Paths are selected by the backend.", closed(), "repository_scan", async (_a,c) => result(c,"repository_scan", await scanRepository({ root: source, openApiDocument: previous }))),
+      defineTool("build_repository_tasks",bundle,"Build candidate tasks from a verified repository_scan Artifact; never automatically execute them.",closed({scanId:{...id,description:"repository_scan Evidence Artifact ID"}},["scanId"]),"repository_tasks",async(raw,c)=>{const a=await load((raw as {scanId:string}).scanId,"repository_scan");return result(c,"repository_tasks",buildRepositoryTasks(a.data as RepositoryReport,previous));}),
       defineTool("compare_contracts", bundle, "Compare registered previous and next OpenAPI contracts; expose actual changes.", closed(), "contract_diff", async (_a,c) => result(c,"contract_diff",diffOpenApi(previous,next))),
       defineTool("analyze_contract_impact", bundle, "Analyze source calls affected by a previously observed contract diff.", closed({ contractDiffId:{...id,description:"Evidence Artifact ID of kind contract_diff, not an individual change ID."} },["contractDiffId"]), "contract_impact", async (raw,c) => {
         const { contractDiffId } = raw as { contractDiffId:string }; await load(contractDiffId,"contract_diff");
@@ -122,17 +127,16 @@ export class RuntimeApiBackend implements ToolBackend {
     // This registered demo is a side-effect-free loopback diagnostic service, not arbitrary enterprise POST.
     if (url.hostname !== "127.0.0.1" || url.pathname !== "/orders") throw new Error("UNREGISTERED_RUNTIME_PROFILE");
     this.contract = { method:"POST",path:"/orders",contractDigest:digest({ method:"POST",path:"/orders",contentType:"application/json",amount:"number" }),requiredContentType:"application/json",bodySchema:closed({ amount:{ type:"number" } },["amount"]) };
+    const document=readApiDocument({openapi:"3.0.3",info:{title:"Side-effect-free sandbox validation",version:"1"},paths:{"/orders":{post:{requestBody:{content:{"application/json":{schema:this.contract.bodySchema}}},responses:{"200":{description:"Validated, no order created"}}}}}});
+    this.contract.contractDigest=digest(document);
     this.tools = [
       defineTool("read_api_document","runtime-api","Read the registered operation, media type and request schema. Observations do not prescribe the next tool.",closed(),"api_operation",async (_a,c) => result(c,"api_operation",this.contract)),
       defineTool("execute_http","runtime-api","Observe the registered sandbox API with chosen method, media type and amount; redirects disabled and response bounded.",closed({ url:{type:"string",maxLength:2048},method:{type:"string",enum:["GET","POST","DELETE"]},contentType:{type:"string",maxLength:128},amount:{anyOf:[{type:"number"},{type:"string",maxLength:100}]} },["url","method","contentType","amount"]),"http_observation",async (raw,c) => {
         const req = this.request(raw);
         if (new URL(req.url).origin !== url.origin || new URL(req.url).pathname !== "/orders") throw new Error("SANDBOX_NETWORK_BOUNDARY");
-        const timeout = AbortSignal.timeout(5000), signal = c.signal ? AbortSignal.any([c.signal,timeout]) : timeout;
-        const response = await fetch(req.url,{ method:req.method,headers:req.headers,...(req.method === "GET" ? {} : { body:JSON.stringify(req.body) }),redirect:"error",signal });
-        if (Number(response.headers.get("content-length") ?? 0) > 8192) throw new Error("HTTP_RESPONSE_LIMIT");
-        const reader = response.body?.getReader(); let bytes=0,text="";
-        if (reader) try { while (true) { const {value,done}=await reader.read(); if(done)break;bytes+=value.length;if(bytes>8192)throw new Error("HTTP_RESPONSE_LIMIT");text+=new TextDecoder().decode(value); } } finally { await reader.cancel(); }
-        return result(c,"http_observation",{ request:{ method:req.method,url:req.url,headers:req.headers,body:req.body }, response:{ status:response.status,body:JSON.parse(text) },sideEffect:false });
+        if(c.signal?.aborted)throw new Error("HTTP_CANCELLED");
+        const response=await new RealHttpTool({allowedHosts:[url.hostname],allowedPorts:[Number(url.port)],timeoutMs:5000,maxResponseBytes:8192}).execute(req);
+        return result(c,"http_observation",{ request:{ method:req.method,url:req.url,headers:req.headers,body:req.body }, response:{ status:response.status,body:response.body },sideEffect:false });
       },"network")
     ];
   }
