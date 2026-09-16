@@ -10,7 +10,7 @@ V4 的 `PiReasoner` 注册空工具，并接收唯一预计算根因/动作；Re
 
 ## 怎么证明
 
-PR-1 保持 Pi `0.74.2`，通过 characterization tests 冻结公开报告字段、`415 → 200` 和 V2～V4 输出。旧 CLI 和既有 eval 保留。
+PR-1 保持 Pi `0.74.2`，通过 characterization tests 冻结公开报告字段、`415 → 200` 和 V2～V4 输出。PR-1 已通过 PR #46 合并；PR-2 升级与运行协议见 [Pi 0.85.1 RFC](pi-0.85.1-rfc.md)。旧 CLI 和既有 eval 保留。
 
 | 批次 | 交付 | 完整版本依赖 |
 | --- | --- | --- |
@@ -23,4 +23,4 @@ PR-1 保持 Pi `0.74.2`，通过 characterization tests 冻结公开报告字段
 
 ## 尚未解决
 
-当前只开始 PR-1。PR-1～PR-4 是基础治理节点；完成它们不等于 V4.5 整体完成。未完成两任务族、独立 Reviewer、Raw Pi/Harness-Pi 同条件实验与真实 DeepSeek 发布前验证，不得宣称完整 V4.5。并发契约仅预留，首版全局 sequential。无真实企业采纳率、生产部署、向量数据库、端边云推理或高并发效果证据。
+PR-1 已合并，PR-2 提供低层多轮运行带。PR-1～PR-4 是基础治理节点；完成它们不等于 V4.5 整体完成。未完成两任务族、独立 Reviewer、Raw Pi/Harness-Pi 同条件实验与真实 DeepSeek 发布前验证，不得宣称完整 V4.5。并发契约仅预留，首版全局 sequential。无真实企业采纳率、生产部署、向量数据库、端边云推理或高并发效果证据。

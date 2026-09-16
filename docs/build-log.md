@@ -457,3 +457,9 @@ V3 能回答“契约升级会影响哪里”，但团队处理故障还要在�
 - 为什么：V4 团队竖切已发布，但 Pi 空工具和唯一答案 Prompt 无法证明 Agentic；先冻结行为，再逐 PR 迁移。
 - 怎么证明：83 项旧测试已通过；新增 characterization tests 对公开字段、415→200 与 V2～V4 指标做精确断言。依赖保持 0.74.2。
 - 尚未解决：PR-2 升级与 loop、PR-3 审批、PR-4 状态/证据、PR-5 两工具族、PR-6 Reviewer/live/对照均需独立验收，不能提前声称完整 V4.5。
+## 2026-09-16：V4.5 PR-2 低层运行带
+
+- 改了什么：Issue #47；精确 Pi 0.85.1 与 typebox 1.3.7、Node 22.19+ 与 CI Node 22；新增 PiLoopAdapter、ToolRegistry、TrajectoryStore、CAS/摘要与多轮 faux 契约。
+- 为什么：Pi 新 root 移除了旧全局 stream/model/faux API，首次编译暴露真实迁移错误。按官方 compat 保留旧路径，新的 adapter 显式注入 stream/provider；不私改依赖。
+- 怎么证明：25 项局部旧 Reasoner + 新 loop 契约通过；观察 415 后选择读规范、awaited sink、混合批次挂起、continue、串行、预算、异常脱敏与事务/CAS 均有反例。最终全量门禁以 PR 记录为准。
+- 尚未解决：领域审批/精确重入、Workspace/Evidence Gate、双工具族、Reviewer/live/配对评测仍为后续批次，不能称完整 V4.5。

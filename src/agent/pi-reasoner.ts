@@ -1,5 +1,5 @@
 import { Agent, type StreamFn } from "@earendil-works/pi-agent-core";
-import { streamSimple, type AssistantMessage, type Model } from "@earendil-works/pi-ai";
+import { streamSimple, type AssistantMessage, type Model } from "@earendil-works/pi-ai/compat";
 import type {
   ApiSpec,
   Diagnosis,

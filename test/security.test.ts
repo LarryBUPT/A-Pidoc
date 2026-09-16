@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { createServer, type Server } from "node:http";
 import test from "node:test";
-import { fauxAssistantMessage, registerFauxProvider } from "@earendil-works/pi-ai";
+import { fauxAssistantMessage, registerFauxProvider } from "@earendil-works/pi-ai/compat";
 import { PiReasoner } from "../src/agent/pi-reasoner.js";
 import { DebugOrchestrator } from "../src/core/orchestrator.js";
 import type { HttpTool, Reasoner } from "../src/domain/types.js";

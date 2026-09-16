@@ -14,6 +14,7 @@
     "test:pi:live": "npm run build --silent && node --env-file=.env scripts/pi-live-smoke.mjs",
     "test": "npm run build --silent && npm run test:unit",
     "eval:pi:stability": "node scripts/pi-tier-a.mjs",
+    "eval:harness": "npm run build --silent && node scripts/harness-contract-eval.mjs",
     "eval:business": "npm run build --silent && node dist/src/cli.js eval",
     "eval:repository": "npm run build --silent && node scripts/repository-eval.mjs",
     "eval:contract": "npm run build --silent && node scripts/contract-eval.mjs",
@@ -24,14 +25,15 @@
     "check": "npm run build --silent && npm run test:unit"
   },
   "engines": {
-    "node": ">=20.6"
+    "node": ">=22.19.0"
   },
   "devDependencies": {
     "@types/node": "24.3.1",
     "typescript": "5.9.2"
   },
   "dependencies": {
-    "@earendil-works/pi-agent-core": "0.74.2",
-    "@earendil-works/pi-ai": "0.74.2"
+    "@earendil-works/pi-agent-core": "0.85.1",
+    "@earendil-works/pi-ai": "0.85.1",
+    "typebox": "1.3.7"
   }
 }
