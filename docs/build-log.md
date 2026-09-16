@@ -489,3 +489,21 @@ V3 能回答“契约升级会影响哪里”，但团队处理故障还要在�
 - 为什么：引用有效不代表语义支持，不能将 faux、固定流程或生产能力混写；实际 live 发现接口歧义和无进展误拦后用合同修正。
 - 怎么证明：相同提示/工具/预算自动 hash 比较；分别记录尝试/护栏阻断/沙箱执行、正常任务误拦、收敛步数、引用率、费用/时延/Reviewer；完整结果见 docs/evidence 与 reviewer-evaluation.md。
 - 尚未解决：受控任务与单次 live 证据不等于普遍模型收益、真实平台客户或生产 SLO；V5 未启动。
+
+## 2026-09-16：V4.5 正式发布与文档收口（Issue #62）
+
+### 改了什么
+
+接续上轮最终交接，完成版本 PR #61 的最新 SHA required CI 审查与 squash 合并，正式发布 `v0.16.0@9d59bd3`。新增 [完整发布审计](v45-release-audit.md)，同步 README、Harness 与验证指南的当前能力和版本；旧 V4 事实与分批进展保留为历史。
+
+### 为什么
+
+功能 PR 与发布前验收不能代替 tag 和真实 Release；旧“暂不支持自主工具”与83项当前测试数也会误导使用者。完整 V4.5 必须同时对应六批交付、最终工具映射、144项测试、54条配对与最终07的双任务 live。
+
+### 怎么证明
+
+版本 PR #61 的最新 head `4e6caef` 的 required check 与 dispatch status 均成功；发布 commit 的 main CI/Release Please 成功；Git tag、非 draft/prerelease Release 与四个版本文件核对一致。公开 offline/live 原始摘要及 hash 保持原封版记录，文档收口另经本地门禁与 PR 最新 SHA CI，不重复运行付费实验或移动 tag。
+
+### 尚未解决
+
+当前仅两个受控 profile 与本地 FixtureConnector 草稿，不代表生产 API、平台客户、通用模型收益或 Exactly-once。V5 调度/队列/常驻监控尚未实施，下一阶段保持原方案与纠偏验收要求。
