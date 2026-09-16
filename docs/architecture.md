@@ -334,3 +334,6 @@ Reviewer 当前是确定性类，不是 Pi 子 Agent；它检查成功状态、�
 ## V4.5 API Guardrail 与 ApprovalProtocol
 
 PiLoopAdapter 的前置、执行和完成 hooks 接入 ApiGuardrail；可信后端描述 OpenAPI operation、请求目标/身份/环境与副作用，ApprovalProtocol 用持久化事务控制挂起、授权和重入。工具实现仍通过 ToolRegistry 转为 Pi AgentTool；执行前在后端锁内重检，结果不明不重放。详见 [审批协议](approval-protocol.md)。
+## V4.5 ConvergentWorkspace / ContextProjector / EvidenceGate
+
+工具通过元数据声明证据类型，真实结果的 call ID、Artifact hash 与 trajectory 绑定。Workspace 只从已执行工具/策略归约事实，投影只生成有界消息视图；Gate 验证运行时与迁移两个证据合同并保存 final Artifact。成功不会由 Reviewer pass 或模型 exit 0 覆盖真实数据。详见 [工作区与证据门禁](workspace-evidence.md)。

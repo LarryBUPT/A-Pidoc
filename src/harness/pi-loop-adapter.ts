@@ -3,7 +3,7 @@ import { createAssistantMessageEventStream, type AssistantMessage, type Message,
 import type { AgentTask, RunState, ToolResult } from "./contracts.js";
 import { appendStep, TrajectoryStore, type RunSnapshot } from "./trajectory-store.js";
 import { ToolRegistry } from "./tool-registry.js";
-import { redactValue } from "../security/redaction.js";
+import { redactValue, redactText } from "../security/redaction.js";
 import { mkdir, rm } from "node:fs/promises";
 import { dirname } from "node:path";
 
@@ -33,7 +33,8 @@ export class PiLoopAdapter {
   private active = false;
   constructor(readonly store: TrajectoryStore, readonly registry: ToolRegistry, private readonly options: PiLoopOptions) {}
   async start(task: AgentTask): Promise<RunSnapshot> {
-    if (!task.goal.trim() || Object.values(task.budget).some(v => !Number.isFinite(v) || v <= 0)) throw new Error("INVALID_RUN_BUDGET");
+    task = { ...task, goal: redactText(task.goal) };
+    if (!task.goal.trim() || Buffer.byteLength(task.goal) > 8192 || Object.values(task.budget).some(v => !Number.isFinite(v) || v <= 0)) throw new Error("INVALID_RUN_BUDGET");
     const message: Message = { role: "user", content: JSON.stringify({ goal: task.goal, taskFamily: task.taskFamily, environment: task.environment }), timestamp: Date.now() };
     await this.store.create({ formatVersion: 1, run: { runId: task.id, task, state: "running", steps: [], usage: { modelCalls: 0, toolCalls: 0, tokens: 0, estimatedCostUsd: 0 }, evidence: [] }, messages: [], stateRevision: 0, workspaceRevision: 0, evidenceSequence: 0, elapsedMs: 0, artifacts: {} });
     return this.drive([message]);
@@ -69,6 +70,10 @@ export class PiLoopAdapter {
         },
         beforeToolCall: async h => {
           const call = { id: h.toolCall.id, name: h.toolCall.name, args: h.args };
+          if (Buffer.byteLength(JSON.stringify(call.args)) > 8192) {
+            await this.store.transact(v => { v.run.state = "blocked"; appendStep(v, "policy", { code: "TOOL_ARGUMENT_BUDGET_EXHAUSTED" }); });
+            return { block: true, terminate: true, reason: "TOOL_ARGUMENT_BUDGET_EXHAUSTED" };
+          }
           const state = await this.store.load();
           if (!ACTIVE.includes(state.run.state)) return { block: true, terminate: true, reason: "RUN_SUSPENDED" };
           const tool = this.registry.get(call.name);

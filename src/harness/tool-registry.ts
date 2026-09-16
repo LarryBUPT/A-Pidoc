@@ -25,7 +25,7 @@ export class ToolRegistry {
         const encoded = canonicalJson(args);
         if (encoded !== canonicalJson(redactValue(args))) throw new Error("SENSITIVE_TOOL_ARGUMENTS");
         try {
-          const execute = () => tool.execute(args, { runId: task.id, environment: task.environment, ...(signal ? { signal } : {}) });
+          const execute = () => tool.execute(args, { runId: task.id, toolCallId: id, environment: task.environment, ...(signal ? { signal } : {}) });
           const result = executionGate ? await executionGate({ id, name: tool.name, args }, execute) : await execute();
           const safe = redactValue(result.data);
           const warnings = redactValue(result.warnings) as string[];
