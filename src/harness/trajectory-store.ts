@@ -19,6 +19,7 @@ export function appendStep(s: RunSnapshot, kind: TrajectoryStep["kind"], data: u
     if (typeof count === "number" && Number.isSafeInteger(count) && count >= 0) (safe as { totalTokens?: number }).totalTokens = count;
   }
   s.run.steps.push({ seq: s.run.steps.length + 1, at: new Date().toISOString(), kind, data: safe });
+  s.evidenceSequence++; // Append-only audit/observation clock; never a Grant version.
 }
 // An exclusive mkdir lock rejects concurrent processes. Stale locks fail closed;
 // recovery requires inspection, never silently stealing a lock or replaying writes.

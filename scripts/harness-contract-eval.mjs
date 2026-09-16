@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-const files = ["dist/test/pi-loop-contract.test.js", "dist/test/approval-contract.test.js"];
+const files = ["dist/test/pi-loop-contract.test.js", "dist/test/approval-contract.test.js", "dist/test/workspace-evidence.test.js"];
 const results = [];
 for (let run = 1; run <= 3; run++) {
   const started = performance.now();

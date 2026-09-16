@@ -14,15 +14,17 @@ export interface ToolConcurrencyPolicy {
   parallelSafe: boolean; sideEffectFree: boolean; snapshotConsistent: boolean;
   resourceKey?: string; maxConcurrency?: number;
 }
-export interface ToolContext { runId: string; environment: Environment; signal?: AbortSignal }
+export interface ToolContext { runId: string; toolCallId: string; environment: Environment; signal?: AbortSignal }
 export interface ToolResult<Output = unknown> {
   success: boolean; data: Output; evidence: EvidenceRef[]; warnings: string[];
   durationMs: number; redacted: true;
+  controlPlaneChanged?: boolean;
 }
 export interface HarnessTool<Input = unknown, Output = unknown> {
   name: string; bundle: string; description: string; inputSchema: Record<string, unknown>;
   risk: "read" | "network" | "write" | "publish"; executionMode: "parallel" | "sequential";
   idempotency: "safe" | "keyed" | "unsafe"; concurrency: ToolConcurrencyPolicy;
+  evidenceKinds?: string[];
   execute(input: Input, context: ToolContext): Promise<ToolResult<Output>>;
 }
 export type PolicyDecision =

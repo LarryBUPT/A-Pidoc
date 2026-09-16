@@ -188,3 +188,6 @@ GitHub/GitLab PR、Jira Issue、Slack/飞书消息均有载荷归一化器和回
 ## V4.5 PR-3 审批与安全合同
 
 `node --test dist/test/approval-contract.test.js` 覆盖原子挂起、精确调用、一次纠偏、错误参数/工具/Schema、混合批次、过期/拒绝/权限、日志与关键前置条件、TOCTOU、消费后崩溃、租户/环境/敏感参数和预算。`npm run eval:harness` 对 loop + approval 连续三轮通过才可合并。详见 [审批协议](approval-protocol.md)。
+## V4.5 PR-4 事实与完成门禁
+
+`node --test dist/test/workspace-evidence.test.js` 覆盖 13 项状态、Artifact、投影、无进展与 Evidence Gate 故障合同。`npm run eval:harness` 现在连续三轮验证 loop + approval + workspace/evidence；既有 provider/business/repository/contract/collaboration 保留，faux 与 live 分列。验证规则见 [工作区与证据门禁](workspace-evidence.md)。
