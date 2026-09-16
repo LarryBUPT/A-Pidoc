@@ -49,3 +49,5 @@ PR 被放弃时应直接关闭，并保留 Issue；需求只有在验收完成�
 Pi 精确锁定 `0.85.1`，运行要求 Node 22.19+。除既有门禁，还须执行 `npm run eval:harness`：三轮离线低层 loop 合同，用 faux provider 验证工具轨迹、awaited sink、暂停/继续与串行边界。完整迁移标准见 [Harness 文档](docs/agentic-harness.md) 与 [Pi RFC](docs/pi-0.85.1-rfc.md)。真实模型验证仍独立受预算执行，不进入 required CI。
 
 V4.5 PR-6 起本地/required CI 增加 `npm run eval:agentic`（54 条 offline 配对结果）。完整 V4.5 发布前须手动 `eval:agentic:live`，凭据和完整轨迹放私有忽略目录；公开仅提交脱敏证据，不把 live 作为每次 PR 的 required network gate。
+
+V5 PR-7起本地/required CI再增加 `npm run eval:reliability`：三轮计划/探测/队列/真实子进程中断恢复合同与faux场景。发布V5前手动 `eval:reliability:live`，保留私有失败预跑、任务轨迹与原报告hash，公开脱敏摘要。Worker复用原Harness，禁止用第二套模型执行loop替代；本地JSON与隔离副作用不作为生产SLO或Exactly-once证据。

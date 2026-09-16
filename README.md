@@ -207,6 +207,7 @@ HTTP API 同时保留 V0 `{ "caseId": "auth-header" }` 输入，并新增：
 - [V0 → V4.5 构建日志](docs/build-log.md)：按真实提交、Issue、PR 和测试记录迭代。
 - [V0 → V4.5 验证指南](docs/verification.md)：从干净安装到团队协作闭环的命令、预期信号、退出码和排错入口。
 - [V4.5 完整发布审计](docs/v45-release-audit.md)：六批交付、正式版本一致性、offline/live 指标、失败记录与生产边界。
+- [V5 持续可靠性](docs/reliability-v5.md)：低成本计划探测、异常聚类、本地工单、持久队列、Harness Worker与中断恢复。
 - [贡献与发布工作流](CONTRIBUTING.md)：Issue、分支、CI/CD（Continuous Integration / Continuous Delivery，持续集成与持续交付）和 Release 规则。
 
 个人求职分析、JD、废弃方案和未来规划保存在本地 `.private/planning-docs/`，由 `.gitignore` 排除，不进入 GitHub。
@@ -228,6 +229,7 @@ src/
   core/              V0～V4 兼容编排主循环
   harness/           Pi 低层适配、工具注册、持久轨迹、审批协议与预算
   api-harness/       API 护栏、事实工作区、投影、硬门禁、工具族与独立 Reviewer
+  reliability/       V5 计划探测、异常分流、持久队列、Worker生命周期与本地观测
   domain/            稳定 JSON/TypeScript 契约
   evaluation/        业务、仓库、契约和团队协作冻结评测
   fixtures/          可重复的故障案例
@@ -259,6 +261,8 @@ docs/                可由仓库事实验证的公开文档
 - V3 能力：比较 OpenAPI operation 与 JSON request/response 字段的增删、类型和 required 变化；将风险映射到 V2 已解析调用点，并在显式批准的隔离副本验证一类无损字面量迁移。
 - V4 能力：归一化 GitHub PR、GitLab MR、Jira Issue、Slack/飞书消息，构造对应回复载荷；导入/导出受限 Postman JSON 请求；以角色、租户和双审批约束日志查询、诊断、发布与结构化知识入库。
 - V4.5 能力：复杂任务由 Pi 自主选择注册工具，支持 runtime-api 调查与有限 repository-contract 隔离迁移；持久轨迹、准确批准后的模型重发、事实投影、硬 Gate 与独立 Reviewer 约束执行和完成。简单固定 case 保留零模型路径，发布仅为批准后的本地 fixture 草稿。
-- 暂不支持：OpenAPI 外部/循环 `$ref`、非 JSON request body、完整 AST 与函数间/运行时数据流、自定义客户端、字段重命名或业务值推断、响应字段使用级追踪、自动历史副作用回放、真实企业平台账号与网络写回、异步队列、向量知识检索、管理 UI、Skill 动态加载、生产部署和公网模型在线 CI。
+- 暂不支持：OpenAPI 外部/循环 `$ref`、非 JSON request body、完整 AST 与函数间/运行时数据流、自定义客户端、字段重命名或业务值推断、响应字段使用级追踪、自动历史副作用回放、真实企业平台账号与网络写回、生产分布式队列、向量知识检索、管理 UI、Skill 动态加载、生产部署和公网模型在线 CI。
 
 复杂 API 调查的新入口是 `agent-run`（Pi 低层循环、实际工具、审批恢复、收敛状态、硬证据门禁与独立 Reviewer）；简单已知 case 保留零模型的确定性路径。使用方式见 [API 工具族](docs/api-tool-bundles.md)，验收与边界见 [Reviewer/配对评测](docs/reviewer-evaluation.md)。`eval:agentic` 为离线 required gate，`eval:agentic:live` 为私有凭据的发布前验收。
+
+V5 持续可靠性入口是 `reliability-*` CLI，或先运行 `npm run demo:reliability`：健康合法/负例探测零模型，复杂异常经持久队列复用上述Harness，高风险本地草稿需准确批准，响应结构持续异常保留人工接管。JSON队列是本地受控实现，生产分布式队列/长期监控/SLO仍未验证；三轮 `eval:reliability` 为离线门禁，`eval:reliability:live` 为独立发布前验收。

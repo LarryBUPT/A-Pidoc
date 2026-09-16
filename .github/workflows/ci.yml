@@ -58,7 +58,10 @@ jobs:
       - name: Run matched offline Raw Pi and Harness-Pi comparison
         run: npm run eval:agentic
 
-      - name: Verify generated output is reproducible
+      - name: Run three V5 scheduled reliability and worker recovery evaluations
+        run: npm run eval:reliability
+
+      - name: Verify generated output is reproducible after all evaluations
         run: git diff --exit-code
 
       # workflow_dispatch check suites are not associated with an open PR.
