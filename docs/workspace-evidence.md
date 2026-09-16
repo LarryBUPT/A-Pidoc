@@ -30,4 +30,4 @@ waiting、pending-reissue、blocked 或 executionInDoubt 不可 resolved。Revie
 
 ## 尚未解决
 
-当前是基础治理合同完整交付；faux 工具验证结构与失败协议，不代表两个真实 API 工具族已迁移。PR-5 需要 HTTP 与仓库竖切、隔离/实际测试/文件 hash verifier；PR-6 需要独立 Reviewer、真实 DeepSeek 重发轨迹和同条件 Raw Pi 对照。完成 PR-1～PR-4 不等于完整 V4.5，也不等于生产安全、任意 API 语义验证或 Exactly-once。
+PR-4 本批次是基础治理合同；后续 [PR-5](api-tool-bundles.md) 提供实际 HTTP/隔离测试/文件 verifier，[PR-6](reviewer-evaluation.md) 提供独立 Reviewer、真实模型重发与配对结果。完成 PR-1～PR-4 不等于完整 V4.5；后续全部受控验收也不等于生产安全、任意 API 语义验证或 Exactly-once。

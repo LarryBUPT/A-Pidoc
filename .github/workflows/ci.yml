@@ -55,6 +55,9 @@ jobs:
       - name: Run three offline low-level Harness contract evaluations
         run: npm run eval:harness
 
+      - name: Run matched offline Raw Pi and Harness-Pi comparison
+        run: npm run eval:agentic
+
       - name: Verify generated output is reproducible
         run: git diff --exit-code
 

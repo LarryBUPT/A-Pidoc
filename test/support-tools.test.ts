@@ -1,0 +1,32 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { writeFile, readFile } from "node:fs/promises";
+import { fauxAssistantMessage, fauxToolCall } from "@earendil-works/pi-ai";
+import { harness, task } from "./harness-helpers.js";
+import { ApiHarnessRuntime } from "../src/api-harness/runtime.js";
+import { createDiagnosticSandbox, RuntimeApiBackend } from "../src/api-harness/tool-bundles.js";
+import { JsonKnowledgeStore } from "../src/collaboration/knowledge-store.js";
+import { ApiSupportTools } from "../src/api-harness/support-tools.js";
+const call=(name:string,args:Record<string,unknown>,id:string)=>fauxAssistantMessage(fauxToolCall(name,args,{id}));
+test("support retrieval uses host task scope and bounds time/count while stripping secrets",async t=>{
+  const h=await harness(t,[],[]),sandbox=await createDiagnosticSandbox();t.after(()=>sandbox.close());
+  const knowledge=new JsonKnowledgeStore(`${h.store.file}.knowledge.json`);
+  for(const tenantId of ["public-demo","other-team"])await knowledge.save({id:tenantId,tenantId,errorSignature:"415",operation:"POST /orders",rootCause:"CONTENT_TYPE_MISMATCH",effectiveFix:"application/json",verification:"local fixture",applicableVersion:"1",evidenceSources:[],createdAt:new Date().toISOString()});
+  await writeFile(`${h.store.file}.logs.json`,JSON.stringify([{id:"allowed",tenantId:"public-demo",correlationId:"test-run",at:new Date().toISOString(),level:"warn",message:"Authorization: Bearer fake-secret",attributes:{apiKey:"secret"}},{id:"other",tenantId:"other-team",correlationId:"test-run",at:new Date().toISOString(),level:"warn",message:"private",attributes:{}}]));
+  h.provider.setResponses([call("search_knowledge",{operation:"POST /orders",limit:5},"knowledge"),call("query_logs",{lookbackSeconds:60,limit:20},"logs"),fauxAssistantMessage("No completed diagnosis")]);
+  const runtime=new ApiHarnessRuntime(h.store,new RuntimeApiBackend(sandbox.endpoint),{hosts:["127.0.0.1"],ports:[Number(new URL(sandbox.endpoint).port)],environments:["sandbox"],credentialScopes:[]},h.options,()=>false);
+  const s=await runtime.start({...task(),taskFamily:"runtime-api",allowedToolBundles:["runtime-api","shared"]});
+  assert.equal((s.artifacts["knowledge_lookup-knowledge"] as {data:{cases:{id:string}[]}}).data.cases[0]!.id,"public-demo");
+  const logs=(s.artifacts["log_observation-logs"] as {data:{logs:{id:string}[]}}).data.logs;assert.equal(logs.length,1);assert.equal(logs[0]!.id,"allowed");assert.doesNotMatch(JSON.stringify(s),/fake-secret|other-team/);
+});
+test("publication suspends, exact reissue stores one local receipt and backend idempotency survives restart",async t=>{
+  const h=await harness(t,[],[]),sandbox=await createDiagnosticSandbox();t.after(()=>sandbox.close());
+  const runtime=new ApiHarnessRuntime(h.store,new RuntimeApiBackend(sandbox.endpoint),{hosts:["127.0.0.1"],ports:[Number(new URL(sandbox.endpoint).port)],environments:["sandbox"],credentialScopes:[]},h.options,i=>i.actorId==="owner"&&i.source==="local");
+  const args={message:"Observed sandbox contract; investigation not completed",evidenceIds:["api_operation-doc"]};
+  h.provider.setResponses([call("read_api_document",{},"doc"),call("publish_report",args,"pending")]);let s=await runtime.start({...task(),taskFamily:"runtime-api",allowedToolBundles:["runtime-api","shared"]});assert.equal(s.run.state,"waiting_approval");
+  await runtime.guardrail.grant(s.pendingApproval!.approvalId,{actorId:"owner",source:"local"});h.provider.setResponses([call("publish_report",args,"published"),fauxAssistantMessage("Draft recorded")]);s=await runtime.resume();
+  assert.equal(s.run.evidence.filter(r=>r.kind==="publication_receipt").length,1);
+  const support=new ApiSupportTools(h.store),tool=support.tools.find(t=>t.name==="publish_report")!;
+  await tool.execute(args,{runId:s.run.runId,toolCallId:"retry-read",environment:"sandbox"});
+  assert.equal(Object.keys(JSON.parse(await readFile(`${h.store.file}.publications.json`,"utf8"))).length,1);
+});

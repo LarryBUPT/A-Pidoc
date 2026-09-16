@@ -1,6 +1,11 @@
 import { TrajectoryStore } from "../harness/trajectory-store.js";
 import { resolveEvidence, workspaceState } from "./convergent-workspace.js";
 import { redactValue } from "../security/redaction.js";
+function observation(data:unknown):string {
+  const text=JSON.stringify(data);if(text.length<=1024)return text;
+  const fields=Object.fromEntries(Object.entries(data as Record<string,unknown>).filter(([_k,v])=>typeof v==="number"||typeof v==="boolean"||typeof v==="string"&&v.length<=160));
+  return JSON.stringify({summary:"Large observation; read_evidence contains full data",fields});
+}
 
 export class ContextProjector {
   constructor(readonly store: TrajectoryStore, private readonly maxBytes = 32_768) {}
@@ -9,9 +14,10 @@ export class ContextProjector {
       const s = await this.store.load(), state = workspaceState(s), b = s.run.task.budget, u = s.run.usage;
       const board = { goal: s.run.task.goal, stage: state.stage, stateRevision: s.stateRevision, workspaceRevision: s.workspaceRevision, evidenceSequence: s.evidenceSequence,
         remaining: { modelCalls: b.maxModelCalls - u.modelCalls, toolCalls: b.maxToolCalls - u.toolCalls, tokens: b.maxTokens - u.tokens, estimatedCostUsd: b.maxCostUsd - u.estimatedCostUsd },
-        evidence: s.run.evidence.slice(-24).map(ref => { const a = resolveEvidence(s, ref.id); return { id: ref.id, kind: ref.kind, sha256: ref.sha256, valid: !!a, observation: a ? JSON.stringify(a.data).slice(0, 1024) : null }; }),
+        evidence: s.run.evidence.slice(-24).map(ref => { const a = resolveEvidence(s, ref.id); return { id: ref.id, kind: ref.kind, sha256: ref.sha256, valid: !!a, observation: a ? observation(a.data) : null }; }),
         openHypotheses: state.openHypotheses.slice(0, 8), rejectedHypotheses: state.rejectedHypotheses.slice(-8), noProgressCount: state.noProgressCount,
         pending: s.pendingApproval ? { toolName: s.pendingApproval.toolName, actionDigest: s.pendingApproval.normalizedArgsDigest, status: s.pendingApproval.status } : null,
+        reviewFeedback: [...s.run.steps].reverse().find(v => v.kind === "review" && ["revision_requested", "manual_handoff"].includes((v.data as {type?:string}).type ?? ""))?.data ?? null,
         instruction: "Evidence IDs refer to persisted tool results. Read evidence by ID if needed. Never claim unexecuted changes or tests. A success proposal must pass the task Evidence Gate." };
       const safe = redactValue(messages) as Array<Record<string, unknown>>;
       const last = safe.at(-1), tail: unknown[] = [];
@@ -21,7 +27,7 @@ export class ContextProjector {
         const assistant = safe[index];
         if (assistant?.role === "assistant") {
           tail.push(assistant);
-          for (const m of safe.slice(index + 1)) tail.push({ ...m, content: m.toolName === "read_evidence" && Buffer.byteLength(JSON.stringify(m.content)) <= 8192 ? m.content : [{ type: "text", text: "Observation persisted in the evidence board. Use evidence IDs for details." }], details: undefined });
+          for (const m of safe.slice(index + 1)) tail.push({ ...m, content: ["read_evidence", "submit_completion"].includes(String(m.toolName)) && Buffer.byteLength(JSON.stringify(m.content)) <= 8192 ? m.content : [{ type: "text", text: "Observation persisted in the evidence board. Use evidence IDs for details." }], details: undefined });
         }
       }
       const projected = [{ role: "user", timestamp: Date.now(), content: `API WORKSPACE BOARD\n${JSON.stringify(board)}` }, ...tail];

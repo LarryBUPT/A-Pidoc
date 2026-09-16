@@ -31,4 +31,6 @@ CLI 审批身份来自本地 OS 会话，显式 approval ID 代表用户授权�
 
 ## 尚未解决
 
-目前注册两个受控任务 profile；不支持任意真实企业环境、任意源代码执行或复杂迁移的语义正确性。单写入 action lock 不承诺外部进程遵守锁，也不等于 Exactly-once。PR-6 的独立 Reviewer、同模型/提示/工具/数据/预算 Raw Pi 对照及真实 DeepSeek 轨迹仍是完整 V4.5 验收条件。
+目前注册两个受控任务 profile；不支持任意真实企业环境、任意源代码执行或复杂迁移的语义正确性。单写入 action lock 不承诺外部进程遵守锁，也不等于 Exactly-once。[PR-6](reviewer-evaluation.md) 补充独立 Reviewer、同条件 Raw Pi 对照及真实 DeepSeek 证据；离线本文件集成测试中的语义 stub 不作为真实审查收益。
+
+最终映射核对补齐 build_repository_tasks（实际扫描→候选任务，不执行）、search_knowledge（本 task scope/公共 demo 的 JsonKnowledgeStore 摘要）、query_logs（已注册本地日志、同 scope/correlation、1 小时与20条限制）、publish_report（本地 FixtureConnector 草稿、准确批准与持久幂等账本）。没有真实平台发送；默认知识/日志为空，不编造企业证据。HTTP 复用 RealHttpTool，规范复用 readApiDocument。两profile都注册共享检索/日志/发布工具，runtime 至少四个只读工具加受控 HTTP；Raw/Harness 共用全部工具。发布草稿不表示任务 resolved，也不变更 API workspace，账本摘要独立参与条件重检。

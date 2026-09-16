@@ -4,9 +4,9 @@ V4 已发布基线是 `v0.11.0`。后续按 [V4.5 Harness 迁移与验证](docs/
 
 API Doctor 是一个面向初级开发者与 SaaS（Software as a Service，软件即服务）实施人员的 HTTP API（Hypertext Transfer Protocol Application Programming Interface，基于超文本传输协议的应用程序编程接口）联调诊断 Agent（智能体）。它把失败请求、接口规范和运行证据组织成一条可复现链路，并在安全策略约束下执行修正、重试与结果复核。
 
-当前 V4 把 V0～V3 的单请求、仓库与契约能力接入一条受控团队工作流：GitHub/GitLab、Jira、Slack/飞书载荷先归一化，随后按租户和角色读取关联日志与结构化历史案例，再执行既有诊断闭环。发布结果和保存知识分别需要显式批准，所有进入报告、平台回复和知识库的数据都会脱敏。Postman Collection v2.1 的受限 JSON 请求可导入并脱敏导出；冻结评测不访问真实企业账号、不调用公网模型。
+V4 历史版本把 V0～V3 的单请求、仓库与契约能力接入受控团队工作流：平台载荷归一化、租户/角色/日志/结构化案例、结果发布与知识批准、脱敏 Postman。V4.5 的复杂任务入口改为 Pi 自主选工具，由 Guardrail、持久事实状态、Evidence Gate 和独立模型 Reviewer 治理；实际工具覆盖 runtime-api 与 repository-contract，发布前 offline/live 证据分别保存。平台连接器仍是受控验证，没有真实企业账号采纳证据。
 
-## 已完成的最小闭环
+## V4 历史闭环（保留兼容）
 
 ```mermaid
 flowchart LR
@@ -25,7 +25,7 @@ flowchart LR
     H --> I[单步修正]
     I --> J{成功?}
     J -- 否且有预算 --> C
-    J -- 是/预算耗尽 --> K[独立 Reviewer]
+    J -- 是/预算耗尽 --> K[V4 确定性复核器]
     K --> L[结构化报告与 Trace]
     L --> Z[平台回复 + 结构化知识案例]
 ```
@@ -256,3 +256,5 @@ docs/                可由仓库事实验证的公开文档
 - V3 能力：比较 OpenAPI operation 与 JSON request/response 字段的增删、类型和 required 变化；将风险映射到 V2 已解析调用点，并在显式批准的隔离副本验证一类无损字面量迁移。
 - V4 能力：归一化 GitHub PR、GitLab MR、Jira Issue、Slack/飞书消息，构造对应回复载荷；导入/导出受限 Postman JSON 请求；以角色、租户和双审批约束日志查询、诊断、发布与结构化知识入库。
 - 暂不支持：OpenAPI 外部/循环 `$ref`、非 JSON request body、完整 AST 与函数间/运行时数据流、自定义客户端、字段重命名或业务值推断、响应字段使用级追踪、任务历史回放、真实企业平台账号与网络写回、异步队列、向量知识检索、管理 UI、Skill 动态加载、Pi 工具自主调用、生产部署和公网模型在线 CI。
+
+复杂 API 调查的新入口是 `agent-run`（Pi 低层循环、实际工具、审批恢复、收敛状态、硬证据门禁与独立 Reviewer）；简单已知 case 保留零模型的确定性路径。使用方式见 [API 工具族](docs/api-tool-bundles.md)，验收与边界见 [Reviewer/配对评测](docs/reviewer-evaluation.md)。`eval:agentic` 为离线 required gate，`eval:agentic:live` 为私有凭据的发布前验收。

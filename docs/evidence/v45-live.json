@@ -1,0 +1,467 @@
+{
+  "dataset": "agentic-live-v1",
+  "passed": true,
+  "provider": "deepseek",
+  "model": "deepseek-v4-pro",
+  "liveEvidence": true,
+  "repetitions": 1,
+  "originalReportSha256": "3cfbb6e3deb039ad0ef734aea2f0fa48c759a7abb16f44b762766cd4c1106021",
+  "failedPrerunsPreserved": 5,
+  "results": [
+    {
+      "family": "runtime-api",
+      "provider": "deepseek",
+      "model": "deepseek-v4-pro",
+      "promptHash": "ed2749359f86cb4b134f06b5d50dd393deb3d8ac8adb047b91378347d8f2acf1",
+      "toolHash": "47234db0e37f866f6b59ad0244b4cce1d8105ae66948438db53e4550be5a39a8",
+      "dataset": "agentic-live-v1",
+      "repetitions": 1,
+      "approvals": 0,
+      "state": "resolved",
+      "modelTurns": 6,
+      "toolCalls": 7,
+      "stepsToConvergence": 13,
+      "tokens": 12661,
+      "costUsd": 0.0041012670000000005,
+      "durationMs": 17979,
+      "toolErrors": 0,
+      "groundedClaims": 2,
+      "totalClaims": 2,
+      "groundedReasoningRate": 1,
+      "review": [
+        {
+          "type": "verdict",
+          "verdict": "pass",
+          "reasons": [
+            "API contract evidence shows requiredContentType application/json for POST /orders.",
+            "HTTP observation with Content-Type text/plain returned status 415 and message 'Expected application/json', supporting the rejection claim.",
+            "HTTP observation with Content-Type application/json returned status 200 and message 'Request validated; no order was created', supporting the success claim.",
+            "Both observations were sideEffect=false, so success is only a validation response and no order creation is evidenced."
+          ]
+        }
+      ],
+      "finalArtifact": {
+        "id": "final-4e707683-a37d-4f69-a2aa-fee8a6ec0ed1",
+        "sha256": "2b42cfcb138beef9d145934ef2bb4cb3e8d1a014ff4414c43e312dd0bb363fe4",
+        "mediaType": "application/json"
+      },
+      "reviewPromptHash": "fc23cb16b5a76a813a289f7f63b578a87ae886e0ccb0f3e8cb91768c5d1eb6be",
+      "leadPromptHash": "ed2749359f86cb4b134f06b5d50dd393deb3d8ac8adb047b91378347d8f2acf1",
+      "trajectorySummary": [
+        {
+          "seq": 3,
+          "kind": "tool_call",
+          "type": null,
+          "name": "read_api_document",
+          "verdict": null,
+          "state": null,
+          "code": null
+        },
+        {
+          "seq": 10,
+          "kind": "tool_call",
+          "type": null,
+          "name": "read_evidence",
+          "verdict": null,
+          "state": null,
+          "code": null
+        },
+        {
+          "seq": 14,
+          "kind": "tool_call",
+          "type": null,
+          "name": "query_logs",
+          "verdict": null,
+          "state": null,
+          "code": null
+        },
+        {
+          "seq": 21,
+          "kind": "tool_call",
+          "type": null,
+          "name": "execute_http",
+          "verdict": null,
+          "state": null,
+          "code": null
+        },
+        {
+          "seq": 25,
+          "kind": "tool_call",
+          "type": null,
+          "name": "execute_http",
+          "verdict": null,
+          "state": null,
+          "code": null
+        },
+        {
+          "seq": 32,
+          "kind": "tool_call",
+          "type": null,
+          "name": "query_logs",
+          "verdict": null,
+          "state": null,
+          "code": null
+        },
+        {
+          "seq": 39,
+          "kind": "tool_call",
+          "type": null,
+          "name": "submit_completion",
+          "verdict": null,
+          "state": null,
+          "code": null
+        },
+        {
+          "seq": 42,
+          "kind": "review",
+          "type": "provider_request",
+          "name": null,
+          "verdict": null,
+          "state": null,
+          "code": null
+        },
+        {
+          "seq": 43,
+          "kind": "review",
+          "type": "model_turn",
+          "name": null,
+          "verdict": null,
+          "state": null,
+          "code": null
+        },
+        {
+          "seq": 44,
+          "kind": "review",
+          "type": "verdict",
+          "name": null,
+          "verdict": "pass",
+          "state": null,
+          "code": null
+        },
+        {
+          "seq": 45,
+          "kind": "state_transition",
+          "type": "evidence_gate",
+          "name": null,
+          "verdict": null,
+          "state": null,
+          "code": null
+        }
+      ]
+    },
+    {
+      "family": "repository-contract",
+      "provider": "deepseek",
+      "model": "deepseek-v4-pro",
+      "promptHash": "ed2749359f86cb4b134f06b5d50dd393deb3d8ac8adb047b91378347d8f2acf1",
+      "toolHash": "90188aea1c9928f76596decac69c2cc4ba70fc914da08b53f9cb5b2b185d0c96",
+      "dataset": "agentic-live-v1",
+      "repetitions": 1,
+      "approvals": 2,
+      "state": "resolved",
+      "modelTurns": 13,
+      "toolCalls": 14,
+      "stepsToConvergence": 27,
+      "tokens": 43098,
+      "costUsd": 0.011029077000000002,
+      "durationMs": 37454,
+      "toolErrors": 2,
+      "groundedClaims": 4,
+      "totalClaims": 4,
+      "groundedReasoningRate": 1,
+      "review": [
+        {
+          "type": "verdict",
+          "verdict": "pass",
+          "reasons": [
+            "Contract diff evidence shows POST /orders $.amount changed from string to number, breaking.",
+            "Repository scan evidence shows src/client.ts:2 serializes amount as string literal \"42\", matching the affected field.",
+            "Contract impact evidence connects the breaking change to the fetch call at src/client.ts:2.",
+            "Patch proposal evidence provides the intended change from amount: \"42\" to amount: 42.",
+            "Isolated patch evidence confirms the patch was applied as isolated.",
+            "Test run evidence shows exitCode 0 and 1/1 pass for the migrated POST /orders call."
+          ]
+        }
+      ],
+      "finalArtifact": {
+        "id": "final-adaebd42-5d59-4bf2-abcd-e9a7f462884c",
+        "sha256": "c8e8bd005d3fad8384868dc67dab447fc9e7bd357d825b7e632688ccae2ee5cb",
+        "mediaType": "application/json"
+      },
+      "reviewPromptHash": "fc23cb16b5a76a813a289f7f63b578a87ae886e0ccb0f3e8cb91768c5d1eb6be",
+      "leadPromptHash": "ed2749359f86cb4b134f06b5d50dd393deb3d8ac8adb047b91378347d8f2acf1",
+      "trajectorySummary": [
+        {
+          "seq": 3,
+          "kind": "tool_call",
+          "type": null,
+          "name": "compare_contracts",
+          "verdict": null,
+          "state": null,
+          "code": null
+        },
+        {
+          "seq": 7,
+          "kind": "tool_call",
+          "type": null,
+          "name": "scan_repository",
+          "verdict": null,
+          "state": null,
+          "code": null
+        },
+        {
+          "seq": 14,
+          "kind": "tool_call",
+          "type": null,
+          "name": "read_evidence",
+          "verdict": null,
+          "state": null,
+          "code": null
+        },
+        {
+          "seq": 18,
+          "kind": "tool_call",
+          "type": null,
+          "name": "read_evidence",
+          "verdict": null,
+          "state": null,
+          "code": null
+        },
+        {
+          "seq": 25,
+          "kind": "tool_call",
+          "type": null,
+          "name": "analyze_contract_impact",
+          "verdict": null,
+          "state": null,
+          "code": null
+        },
+        {
+          "seq": 32,
+          "kind": "tool_call",
+          "type": null,
+          "name": "read_evidence",
+          "verdict": null,
+          "state": null,
+          "code": null
+        },
+        {
+          "seq": 39,
+          "kind": "tool_call",
+          "type": null,
+          "name": "propose_patch",
+          "verdict": null,
+          "state": null,
+          "code": null
+        },
+        {
+          "seq": 46,
+          "kind": "tool_call",
+          "type": null,
+          "name": "read_evidence",
+          "verdict": null,
+          "state": null,
+          "code": null
+        },
+        {
+          "seq": 53,
+          "kind": "tool_call",
+          "type": null,
+          "name": "apply_patch_isolated",
+          "verdict": null,
+          "state": null,
+          "code": null
+        },
+        {
+          "seq": 55,
+          "kind": "approval",
+          "type": "pending",
+          "name": "apply_patch_isolated",
+          "verdict": null,
+          "state": null,
+          "code": null
+        },
+        {
+          "seq": 56,
+          "kind": "state_transition",
+          "type": null,
+          "name": null,
+          "verdict": null,
+          "state": "waiting_approval",
+          "code": null
+        },
+        {
+          "seq": 60,
+          "kind": "approval",
+          "type": "granted",
+          "name": "apply_patch_isolated",
+          "verdict": null,
+          "state": null,
+          "code": null
+        },
+        {
+          "seq": 61,
+          "kind": "reentry",
+          "type": null,
+          "name": null,
+          "verdict": null,
+          "state": null,
+          "code": null
+        },
+        {
+          "seq": 64,
+          "kind": "tool_call",
+          "type": null,
+          "name": "apply_patch_isolated",
+          "verdict": null,
+          "state": null,
+          "code": null
+        },
+        {
+          "seq": 65,
+          "kind": "approval",
+          "type": "consumed",
+          "name": "apply_patch_isolated",
+          "verdict": null,
+          "state": null,
+          "code": null
+        },
+        {
+          "seq": 67,
+          "kind": "approval",
+          "type": "execution_confirmed",
+          "name": null,
+          "verdict": null,
+          "state": null,
+          "code": null
+        },
+        {
+          "seq": 73,
+          "kind": "tool_call",
+          "type": null,
+          "name": "run_regression_tests",
+          "verdict": null,
+          "state": null,
+          "code": null
+        },
+        {
+          "seq": 75,
+          "kind": "approval",
+          "type": "pending",
+          "name": "run_regression_tests",
+          "verdict": null,
+          "state": null,
+          "code": null
+        },
+        {
+          "seq": 76,
+          "kind": "state_transition",
+          "type": null,
+          "name": null,
+          "verdict": null,
+          "state": "waiting_approval",
+          "code": null
+        },
+        {
+          "seq": 80,
+          "kind": "approval",
+          "type": "granted",
+          "name": "run_regression_tests",
+          "verdict": null,
+          "state": null,
+          "code": null
+        },
+        {
+          "seq": 81,
+          "kind": "reentry",
+          "type": null,
+          "name": null,
+          "verdict": null,
+          "state": null,
+          "code": null
+        },
+        {
+          "seq": 84,
+          "kind": "tool_call",
+          "type": null,
+          "name": "run_regression_tests",
+          "verdict": null,
+          "state": null,
+          "code": null
+        },
+        {
+          "seq": 85,
+          "kind": "approval",
+          "type": "consumed",
+          "name": "run_regression_tests",
+          "verdict": null,
+          "state": null,
+          "code": null
+        },
+        {
+          "seq": 87,
+          "kind": "approval",
+          "type": "execution_confirmed",
+          "name": null,
+          "verdict": null,
+          "state": null,
+          "code": null
+        },
+        {
+          "seq": 93,
+          "kind": "tool_call",
+          "type": null,
+          "name": "read_evidence",
+          "verdict": null,
+          "state": null,
+          "code": null
+        },
+        {
+          "seq": 100,
+          "kind": "tool_call",
+          "type": null,
+          "name": "submit_completion",
+          "verdict": null,
+          "state": null,
+          "code": null
+        },
+        {
+          "seq": 103,
+          "kind": "review",
+          "type": "provider_request",
+          "name": null,
+          "verdict": null,
+          "state": null,
+          "code": null
+        },
+        {
+          "seq": 104,
+          "kind": "review",
+          "type": "model_turn",
+          "name": null,
+          "verdict": null,
+          "state": null,
+          "code": null
+        },
+        {
+          "seq": 105,
+          "kind": "review",
+          "type": "verdict",
+          "name": null,
+          "verdict": "pass",
+          "state": null,
+          "code": null
+        },
+        {
+          "seq": 106,
+          "kind": "state_transition",
+          "type": "evidence_gate",
+          "name": null,
+          "verdict": null,
+          "state": null,
+          "code": null
+        }
+      ]
+    }
+  ]
+}

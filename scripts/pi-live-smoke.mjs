@@ -29,6 +29,8 @@ try {
     model: EXPECTED_MODEL,
     promptVersion: "v1.0.0",
     timeoutMs: 30000,
+    maxOutputTokens: 2048,
+    maxPromptBytes: 32768,
     fallback: "none"
   });
 
