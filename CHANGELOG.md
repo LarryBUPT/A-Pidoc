@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.15.0](https://github.com/LarryBUPT/A-Pidoc/compare/v0.14.0...v0.15.0) (2026-09-16)
+
+
+### Features
+
+* register actual API and isolated contract tools ([#57](https://github.com/LarryBUPT/A-Pidoc/issues/57)) ([8645e1c](https://github.com/LarryBUPT/A-Pidoc/commit/8645e1c2c63134d93d41bf79333865c87207297f))
+
 ## [0.14.0](https://github.com/LarryBUPT/A-Pidoc/compare/v0.13.0...v0.14.0) (2026-09-16)
 
 
