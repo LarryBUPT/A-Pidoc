@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.14.0](https://github.com/LarryBUPT/A-Pidoc/compare/v0.13.0...v0.14.0) (2026-09-16)
+
+
+### Features
+
+* add convergent workspace and hard evidence gate ([#54](https://github.com/LarryBUPT/A-Pidoc/issues/54)) ([8114782](https://github.com/LarryBUPT/A-Pidoc/commit/8114782dc3d95e557452ed793bbd97ed5b23c1c4))
+
 ## [0.13.0](https://github.com/LarryBUPT/A-Pidoc/compare/v0.12.0...v0.13.0) (2026-09-16)
 
 
