@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.17.0](https://github.com/LarryBUPT/A-Pidoc/compare/v0.16.0...v0.17.0) (2026-09-16)
+
+
+### Features
+
+* add V5 scheduled reliability and durable Harness workers ([#65](https://github.com/LarryBUPT/A-Pidoc/issues/65)) ([f3c181d](https://github.com/LarryBUPT/A-Pidoc/commit/f3c181d220dc82d01a522fbc548b47bec3f12e9d))
+
 ## [0.16.0](https://github.com/LarryBUPT/A-Pidoc/compare/v0.15.0...v0.16.0) (2026-09-16)
 
 
