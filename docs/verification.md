@@ -191,3 +191,5 @@ GitHub/GitLab PR、Jira Issue、Slack/飞书消息均有载荷归一化器和回
 ## V4.5 PR-4 事实与完成门禁
 
 `node --test dist/test/workspace-evidence.test.js` 覆盖 13 项状态、Artifact、投影、无进展与 Evidence Gate 故障合同。`npm run eval:harness` 现在连续三轮验证 loop + approval + workspace/evidence；既有 provider/business/repository/contract/collaboration 保留，faux 与 live 分列。验证规则见 [工作区与证据门禁](workspace-evidence.md)。
+
+PR-5 把真实 HTTP/隔离迁移工具集成合同加入 `eval:harness` 三轮复跑。独立 TAP 子进程不继承 NODE_TEST_CONTEXT，实际测试数必须为正；live CLI 使用私有 `.env` 与 `.private/runs`，不会进入离线 CI。

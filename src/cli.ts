@@ -16,6 +16,7 @@ import { exportPostmanCollection, importPostmanCollection, parseApiRequestArray 
 import type { CollaborationPlatform } from "./collaboration/types.js";
 import { scanRepository } from "./repository/scanner.js";
 import { buildRepositoryTasks, generateRepositoryPatchPlans, generateRepositoryTestPlans, runRepositoryTasks, verifyRepositoryPlan } from "./repository/workflow.js";
+import { runHarnessCommand, safeHarnessError } from "./api-harness/cli.js";
 
 function flags(args: string[]): Map<string, string> {
   const result = new Map<string, string>();
@@ -45,6 +46,10 @@ function printReport(report: Awaited<ReturnType<ReturnType<typeof createRealAppW
 
 async function run(): Promise<void> {
   const [mode = "all", ...args] = process.argv.slice(2);
+  if (["agent-run", "agent-approve", "agent-resume"].includes(mode)) {
+    try { await runHarnessCommand(mode, flags(args)); } catch (error) { console.error(safeHarnessError(error)); process.exitCode = 1; }
+    return;
+  }
   if (mode === "eval") {
     const evaluation = await evaluateBusinessCases();
     console.log(JSON.stringify(evaluation, null, 2));

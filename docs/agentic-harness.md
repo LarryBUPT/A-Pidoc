@@ -30,3 +30,5 @@ PR-1 已合并，PR-2 提供低层多轮运行带。PR-1～PR-4 是基础治理�
 ## PR-4 状态与证据治理
 
 收敛归约、临时上下文投影、证据包关联和 final Artifact 见 [工作区与证据门禁](workspace-evidence.md)。目前已推进基础治理四批；双 API 工具族、真实模型/Reviewer/配对评测仍须分别验收。
+
+实际 API 工具族见 [PR-5](api-tool-bundles.md)。注册两个 profile 共用同一 Lead 提示与循环；真实工具可生成 HTTP、隔离补丁、Node 测试和磁盘摘要证据，离线 faux 不代表 live 模型验收。
