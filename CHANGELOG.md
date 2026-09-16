@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.16.0](https://github.com/LarryBUPT/A-Pidoc/compare/v0.15.0...v0.16.0) (2026-09-16)
+
+
+### Features
+
+* complete independent review and matched Harness evaluation ([#60](https://github.com/LarryBUPT/A-Pidoc/issues/60)) ([b4ad177](https://github.com/LarryBUPT/A-Pidoc/commit/b4ad177b5fcc9c8758c9f901128f932990b25e15))
+
 ## [0.15.0](https://github.com/LarryBUPT/A-Pidoc/compare/v0.14.0...v0.15.0) (2026-09-16)
 
 
