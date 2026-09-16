@@ -14,7 +14,7 @@ export interface RunSnapshot {
 }
 export function appendStep(s: RunSnapshot, kind: TrajectoryStep["kind"], data: unknown): void {
   const safe = redactValue(data);
-  if (kind === "model_turn" && data && typeof data === "object" && safe && typeof safe === "object") {
+  if ((kind === "model_turn" || kind === "review" && (data as { type?:string } | null)?.type === "model_turn") && data && typeof data === "object" && safe && typeof safe === "object") {
     const count = (data as { totalTokens?: number }).totalTokens;
     if (typeof count === "number" && Number.isSafeInteger(count) && count >= 0) (safe as { totalTokens?: number }).totalTokens = count;
   }

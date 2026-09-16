@@ -31,4 +31,4 @@ CLI 审批身份来自本地 OS 会话，显式 approval ID 代表用户授权�
 
 ## 尚未解决
 
-目前注册两个受控任务 profile；不支持任意真实企业环境、任意源代码执行或复杂迁移的语义正确性。单写入 action lock 不承诺外部进程遵守锁，也不等于 Exactly-once。PR-6 的独立 Reviewer、同模型/提示/工具/数据/预算 Raw Pi 对照及真实 DeepSeek 轨迹仍是完整 V4.5 验收条件。
+目前注册两个受控任务 profile；不支持任意真实企业环境、任意源代码执行或复杂迁移的语义正确性。单写入 action lock 不承诺外部进程遵守锁，也不等于 Exactly-once。[PR-6](reviewer-evaluation.md) 补充独立 Reviewer、同条件 Raw Pi 对照及真实 DeepSeek 证据；离线本文件集成测试中的语义 stub 不作为真实审查收益。

@@ -10,12 +10,12 @@ export interface StoredEvidence {
   ref: EvidenceRef; data: unknown; source: "tool"; beforeWorkspaceRevision: number;
   workspaceRevision: number; sequence: number;
 }
-interface WorkspaceState extends ApiDiagnosticState { factSignatures: string[] }
+interface WorkspaceState extends ApiDiagnosticState { factSignatures: string[]; inspectedEvidenceIds:string[] }
 export function workspaceState(s: RunSnapshot): WorkspaceState {
   const previous = s.domainState as WorkspaceState | undefined;
   const grants = s.run.steps.filter(v => v.kind === "approval" && (v.data as { type?: string }).type === "consumed").map(v => v.data as ApprovalGrant);
   if (s.grant && !grants.some(g => g.grantId === s.grant!.grantId)) grants.push(s.grant);
-  return { stage: "symptom_confirmed", confirmedFacts: [], openHypotheses: [], rejectedHypotheses: [], noProgressCount: 0, factSignatures: [], ...previous, approvals: grants, stateRevision: s.stateRevision, workspaceRevision: s.workspaceRevision, evidenceSequence: s.evidenceSequence };
+  return { stage: "symptom_confirmed", confirmedFacts: [], openHypotheses: [], rejectedHypotheses: [], noProgressCount: 0, factSignatures: [], inspectedEvidenceIds:[], ...previous, approvals: grants, stateRevision: s.stateRevision, workspaceRevision: s.workspaceRevision, evidenceSequence: s.evidenceSequence };
 }
 export function resolveEvidence(s: RunSnapshot, id: string): StoredEvidence | undefined {
   const a = s.artifacts[id] as StoredEvidence | undefined;
@@ -35,6 +35,11 @@ export class ConvergentWorkspace {
       let progress = false;
       if (!isError && result?.success === true && result.redacted === true && Array.isArray(result.evidence)) {
         const data = redactValue(result.data), hash = digest(data);
+        if (tool.progressMode === "inspect") {
+          const ref=(data as {ref?:EvidenceRef}).ref,a=ref?resolveEvidence(s,ref.id):undefined;
+          if(!a||a.ref.sha256!==ref!.sha256||digest((data as {data:unknown}).data)!==a.ref.sha256)throw new Error("INVALID_EVIDENCE_INSPECTION");
+          if(!state.inspectedEvidenceIds.includes(ref!.id)){state.inspectedEvidenceIds.push(ref!.id);progress=true;}
+        }
         if (result.evidence.length > 8) throw new Error("EVIDENCE_OUTPUT_LIMIT");
         const beforeRevision = s.workspaceRevision;
         if (result.controlPlaneChanged) {
@@ -52,7 +57,7 @@ export class ConvergentWorkspace {
           s.run.evidence.push(structuredClone(ref)); state.confirmedFacts.push(structuredClone(ref));
         }
       }
-      state.noProgressCount = progress ? 0 : state.noProgressCount + 1;
+      if (tool.progressMode !== "submit") state.noProgressCount = progress ? 0 : state.noProgressCount + 1;
       const artifacts = state.confirmedFacts.map(r => s.artifacts[r.id] as StoredEvidence);
       const kinds = new Set(artifacts.map(a => a.ref.kind));
       const latestTest = [...artifacts].reverse().find(a => a.ref.kind === "test_run");

@@ -11,7 +11,7 @@ export interface ToolInvocation { id: string; name: string; args: unknown }
 export interface LoopHooks {
   executeTool?: (call: ToolInvocation, execute: () => Promise<ToolResult>) => Promise<ToolResult>;
   beforeTool?: (call: ToolInvocation) => Promise<{ block: true; terminate: true; reason: string } | undefined>;
-  afterTool?: (call: ToolInvocation, result: unknown, isError: boolean) => Promise<void>;
+  afterTool?: (call: ToolInvocation, result: unknown, isError: boolean, signal?: AbortSignal) => Promise<void>;
   onEvent?: (event: AgentEvent) => Promise<void>;
   shouldStop?: () => Promise<boolean>;
   project?: (messages: unknown[]) => Promise<unknown[]>;
@@ -92,7 +92,7 @@ export class PiLoopAdapter {
           await this.store.transact(v => { appendStep(v, "policy", { toolCallId: call.id, decision: allowed ? "allow" : "block", code: allowed ? "READ_ONLY_BASELINE" : "GUARDRAIL_REQUIRED" }); if (!allowed) v.run.state = "blocked"; });
           return allowed ? undefined : { block: true, terminate: true, reason: "GUARDRAIL_REQUIRED" };
         },
-        afterToolCall: async h => { await hooks.afterTool?.({ id: h.toolCall.id, name: h.toolCall.name, args: h.args }, h.result.details, h.isError); return undefined; },
+        afterToolCall: async h => { await hooks.afterTool?.({ id: h.toolCall.id, name: h.toolCall.name, args: h.args }, h.result.details, h.isError, controller.signal); return undefined; },
         shouldStopAfterTurn: async () => {
           const state = await this.store.load();
           if (!ACTIVE.includes(state.run.state) || await hooks.shouldStop?.()) return true;

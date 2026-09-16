@@ -11,6 +11,7 @@ export class ToolRegistry {
     for (const tool of tools) {
       if (!/^[a-z][a-z0-9_]{0,63}$/.test(tool.name) || this.tools.has(tool.name)) throw new Error("INVALID_TOOL_REGISTRY");
       if (tool.inputSchema.type !== "object" || tool.inputSchema.additionalProperties !== false) throw new Error("CLOSED_OBJECT_SCHEMA_REQUIRED");
+      if(tool.progressMode!==undefined&&!["observe","inspect","submit"].includes(tool.progressMode))throw new Error("INVALID_PROGRESS_MODE");
       if (!tool.description.trim() || !tool.bundle.trim() || tool.concurrency.maxConcurrency !== undefined && (!Number.isInteger(tool.concurrency.maxConcurrency) || tool.concurrency.maxConcurrency < 1)) throw new Error("INVALID_TOOL_METADATA");
       this.tools.set(tool.name, tool);
     }

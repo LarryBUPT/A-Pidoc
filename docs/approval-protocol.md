@@ -34,4 +34,4 @@ stateDiagram-v2
 
 ## 尚未解决
 
-目前使用隔离测试后端验证锁与条件重检；真实 API 工具族仍须在 PR-5 提供实际隔离/If-Match/幂等条件实现。可信 operation 描述器不是模型可以自报的风险标记，未来工具必须从受控规范解析。当前不承诺任意外部系统 Exactly-once；DNS 核验到真实连接仍需沿用既有安全边界与出口约束。PR-4 Workspace/Evidence Gate、双任务族、Reviewer/live/同条件对照未通过前不能称完整 V4.5。
+PR-3 的隔离测试后端验证协议；PR-5 已接入实际隔离文件、摘要前置条件与锁内重检，PR-6 保存真实模型审批重发轨迹。当前 runtime profile 是无副作用 loopback 验证，不是任意外部写 API 的 If-Match/Exactly-once 实现。可信 operation 不能由模型自报风险，新增企业后端必须从受控规范解析，提供真实条件执行与出口约束。完整 V4.5 仍以全部批次功能、offline/live 和实际发版审计为准。

@@ -339,3 +339,5 @@ PiLoopAdapter 的前置、执行和完成 hooks 接入 ApiGuardrail；可信后�
 工具通过元数据声明证据类型，真实结果的 call ID、Artifact hash 与 trajectory 绑定。Workspace 只从已执行工具/策略归约事实，投影只生成有界消息视图；Gate 验证运行时与迁移两个证据合同并保存 final Artifact。成功不会由 Reviewer pass 或模型 exit 0 覆盖真实数据。详见 [工作区与证据门禁](workspace-evidence.md)。
 
 PR-5 的 [实际工具族](api-tool-bundles.md)通过 ApiHarnessRuntime 组合共享基础能力，PiLoopAdapter 不理解 HTTP/OpenAPI。后端拥有注册 endpoint/source/workspace 与真实前置条件，模型参数只有可审计请求或本 run Artifact ID。
+
+PR-6 中 completionTool 无副作用只提交 proposal，host 的硬 Gate/独立 Pi Reviewer 才改变终态；Raw 对照共用该工具实现。Reviewer 独立 transcript、无工具、同预算、最多一次 revise，符合 [评测架构](reviewer-evaluation.md)。复杂任务使用 agent-run，固定已知任务保持 deterministic。

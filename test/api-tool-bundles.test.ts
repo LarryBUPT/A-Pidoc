@@ -13,7 +13,7 @@ async function migration(t:TestContext) {
   await cp(resolve("test/fixtures/repository-v3-migration"),source,{recursive:true});
   const previous=JSON.parse(await readFile(join(source,"old.json"),"utf8")),next=JSON.parse(await readFile(join(source,"new.json"),"utf8"));
   const backend=new RepositoryContractBackend(h.store,source,work,previous,next);
-  const runtime=new ApiHarnessRuntime(h.store,backend,{hosts:[],ports:[],environments:["sandbox"],credentialScopes:[]},h.options,i=>i.actorId==="owner"&&i.source==="local-authenticated");
+  const runtime=new ApiHarnessRuntime(h.store,backend,{hosts:[],ports:[],environments:["sandbox"],credentialScopes:[]},h.options,i=>i.actorId==="owner"&&i.source==="local-authenticated",async()=>({verdict:"pass",reasons:["Test-only semantic stub; hard Gate remains actual"]}));
   const input={...task(),taskFamily:"repository-contract",allowedToolBundles:["repository-contract","shared"],budget:{...task().budget,maxModelCalls:16}};
   const p:EvidencePackage={claimRefs:[{claim:"Isolated amount literal migrated and generated contract test passed",evidenceIds:["isolated_patch-patch","test_run-tests"]}],httpObservationIds:[],contractDiffId:"contract_diff-diff",patchArtifactId:"isolated_patch-patch",testRunId:"test_run-tests",testExitCode:0};
   return {...h,source,work,backend,runtime,input,p};
@@ -22,7 +22,7 @@ test("actual loopback HTTP tools reproduce 415 and validate the model-selected c
   const sandbox=await createDiagnosticSandbox();t.after(()=>sandbox.close());
   const h=await harness(t,[],[]),backend=new RuntimeApiBackend(sandbox.endpoint);
   h.provider.setResponses([call("execute_http",{url:sandbox.endpoint,method:"POST",contentType:"text/plain",amount:42},"before"),call("read_api_document",{},"doc"),call("execute_http",{url:sandbox.endpoint,method:"POST",contentType:"application/json",amount:42},"after"),call("submit_completion",{package:{claimRefs:[{claim:"Correct media type yielded HTTP 200",evidenceIds:["api_operation-doc","http_observation-after"]}],httpObservationIds:["http_observation-before","http_observation-after"]}},"finish")]);
-  const runtime=new ApiHarnessRuntime(h.store,backend,{hosts:["127.0.0.1"],ports:[Number(new URL(sandbox.endpoint).port)],environments:["sandbox"],credentialScopes:[]},h.options,()=>false);
+  const runtime=new ApiHarnessRuntime(h.store,backend,{hosts:["127.0.0.1"],ports:[Number(new URL(sandbox.endpoint).port)],environments:["sandbox"],credentialScopes:[]},h.options,()=>false,async()=>({verdict:"pass",reasons:["Test-only semantic stub"]}));
   const s=await runtime.start({...task(),taskFamily:"runtime-api",allowedToolBundles:["runtime-api","shared"]});
   assert.equal(s.run.state,"resolved");assert.ok(s.run.finalArtifact);assert.equal(s.run.evidence.length,3);
   assert.equal((s.artifacts["http_observation-before"] as {data:{response:{status:number}}}).data.response.status,415);

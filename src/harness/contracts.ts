@@ -25,6 +25,7 @@ export interface HarnessTool<Input = unknown, Output = unknown> {
   risk: "read" | "network" | "write" | "publish"; executionMode: "parallel" | "sequential";
   idempotency: "safe" | "keyed" | "unsafe"; concurrency: ToolConcurrencyPolicy;
   evidenceKinds?: string[];
+  progressMode?: "observe" | "inspect" | "submit";
   execute(input: Input, context: ToolContext): Promise<ToolResult<Output>>;
 }
 export type PolicyDecision =

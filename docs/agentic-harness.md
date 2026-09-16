@@ -23,12 +23,14 @@ PR-1 保持 Pi `0.74.2`，通过 characterization tests 冻结公开报告字段
 
 ## 尚未解决
 
-PR-1 已合并，PR-2 提供低层多轮运行带。PR-1～PR-4 是基础治理节点；完成它们不等于 V4.5 整体完成。未完成两任务族、独立 Reviewer、Raw Pi/Harness-Pi 同条件实验与真实 DeepSeek 发布前验证，不得宣称完整 V4.5。并发契约仅预留，首版全局 sequential。无真实企业采纳率、生产部署、向量数据库、端边云推理或高并发效果证据。
+PR-1～PR-5 已逐批发布；PR-6 完成独立 Reviewer、54 条配对结果与两个真实 DeepSeek 任务的发布前验收，实际版本发布仍需 required CI、版本 PR、tag/Release/main 核对。公开证据见 [offline](evidence/v45-paired.json) 与 [live](evidence/v45-live.json)。并发契约仅预留，首版全局 sequential。无真实企业采纳率、生产部署、向量数据库、端边云推理或高并发效果证据。
 ## PR-3 审批治理
 
 完整状态机、作用范围、精确重入与失败合同见 [审批协议](approval-protocol.md)。批准只创建 Grant；模型必须重新调用原工具。执行结果不明保留接管标记，不能用自然语言或授权消费代替执行证据。
 ## PR-4 状态与证据治理
 
-收敛归约、临时上下文投影、证据包关联和 final Artifact 见 [工作区与证据门禁](workspace-evidence.md)。目前已推进基础治理四批；双 API 工具族、真实模型/Reviewer/配对评测仍须分别验收。
+收敛归约、临时上下文投影、证据包关联和 final Artifact 见 [工作区与证据门禁](workspace-evidence.md)。PR-1～PR-4 只构成基础治理；双工具族/Reviewer/offline/live 的后续证据不能被基础版本替代。
 
 实际 API 工具族见 [PR-5](api-tool-bundles.md)。注册两个 profile 共用同一 Lead 提示与循环；真实工具可生成 HTTP、隔离补丁、Node 测试和磁盘摘要证据，离线 faux 不代表 live 模型验收。
+
+PR-6 采用[独立 Reviewer 与配对评测](reviewer-evaluation.md)。完成工具为相同的无副作用 proposal 实现；host 包装核验硬门禁并单独审查语义。完整 V4.5 的验收以实际 offline/live 发布证据为准。

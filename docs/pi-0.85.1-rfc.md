@@ -29,4 +29,4 @@ TrajectoryStore 使用同目录临时文件、文件 fsync、原子 rename 与 m
 
 ## 尚未解决
 
-PR-2 仅证明 provider 与多轮工具轨迹、持久化和串行运行协议；测试工具不是已迁移的 API 工具族。PR-3 的 domain preflight、审批授权/防重放，PR-4 的事实归约/证据门禁及 PR-5/6 的双任务/live/Reviewer/配对评测仍需完成。文件 fsync + rename 不等于跨存储生产事务；SDK 估算费用不是账户硬账单预算；进程崩溃留下 runner 锁时须先检查，不自动重放副作用。
+PR-2 本批次只证明 provider、多轮工具轨迹、持久化和串行协议；后续 domain preflight/审批、事实/Gate、实际双工具族与 Reviewer/offline/live 分别见 PR-3～PR-6 文档与证据。文件 fsync + rename 不等于跨存储生产事务；SDK 估算费用不是账户硬账单预算；进程崩溃留下 runner 锁时须先检查，不自动重放副作用。
