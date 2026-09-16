@@ -5,7 +5,7 @@ import {
   registerFauxProvider,
   streamSimple,
   type Context
-} from "@earendil-works/pi-ai";
+} from "@earendil-works/pi-ai/compat";
 import { DeterministicReasoner } from "../src/agent/deterministic-reasoner.js";
 import { PiReasoner } from "../src/agent/pi-reasoner.js";
 import { createConfiguredReasoner } from "../src/config/reasoner.js";

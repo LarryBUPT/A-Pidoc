@@ -1,4 +1,4 @@
-import { getEnvApiKey, getModels, type KnownProvider } from "@earendil-works/pi-ai";
+import { getEnvApiKey, getModels, type KnownProvider } from "@earendil-works/pi-ai/compat";
 import { DeterministicReasoner } from "../agent/deterministic-reasoner.js";
 import { PiReasoner } from "../agent/pi-reasoner.js";
 import type { Reasoner } from "../domain/types.js";
@@ -23,7 +23,7 @@ export function createConfiguredReasoner(env: NodeJS.ProcessEnv = process.env): 
 
   const provider = env.A_PIDOC_PI_PROVIDER?.trim() || DEFAULT_PI_PROVIDER;
   const modelId = env.A_PIDOC_PI_MODEL?.trim() || DEFAULT_PI_MODEL;
-  const model = getModels(provider as KnownProvider).find((candidate) => candidate.id === modelId);
+  const model = getModels(provider as Parameters<typeof getModels>[0]).find((candidate) => candidate.id === modelId);
   if (!model) throw new Error(`Unknown Pi model ${provider}/${modelId}`);
 
   const apiKey = env.A_PIDOC_PI_API_KEY ?? getEnvApiKey(provider);

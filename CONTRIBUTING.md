@@ -44,3 +44,6 @@ PR 被放弃时应直接关闭，并保留 Issue；需求只有在验收完成�
 - 禁止 force push 和删除 `main`。
 
 工作流在未配置 Secret 时会回退到内置 `GITHUB_TOKEN`。为让 Release Please 创建的 PR 也触发正常 CI，仍建议配置仓库 Secret `RELEASE_PLEASE_TOKEN`：使用只授权本仓库的 fine-grained PAT，并仅授予 Contents 与 Pull requests 的 Read and write 权限。不要把 token 写入代码或 Issue。
+## V4.5 增量门禁
+
+Pi 精确锁定 `0.85.1`，运行要求 Node 22.19+。除既有门禁，还须执行 `npm run eval:harness`：三轮离线低层 loop 合同，用 faux provider 验证工具轨迹、awaited sink、暂停/继续与串行边界。完整迁移标准见 [Harness 文档](docs/agentic-harness.md) 与 [Pi RFC](docs/pi-0.85.1-rfc.md)。真实模型验证仍独立受预算执行，不进入 required CI。

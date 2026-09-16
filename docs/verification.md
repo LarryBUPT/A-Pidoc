@@ -20,7 +20,7 @@ flowchart LR
 
 ## 1. 从干净环境运行 required CI 等价门禁
 
-要求 Node.js 20.6+。在仓库根目录运行：
+要求 Node.js 22.19+。在仓库根目录运行：
 
 ```bash
 npm ci --registry=https://registry.npmjs.org
@@ -182,3 +182,6 @@ GitHub/GitLab PR、Jira Issue、Slack/飞书消息均有载荷归一化器和回
 - `test/contract-v3.test.ts`：V3 Diff、影响、迁移、审批、Trace 与 CLI
 - `test/collaboration-v4.test.ts`：V4 五平台、RBAC、租户、双审批、日志、Postman、知识库、竖切与 CLI
 - `.github/workflows/ci.yml`：远程 required CI 的真实命令
+## V4.5 PR-2 运行契约
+
+运行 `npm run build` 后执行 `node --test dist/test/pi-loop-contract.test.js`。它验证稳定 release 的多轮工具观察、awaited 持久化、混合批次停止、消息恢复、串行、预算和错误脱敏，不能替代后续 API 任务或公网模型评测。详见 [Pi 0.85.1 RFC](pi-0.85.1-rfc.md)。

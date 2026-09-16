@@ -50,7 +50,7 @@ flowchart LR
 
 ## 运行
 
-要求 Node.js 20.6+（真实模型脚本使用 Node 内置的 `--env-file`）。
+要求 Node.js 22.19+（Pi 0.85.1 的运行要求；真实模型脚本使用 Node 内置的 `--env-file`）。
 
 ```bash
 npm ci
