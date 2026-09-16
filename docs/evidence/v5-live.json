@@ -1,0 +1,97 @@
+{
+  "dataset": "reliability-v5-v1",
+  "passed": true,
+  "liveEvidence": true,
+  "provider": "deepseek",
+  "model": "deepseek-v4-pro",
+  "repetitions": 1,
+  "scope": "owned loopback fixtures and local draft connector; not production or general model success rate",
+  "originalReportSha256": "27af76a281e74ceecb84e5b1d375fb2799db58a3103ff08fce75c78ba15f7037",
+  "failedPrerunsPreserved": 1,
+  "earlierSuccessfulPrerunsPreserved": 2,
+  "healthyProbes": 6,
+  "healthyModelRequests": 0,
+  "approvals": 1,
+  "localPublicationReceipts": 1,
+  "task": {
+    "state": "completed",
+    "metrics": {
+      "state": "resolved",
+      "modelTurns": 10,
+      "toolCalls": 14,
+      "stepsToConvergence": 24,
+      "tokens": 34085,
+      "costUsd": 0.009331910000000002,
+      "durationMs": 24842,
+      "toolErrors": 2,
+      "groundedClaims": 4,
+      "totalClaims": 4,
+      "groundedReasoningRate": 1,
+      "review": [
+        {
+          "type": "verdict",
+          "verdict": "pass"
+        }
+      ]
+    }
+  },
+  "schemaTask": {
+    "state": "manual_handoff",
+    "reason": "HARNESS_blocked",
+    "runState": "blocked",
+    "investigated": true,
+    "metrics": {
+      "state": "blocked",
+      "modelTurns": 5,
+      "toolCalls": 14,
+      "stepsToConvergence": 19,
+      "tokens": 15630,
+      "costUsd": 0.0036684420000000005,
+      "durationMs": 12384,
+      "toolErrors": 0,
+      "groundedClaims": 0,
+      "totalClaims": 0,
+      "groundedReasoningRate": null,
+      "review": []
+    }
+  },
+  "probeMetrics": {
+    "samples": 11,
+    "assertionPassRate": 0.7272727272727273,
+    "availability": 0.8333333333333334,
+    "errorRate": 0.16666666666666666,
+    "rateLimitRate": 0,
+    "p95Ms": 27,
+    "latencyTrend": {
+      "previousMeanMs": 12,
+      "recentMeanMs": 6
+    },
+    "slo": {
+      "targetAvailability": 0.99,
+      "targetP95Ms": 1000,
+      "scope": "local rolling 100 observations, not production SLO"
+    }
+  },
+  "incidentKinds": [
+    "http_error",
+    "schema_drift"
+  ],
+  "leadPromptHash": "ed2749359f86cb4b134f06b5d50dd393deb3d8ac8adb047b91378347d8f2acf1",
+  "sourceDigestFormat": "SHA-256 of UTF-8 source normalized to LF",
+  "sourceDigests": {
+    "src/reliability/contracts.ts": "0b852b599bbb2fe83f15c2c697292fe44cc1207315d5cdb1727e18081bbcb394",
+    "src/reliability/store.ts": "51a4e2967529167ee36a556f64295926d52bddfba97c16acb300f690a25fcd09",
+    "src/reliability/probes.ts": "ab1789c54a3bcdfb145cfa982764f25e55696aec4ce9d90da7ae9b9ef8f572c1",
+    "src/reliability/router.ts": "bfe7480bec3ef72fdfe22c523d3b68e84b1c91183bd306637cd35db1b788403b",
+    "src/reliability/worker.ts": "c93869c930e119050a489009bda7c2a669ef748c10214cdea343c5fdfcdf76a3",
+    "src/reliability/backend.ts": "a9ed7fe2371cb05dc90e861b0c34d8599beb3d8dc2605acdaa932c6d42683b5b",
+    "src/reliability/cli.ts": "c67737012c10f6067b3abe2731096b6ce631b0aae9e089d2b5d12aeed60fc555",
+    "src/evaluation/reliability-eval.ts": "1d9b6175bc74d58558f923bd1a0e6c7d8d728fc23beaf9e6caa092f74a4b3930",
+    "src/api-harness/runtime.ts": "426376156d7a4e52e5dc8f9c04b3dadff5896d608672f038bbe37e9702f91900",
+    "src/harness/pi-loop-adapter.ts": "6afaa222362a9843696507422e6291e20c9e05a9dd48f86b6ba0666e22a145fd",
+    "test/reliability-v5.test.ts": "b26c5c7faf9039988a4635ef97959398939b128303605cc10556ce8c48d0b8f7",
+    "test/reliability-crash-helper.ts": "cac564ce5e4c4e00f0f5cc43723358b05b41fce0b1d372fd28ffe0f18eb6a0f2",
+    "scripts/reliability-live.mjs": "42c7c66ffe151fb1744e25819d5cd75bc9ef3c3e3c0385a336cd58c253e92130",
+    "scripts/reliability-eval.mjs": "03f7a814240f017dcd6d22b29c2eaf430171c7de60924f2e2f810ecf3076a142"
+  }
+}

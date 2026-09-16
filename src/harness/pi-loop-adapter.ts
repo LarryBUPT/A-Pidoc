@@ -19,7 +19,7 @@ export interface LoopHooks {
 }
 export interface PiLoopOptions {
   model: Model<any>; streamFn: StreamFn; apiKey?: string;
-  prompt: string; maxOutputTokens?: number; hooks?: LoopHooks;
+  prompt: string; maxOutputTokens?: number; hooks?: LoopHooks; signal?: AbortSignal;
 }
 const ACTIVE: RunState[] = ["running", "approval_granted_pending_reissue"];
 function budgetExceeded(s: RunSnapshot): boolean {
@@ -51,6 +51,7 @@ export class PiLoopAdapter {
       await mkdir(dirname(this.store.file), { recursive: true });
       try { await mkdir(lease); ownsLease = true; } catch { throw new Error("RUN_LEASE_UNAVAILABLE"); }
       s = await this.store.load();
+      if(this.options.signal?.aborted)return await this.store.transact(v=>{v.run.state="failed";appendStep(v,"state_transition",{code:"RUN_CANCELLED"});});
       if (!ACTIVE.includes(s.run.state)) return s;
       if (s.executionInDoubt) {
         return await this.store.transact(v => { v.run.state = "blocked"; appendStep(v, "state_transition", { code: "EXECUTION_IN_DOUBT" }); });
@@ -69,6 +70,7 @@ export class PiLoopAdapter {
           try { return hooks.project ? await hooks.project(messages) as AgentMessage[] : messages; } catch { return messages; }
         },
         beforeToolCall: async h => {
+          if(this.options.signal?.aborted)return {block:true,terminate:true,reason:"RUN_CANCELLED"};
           const call = { id: h.toolCall.id, name: h.toolCall.name, args: h.args };
           if (Buffer.byteLength(JSON.stringify(call.args)) > 8192) {
             await this.store.transact(v => { v.run.state = "blocked"; appendStep(v, "policy", { code: "TOOL_ARGUMENT_BUDGET_EXHAUSTED" }); });
@@ -135,12 +137,15 @@ export class PiLoopAdapter {
         await hooks.onEvent?.(event);
       };
       const controller = new AbortController();
+      const cancel=()=>controller.abort(this.options.signal?.reason);
+      this.options.signal?.addEventListener("abort",cancel,{once:true});
+      if(this.options.signal?.aborted)cancel();
       const timer = setTimeout(() => controller.abort(), Math.max(1, s.run.task.budget.maxDurationMs - s.elapsedMs));
       timer.unref();
       try {
         if (prompts) await runAgentLoop(prompts, context, config, emit, controller.signal, stream);
         else await runAgentLoopContinue(context, config, emit, controller.signal, stream);
-      } finally { clearTimeout(timer); }
+      } finally { clearTimeout(timer);this.options.signal?.removeEventListener("abort",cancel); }
       return await this.store.transact(v => { v.elapsedMs += Date.now() - started; });
     } catch {
       if (!ownsLease) throw new Error("RUN_LEASE_UNAVAILABLE");

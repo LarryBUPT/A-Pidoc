@@ -24,7 +24,10 @@
     "demo:team": "npm run build --silent && node dist/src/cli.js collaboration-demo",
     "repo:plan": "npm run build --silent && node dist/src/cli.js repo-plan",
     "eval:tier-a": "npm run test:unit && npm run eval:pi:stability",
-    "check": "npm run build --silent && npm run test:unit"
+    "check": "npm run build --silent && npm run test:unit",
+    "demo:reliability": "npm run build --silent && node scripts/reliability-demo.mjs",
+    "eval:reliability": "npm run build --silent && node scripts/reliability-eval.mjs",
+    "eval:reliability:live": "npm run build --silent && node --env-file=.env scripts/reliability-live.mjs"
   },
   "engines": {
     "node": ">=22.19.0"

@@ -1,0 +1,191 @@
+{
+  "dataset": "reliability-v5-v1",
+  "provider": "faux",
+  "liveEvidence": false,
+  "passed": true,
+  "repetitions": 3,
+  "unitTests": 164,
+  "reliabilityContractTests": 20,
+  "originalReportSha256": "2016ed24347b80c5e014f59fb933670477f8808ae89e197907ce00e65c5f53aa",
+  "scope": "actual HTTP/files and child-process interruption; simulated model policy",
+  "results": [
+    {
+      "run": 1,
+      "contractsPassed": true,
+      "healthyProbes": 6,
+      "healthyModelRequests": 0,
+      "approvals": 2,
+      "task": {
+        "state": "completed",
+        "metrics": {
+          "state": "resolved",
+          "modelTurns": 8,
+          "toolCalls": 7,
+          "stepsToConvergence": 15,
+          "tokens": 17892,
+          "costUsd": 0,
+          "durationMs": 250,
+          "toolErrors": 1,
+          "groundedClaims": 1,
+          "totalClaims": 1,
+          "groundedReasoningRate": 1,
+          "review": [
+            {
+              "type": "verdict",
+              "verdict": "pass"
+            }
+          ]
+        }
+      },
+      "schemaTask": {
+        "state": "manual_handoff",
+        "reason": "HARNESS_unresolved",
+        "runState": "unresolved",
+        "investigated": true,
+        "metrics": {
+          "state": "unresolved",
+          "modelTurns": 6,
+          "toolCalls": 6,
+          "stepsToConvergence": 12,
+          "tokens": 13702,
+          "costUsd": 0,
+          "durationMs": 175,
+          "toolErrors": 1,
+          "groundedClaims": 1,
+          "totalClaims": 1,
+          "groundedReasoningRate": 1,
+          "review": []
+        }
+      },
+      "incidentKinds": [
+        "http_error",
+        "schema_drift"
+      ],
+      "passed": true
+    },
+    {
+      "run": 2,
+      "contractsPassed": true,
+      "healthyProbes": 6,
+      "healthyModelRequests": 0,
+      "approvals": 2,
+      "task": {
+        "state": "completed",
+        "metrics": {
+          "state": "resolved",
+          "modelTurns": 8,
+          "toolCalls": 7,
+          "stepsToConvergence": 15,
+          "tokens": 17892,
+          "costUsd": 0,
+          "durationMs": 223,
+          "toolErrors": 1,
+          "groundedClaims": 1,
+          "totalClaims": 1,
+          "groundedReasoningRate": 1,
+          "review": [
+            {
+              "type": "verdict",
+              "verdict": "pass"
+            }
+          ]
+        }
+      },
+      "schemaTask": {
+        "state": "manual_handoff",
+        "reason": "HARNESS_unresolved",
+        "runState": "unresolved",
+        "investigated": true,
+        "metrics": {
+          "state": "unresolved",
+          "modelTurns": 6,
+          "toolCalls": 6,
+          "stepsToConvergence": 12,
+          "tokens": 13702,
+          "costUsd": 0,
+          "durationMs": 180,
+          "toolErrors": 1,
+          "groundedClaims": 1,
+          "totalClaims": 1,
+          "groundedReasoningRate": 1,
+          "review": []
+        }
+      },
+      "incidentKinds": [
+        "http_error",
+        "schema_drift"
+      ],
+      "passed": true
+    },
+    {
+      "run": 3,
+      "contractsPassed": true,
+      "healthyProbes": 6,
+      "healthyModelRequests": 0,
+      "approvals": 2,
+      "task": {
+        "state": "completed",
+        "metrics": {
+          "state": "resolved",
+          "modelTurns": 8,
+          "toolCalls": 7,
+          "stepsToConvergence": 15,
+          "tokens": 17892,
+          "costUsd": 0,
+          "durationMs": 247,
+          "toolErrors": 1,
+          "groundedClaims": 1,
+          "totalClaims": 1,
+          "groundedReasoningRate": 1,
+          "review": [
+            {
+              "type": "verdict",
+              "verdict": "pass"
+            }
+          ]
+        }
+      },
+      "schemaTask": {
+        "state": "manual_handoff",
+        "reason": "HARNESS_unresolved",
+        "runState": "unresolved",
+        "investigated": true,
+        "metrics": {
+          "state": "unresolved",
+          "modelTurns": 6,
+          "toolCalls": 6,
+          "stepsToConvergence": 12,
+          "tokens": 13702,
+          "costUsd": 0,
+          "durationMs": 190,
+          "toolErrors": 1,
+          "groundedClaims": 1,
+          "totalClaims": 1,
+          "groundedReasoningRate": 1,
+          "review": []
+        }
+      },
+      "incidentKinds": [
+        "http_error",
+        "schema_drift"
+      ],
+      "passed": true
+    }
+  ],
+  "sourceDigests": {
+    "src/reliability/contracts.ts": "0b852b599bbb2fe83f15c2c697292fe44cc1207315d5cdb1727e18081bbcb394",
+    "src/reliability/store.ts": "51a4e2967529167ee36a556f64295926d52bddfba97c16acb300f690a25fcd09",
+    "src/reliability/probes.ts": "ab1789c54a3bcdfb145cfa982764f25e55696aec4ce9d90da7ae9b9ef8f572c1",
+    "src/reliability/router.ts": "bfe7480bec3ef72fdfe22c523d3b68e84b1c91183bd306637cd35db1b788403b",
+    "src/reliability/worker.ts": "c93869c930e119050a489009bda7c2a669ef748c10214cdea343c5fdfcdf76a3",
+    "src/reliability/backend.ts": "a9ed7fe2371cb05dc90e861b0c34d8599beb3d8dc2605acdaa932c6d42683b5b",
+    "src/reliability/cli.ts": "c67737012c10f6067b3abe2731096b6ce631b0aae9e089d2b5d12aeed60fc555",
+    "src/evaluation/reliability-eval.ts": "1d9b6175bc74d58558f923bd1a0e6c7d8d728fc23beaf9e6caa092f74a4b3930",
+    "src/api-harness/runtime.ts": "426376156d7a4e52e5dc8f9c04b3dadff5896d608672f038bbe37e9702f91900",
+    "src/harness/pi-loop-adapter.ts": "6afaa222362a9843696507422e6291e20c9e05a9dd48f86b6ba0666e22a145fd",
+    "test/reliability-v5.test.ts": "b26c5c7faf9039988a4635ef97959398939b128303605cc10556ce8c48d0b8f7",
+    "test/reliability-crash-helper.ts": "cac564ce5e4c4e00f0f5cc43723358b05b41fce0b1d372fd28ffe0f18eb6a0f2",
+    "scripts/reliability-live.mjs": "42c7c66ffe151fb1744e25819d5cd75bc9ef3c3e3c0385a336cd58c253e92130",
+    "scripts/reliability-eval.mjs": "03f7a814240f017dcd6d22b29c2eaf430171c7de60924f2e2f810ecf3076a142"
+  }
+}

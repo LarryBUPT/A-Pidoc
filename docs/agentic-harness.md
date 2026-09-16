@@ -23,6 +23,8 @@ PR-1 保持 Pi `0.74.2`，通过 characterization tests 冻结公开报告字段
 
 ## 尚未解决
 
+V5的计划与Queue/Worker是运行带之外的触发层，复用上述治理合同，附加取消信号和安全continue；不引入第二套模型工具循环或一次迁移全部API工具。历史监控快照与当前HTTP事实分开，原监控合同复查是Worker完成条件，详见 [V5持续可靠性](reliability-v5.md)。生产队列、长期SLO与企业账号仍不在已验证范围。
+
 PR-1～PR-6 已完成完整受控 V4.5，正式版本为 `v0.16.0`；required CI、版本 PR #61、tag/Release/main 一致性见 [发布审计](v45-release-audit.md)。公开证据见 [offline](evidence/v45-paired.json) 与最终07的 [live](evidence/v45-live.json)。并发契约仅预留，首版全局 sequential。无真实企业采纳率、生产部署、向量数据库、端边云推理或高并发效果证据。
 ## PR-3 审批治理
 

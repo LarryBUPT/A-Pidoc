@@ -15,7 +15,8 @@ flowchart LR
     E --> F[V4 团队闭环评测]
     F --> H[Harness 合同 3 轮]
     H --> I[54 条 Raw/Harness 配对]
-    I --> G[生成物一致性]
+    I --> J[V5计划与恢复3轮]
+    J --> G[生成物一致性]
 ```
 
 `v0.10.1` 的 V3 基线是 75 项；V4 增加 8 项后为 83 项，V4.5 完整版本为 144 项。不能把历史数字写成永久门槛。
@@ -34,6 +35,7 @@ npm run eval:contract
 npm run eval:collaboration
 npm run eval:harness
 npm run eval:agentic
+npm run eval:reliability
 git diff --exit-code
 ```
 
@@ -49,6 +51,7 @@ git diff --exit-code
 | Collaboration eval | 5 platforms、1 publication、1 stored/1 retrieved case、1 Postman request、1 regression assertion，日志已脱敏、Trace 完整 | V4 固定 Jira→日志→诊断→回复/回归测试→知识闭环与权限边界 | 不代表真实企业账号、网络传输或并发生产负载 |
 | Harness eval | JSON 的 `passed: true`，`results` 中3轮均通过 | 低层循环、审批、事实门禁、实际工具与 Reviewer 合同稳定 | 不代表外部模型泛化成功率 |
 | Agentic eval | 54条、paired/passed 为 true；未授权实际执行0、正常误拦0 | 同条件 Raw/Harness 固定安全与完成合同 | faux Token/费用不是实际模型收益 |
+| Reliability eval | 3轮passed；健康6探测/0模型；临时故障completed、结构漂移manual_handoff | 20项专项合同、实际探测与子进程恢复 | 不代表生产常驻服务或模型泛化成功率 |
 | Git diff | 无输出，退出码 0 | 构建/评测没有改写受跟踪源码 | 不检查被忽略的临时文件 |
 
 `npm run eval:business` 是更完整的 V1 业务评测，但目前不是 required CI。它运行 26 个 loopback HTTP 案例，不调用公网模型；主动停止的危险或不可证明场景属于正确结果。
@@ -201,3 +204,7 @@ GitHub/GitLab PR、Jira Issue、Slack/飞书消息均有载荷归一化器和回
 PR-5 把真实 HTTP/隔离迁移工具集成合同加入 `eval:harness` 三轮复跑。独立 TAP 子进程不继承 NODE_TEST_CONTEXT，实际测试数必须为正；live CLI 使用私有 `.env` 与 `.private/runs`，不会进入离线 CI。
 
 PR-6 增加 `npm run eval:agentic` 为 required CI 的同条件对照，模型为 faux、9 类三轮，阈值与实际逐例记录见 [评测说明](reviewer-evaluation.md)。`eval:agentic:live` 使用本地凭据手动验收，失败尝试保留，真实结果与模拟统计分开。Reviewer 合同并入 `eval:harness` 三轮复跑。
+
+## V5 计划探测与 Worker 恢复
+
+运行 `npm run demo:reliability` 与 `npm run eval:reliability`，预期 `healthyProbes: 6`、`healthyModelRequests: 0`、临时异常任务completed、Schema持续异常manual_handoff；后者连续三轮专项合同与场景，provider为faux。真实子进程发布后硬中断/恢复不重复、准确审批、原合同复查、容量/取消/超时/预算均有专项反例。原V4.5与旧评测继续required，真实模型独立 `eval:reliability:live`。具体命令/范围见 [V5持续可靠性](reliability-v5.md)。

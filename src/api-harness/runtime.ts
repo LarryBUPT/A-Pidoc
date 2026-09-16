@@ -49,4 +49,7 @@ export class ApiHarnessRuntime {
   }
   async start(task:AgentTask){return this.finish(await this.adapter.start(task));}
   async resume(){return this.finish(await this.guardrail.resume(this.adapter));}
+  // Used only after the host confirms that an interrupted worker has stopped.
+  // Continue the durable transcript; never replay completed tool executions.
+  async resumeInterrupted(){const s=await this.store.load();if(s.run.state!=="running"||s.executionInDoubt)throw new Error("INTERRUPTED_RUN_NOT_SAFE_TO_CONTINUE");return this.finish(await this.adapter.continue());}
 }
