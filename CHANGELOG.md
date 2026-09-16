@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.0](https://github.com/LarryBUPT/A-Pidoc/compare/v0.11.0...v0.12.0) (2026-09-16)
+
+
+### Features
+
+* add durable Pi low-level Harness runtime ([#48](https://github.com/LarryBUPT/A-Pidoc/issues/48)) ([80b209e](https://github.com/LarryBUPT/A-Pidoc/commit/80b209eccd678252d80072b4153c466a1ef88fc6))
+
 ## [0.11.0](https://github.com/LarryBUPT/A-Pidoc/compare/v0.10.1...v0.11.0) (2026-09-15)
 
 
