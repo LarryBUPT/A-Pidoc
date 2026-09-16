@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.13.0](https://github.com/LarryBUPT/A-Pidoc/compare/v0.12.0...v0.13.0) (2026-09-16)
+
+
+### Features
+
+* enforce API guardrails and exact approval reentry ([#51](https://github.com/LarryBUPT/A-Pidoc/issues/51)) ([1fa3ee5](https://github.com/LarryBUPT/A-Pidoc/commit/1fa3ee5e3d0a48ac63a22467b1067b2aee87f06e))
+
 ## [0.12.0](https://github.com/LarryBUPT/A-Pidoc/compare/v0.11.0...v0.12.0) (2026-09-16)
 
 
