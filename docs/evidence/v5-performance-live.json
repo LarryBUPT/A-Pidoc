@@ -1,0 +1,102 @@
+{
+  "dataset": "reliability-v5-v1",
+  "passed": true,
+  "liveEvidence": true,
+  "scope": "fresh release smoke, owned loopback and local draft; no model performance comparison",
+  "originalReportSha256": "1634dab5f6143fbbd85e2e2ae52c67db093608b189acf61043c1f36c78211ab3",
+  "failedLivePreruns": [
+    {
+      "attempt": "01",
+      "passed": false,
+      "taskState": "manual_handoff",
+      "schemaState": "manual_handoff",
+      "originalReportSha256": "780f34cbbc9b9853449efe40cdf9e14eabb50c43363dc51eb6c5072c07d23c70"
+    },
+    {
+      "attempt": "02",
+      "passed": false,
+      "taskState": "manual_handoff",
+      "schemaState": "manual_handoff",
+      "originalReportSha256": "c11bf239c940587b4429239dc5f3ecc74e0a3793bdae5c22631af02fb0a6325a"
+    },
+    {
+      "attempt": "03",
+      "passed": false,
+      "taskState": "manual_handoff",
+      "schemaState": "manual_handoff",
+      "originalReportSha256": "d51bff9bc98d3c4f8d4434c2a06cf4fdc3ecd90c0f1f9344bb896ebc8985d711"
+    },
+    {
+      "attempt": "04",
+      "passed": false,
+      "taskState": "manual_handoff",
+      "schemaState": "manual_handoff",
+      "originalReportSha256": "0b75e93c65fe7e09a5ff116f72bfa01a41730d6595b66ec3c2f628c3bd2b7642"
+    }
+  ],
+  "provider": "deepseek",
+  "model": "deepseek-v4-pro",
+  "healthyProbes": 6,
+  "healthyModelRequests": 0,
+  "approvals": 1,
+  "localPublicationReceipts": 1,
+  "task": {
+    "state": "completed",
+    "metrics": {
+      "state": "resolved",
+      "modelTurns": 10,
+      "toolCalls": 13,
+      "stepsToConvergence": 23,
+      "tokens": 34555,
+      "costUsd": 0.009585515000000001,
+      "durationMs": 39703,
+      "toolErrors": 1,
+      "groundedClaims": 5,
+      "totalClaims": 5,
+      "groundedReasoningRate": 1,
+      "review": [
+        {
+          "type": "verdict",
+          "verdict": "pass"
+        }
+      ]
+    }
+  },
+  "schemaTask": {
+    "state": "manual_handoff",
+    "reason": "HARNESS_blocked",
+    "runState": "blocked",
+    "investigated": true,
+    "metrics": {
+      "state": "blocked",
+      "modelTurns": 8,
+      "toolCalls": 15,
+      "stepsToConvergence": 23,
+      "tokens": 26140,
+      "costUsd": 0.006279573,
+      "durationMs": 27054,
+      "toolErrors": 2,
+      "groundedClaims": 0,
+      "totalClaims": 0,
+      "groundedReasoningRate": null,
+      "review": []
+    }
+  },
+  "sourceDigests": {
+    "src/reliability/contracts.ts": "338c3e53e12afdbf30042780d4ce5633ac0d0e79e8cfc0fd94dc102be3b3aaa4",
+    "src/reliability/probes.ts": "3d62a8e3e2282b0764a03c956583464aa82b6880860fee20d34ef423caf4b088",
+    "src/reliability/cli.ts": "3a7aa54df622e63cf64e01e433d5ba7937e4402f12bc395c2648c0b667921996",
+    "src/reliability/store.ts": "51a4e2967529167ee36a556f64295926d52bddfba97c16acb300f690a25fcd09",
+    "src/reliability/router.ts": "9f90fd7f985ba0608271c617ab354d4303dd438deb1957dc01a07003ea94eedb",
+    "src/reliability/worker.ts": "c93869c930e119050a489009bda7c2a669ef748c10214cdea343c5fdfcdf76a3",
+    "src/evaluation/performance-eval.ts": "f744ed9c5ce2ae79176e7b9b2ee56abfd9d85981e18b0de92f460d06ece68ac7",
+    "src/evaluation/reliability-eval.ts": "1d9b6175bc74d58558f923bd1a0e6c7d8d728fc23beaf9e6caa092f74a4b3930",
+    "src/api-harness/runtime.ts": "426376156d7a4e52e5dc8f9c04b3dadff5896d608672f038bbe37e9702f91900",
+    "src/api-harness/context-projector.ts": "a27dbf66e10830173c424751bc12dffb3e0515908b0130f6390826edddf1abdd",
+    "test/workspace-evidence.test.ts": "3ae5781ef471aa4d3fe4abe29790a97e05bb0716e17a0c0135ec9514401b2d44",
+    "src/harness/pi-loop-adapter.ts": "6afaa222362a9843696507422e6291e20c9e05a9dd48f86b6ba0666e22a145fd",
+    "scripts/performance-eval.mjs": "d90b2281733c4accf076c70759a84dbd7ca5ca9c67c9f8240941da8c9aa4913a",
+    "scripts/reliability-live.mjs": "42c7c66ffe151fb1744e25819d5cd75bc9ef3c3e3c0385a336cd58c253e92130",
+    "test/probe-performance.test.ts": "44d6613a9e924e3cd7b22bcf176fb08290dd0c9e34e516a76fddc7ddd2484d62"
+  }
+}

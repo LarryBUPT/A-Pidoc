@@ -61,6 +61,9 @@ jobs:
       - name: Run three V5 scheduled reliability and worker recovery evaluations
         run: npm run eval:reliability
 
+      - name: Compare bounded independent probes with identical HTTP and storage load
+        run: npm run eval:performance
+
       - name: Verify generated output is reproducible after all evaluations
         run: git diff --exit-code
 

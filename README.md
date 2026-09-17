@@ -266,3 +266,7 @@ docs/                可由仓库事实验证的公开文档
 复杂 API 调查的新入口是 `agent-run`（Pi 低层循环、实际工具、审批恢复、收敛状态、硬证据门禁与独立 Reviewer）；简单已知 case 保留零模型的确定性路径。使用方式见 [API 工具族](docs/api-tool-bundles.md)，验收与边界见 [Reviewer/配对评测](docs/reviewer-evaluation.md)。`eval:agentic` 为离线 required gate，`eval:agentic:live` 为私有凭据的发布前验收。
 
 V5 持续可靠性入口是 `reliability-*` CLI，或先运行 `npm run demo:reliability`：健康合法/负例探测零模型，复杂异常经持久队列复用上述Harness，高风险本地草稿需准确批准，响应结构持续异常保留人工接管。JSON队列是本地受控实现，生产分布式队列/长期监控/SLO仍未验证；三轮 `eval:reliability` 为离线门禁，`eval:reliability:live` 为独立发布前验收。
+
+## V5 秋招性能证据
+
+独立确定性探针支持显式有界并发，保留默认串行与原Harness审批链路；同场景串行1/并发4、注入40ms与零注入延迟对照、173项单测及独立live验收见 [性能说明](docs/v5-performance.md)。长期SLO与生产部署不属于本轮秋招验收条件。

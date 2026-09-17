@@ -27,7 +27,8 @@
     "check": "npm run build --silent && npm run test:unit",
     "demo:reliability": "npm run build --silent && node scripts/reliability-demo.mjs",
     "eval:reliability": "npm run build --silent && node scripts/reliability-eval.mjs",
-    "eval:reliability:live": "npm run build --silent && node --env-file=.env scripts/reliability-live.mjs"
+    "eval:reliability:live": "npm run build --silent && node --env-file=.env scripts/reliability-live.mjs",
+    "eval:performance": "npm run build --silent && node scripts/performance-eval.mjs"
   },
   "engines": {
     "node": ">=22.19.0"

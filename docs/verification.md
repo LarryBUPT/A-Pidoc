@@ -208,3 +208,7 @@ PR-6 增加 `npm run eval:agentic` 为 required CI 的同条件对照，模型�
 ## V5 计划探测与 Worker 恢复
 
 运行 `npm run demo:reliability` 与 `npm run eval:reliability`，预期 `healthyProbes: 6`、`healthyModelRequests: 0`、临时异常任务completed、Schema持续异常manual_handoff；后者连续三轮专项合同与场景，provider为faux。真实子进程发布后硬中断/恢复不重复、准确审批、原合同复查、容量/取消/超时/预算均有专项反例。原V4.5与旧评测继续required，真实模型独立 `eval:reliability:live`。具体命令/范围见 [V5持续可靠性](reliability-v5.md)。
+
+## V5 性能配对门禁
+
+`npm run eval:performance`对相同HTTP与JSON存储跑两种负载，各六组AB/BA、预热剔除。required CI验证结果语义、并发上限和零模型合同；指标打印而不设机器相关速度阈值。全量单测173项，新合同8项；实际冻结指标与live区分见 [性能说明](v5-performance.md)。

@@ -9,7 +9,7 @@ import { AnomalyRouter, defaultRouting } from "./router.js";
 import { ReliabilityWorker } from "./worker.js";
 import type { ProbePlan } from "./contracts.js";
 export async function runReliabilityCommand(mode:string,options:Map<string,string>){
-  const file=options.get("state");if(!file)throw new Error("--state private JSON path is required");const store=new ReliabilityStore(file),scheduler=new ProbeScheduler(store),actor=userInfo().username;
+  const file=options.get("state");if(!file)throw new Error("--state private JSON path is required");const store=new ReliabilityStore(file),scheduler=new ProbeScheduler(store,undefined,Number(options.get("probe-concurrency")??1)),actor=userInfo().username;
   const provider=process.env.A_PIDOC_PI_PROVIDER??"deepseek",modelId=process.env.A_PIDOC_PI_MODEL??"deepseek-v4-pro",smallId=process.env.A_PIDOC_PI_SMALL_MODEL;
   const config={...defaultRouting,smallModelConfigured:!!smallId};
   const worker=new ReliabilityWorker(store,async(job,_run,signal)=>{

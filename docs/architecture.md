@@ -343,3 +343,7 @@ PiLoopAdapter 的前置、执行和完成 hooks 接入 ApiGuardrail；可信后�
 PR-5 的 [实际工具族](api-tool-bundles.md)通过 ApiHarnessRuntime 组合共享基础能力，PiLoopAdapter 不理解 HTTP/OpenAPI。后端拥有注册 endpoint/source/workspace 与真实前置条件，模型参数只有可审计请求或本 run Artifact ID。
 
 PR-6 中 completionTool 无副作用只提交 proposal，host 的硬 Gate/独立 Pi Reviewer 才改变终态；Raw 对照共用该工具实现。Reviewer 独立 transcript、无工具、同预算、最多一次 revise，符合 [评测架构](reviewer-evaluation.md)。复杂任务使用 agent-run，固定已知任务保持 deterministic。
+
+## V5 探针性能边界
+
+ProbeScheduler在计划slot持久化后，只将宿主显式声明三项并行条件的连续计划段按origin分组，有界执行。未声明计划形成独占屏障，同origin串行，同实例tick排队；可靠性Worker仍复用ApiHarnessRuntime，未新建模型loop。见 [性能说明与实际指标](v5-performance.md)。

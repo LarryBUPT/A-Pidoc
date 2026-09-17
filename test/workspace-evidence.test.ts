@@ -11,6 +11,8 @@ import type { EvidencePackage } from "../src/api-harness/contracts.js";
 import { digest } from "../src/harness/digest.js";
 import { appendStep } from "../src/harness/trajectory-store.js";
 import type { HarnessTool } from "../src/harness/contracts.js";
+import { evidenceReader } from "../src/api-harness/tool-bundles.js";
+import { ToolRegistry } from "../src/harness/tool-registry.js";
 
 function evidenceTool(name: string, kind: string, data: unknown, write = false): HarnessTool {
   return { ...tool(name, async (_input, context) => ({ success: true, data, evidence: [{ id: `${kind}-${context.toolCallId}`, kind, sha256: digest(data), mediaType: "application/json", toolCallId: context.toolCallId }], warnings: [], durationMs: 0, redacted: true, ...(write ? { controlPlaneChanged: true } : {}) })), evidenceKinds: [kind], risk: write ? "write" : "read", idempotency: "keyed" };
@@ -60,6 +62,16 @@ test("context projection stays bounded with protocol-complete tool results and p
   const projected = await h.projector.project(huge);
   assert.ok(Buffer.byteLength(JSON.stringify(projected)) < 32_768); assert.ok(JSON.stringify(projected).includes("http_observation-after")); assert.ok(JSON.stringify(projected).includes("large"));
   assert.equal(JSON.stringify(await h.store.load()), old);
+});
+test("projected context preserves completed artifact inspection and task requirements across compaction", async t => {
+  const h=await runtime(t),reader=evidenceReader(h.store),workspace=new ConvergentWorkspace(h.store,new ToolRegistry([reader]));
+  const result=await reader.execute({id:"http_observation-before"},{runId:"test",toolCallId:"inspect",environment:"sandbox"});
+  await workspace.record({id:"inspect",name:reader.name,args:{id:"http_observation-before"}},result,false);
+  const before=await h.store.load(),projected=await h.projector.project(before.messages),board=JSON.parse(String((projected[0] as {content:string}).content).replace(/^API WORKSPACE BOARD\n/,""));
+  assert.equal(board.evidence.find((r:{id:string})=>r.id==="http_observation-before").inspected,true);
+  assert.equal(board.evidence.find((r:{id:string})=>r.id==="http_observation-after").inspected,false);assert.equal(board.goal,before.run.task.goal);assert.match(board.completionRequirements,/failed HTTP baseline/);
+  const compact=await new ContextProjector(h.store,1600).project(before.messages),small=JSON.parse(String((compact[0] as {content:string}).content));assert.equal(small.goal,before.run.task.goal);assert.equal(small.remaining.modelCalls,board.remaining.modelCalls);assert.equal(small.completionRequirements,board.completionRequirements);
+  assert.equal(JSON.stringify(await h.store.load()),JSON.stringify(before));
 });
 test("hypotheses stay bounded and cannot become facts or skip evidence maturity", async t => {
   const h = await runtime(t);
