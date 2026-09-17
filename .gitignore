@@ -4,3 +4,4 @@ coverage/
 .private/
 .env
 *.log
+.claude/settings.local.json
