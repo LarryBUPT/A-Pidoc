@@ -1,6 +1,6 @@
 # A-Pidoc / API Doctor
 
-当前完整受控V5已发布 `v0.17.0`，计划探测、异常分流、持久队列与Harness Worker的实现、CI、版本PR、tag/Release和offline/live证据见 [V5发布审计](docs/v5-release-audit.md)。V4历史基线 `v0.11.0`、V4.5 `v0.16.0` 保留，六批治理改动见 [V4.5发布审计](docs/v45-release-audit.md)，模型工具控制面见 [Harness迁移与验证](docs/agentic-harness.md)。
+当前完整秋招V5已发布 `v0.18.0`，包含持续可靠性闭环与可复跑的探针性能优化；版本/tag/Release/CI一致性见 [性能补充发布审计](docs/v5-performance-release-audit.md)。基础V5 `v0.17.0` 的 [历史审计](docs/v5-release-audit.md)、V4.5 `v0.16.0` 与 [治理审计](docs/v45-release-audit.md)保留。长期SLO与生产部署不属本轮验收条件，模型控制面见 [Harness文档](docs/agentic-harness.md)。
 
 API Doctor 是一个面向初级开发者与 SaaS（Software as a Service，软件即服务）实施人员的 HTTP API（Hypertext Transfer Protocol Application Programming Interface，基于超文本传输协议的应用程序编程接口）联调诊断 Agent（智能体）。它把失败请求、接口规范和运行证据组织成一条可复现链路，并在安全策略约束下执行修正、重试与结果复核。
 
