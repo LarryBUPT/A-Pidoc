@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "defaultMode": "default",
+    "allow": [
+      "Edit(/.private/review/**)",
+      "Bash(git status --short)",
+      "Bash(git rev-parse HEAD)",
+      "Bash(git diff --name-only)",
+      "Bash(git diff --stat)"
+    ],
+    "deny": [
+      "Read(/.env)",
+      "Read(/.env.*)",
+      "Read(/.claude/settings.local.json)",
+      "Read(/.private/automation/**)",
+      "Edit(/src/**)",
+      "Edit(/test/**)",
+      "Edit(/scripts/**)",
+      "Edit(/docs/**)",
+      "Edit(/.github/**)",
+      "Edit(/.claude/**)",
+      "Edit(/.git/**)",
+      "Edit(/AGENTS.md)",
+      "Edit(/CLAUDE.md)",
+      "Edit(/README.md)",
+      "Edit(/CONTRIBUTING.md)",
+      "Edit(/package.json)",
+      "Edit(/package-lock.json)",
+      "Edit(/.gitignore)"
+    ]
+  },
+  "env": {
+    "ANTHROPIC_BASE_URL": "https://api.deepseek.com/anthropic",
+    "ANTHROPIC_MODEL": "deepseek-flash[1m]",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "deepseek-flash[1m]",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "deepseek-flash[1m]",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "deepseek-flash",
+    "CLAUDE_CODE_SUBAGENT_MODEL": "deepseek-flash",
+    "CLAUDE_CODE_EFFORT_LEVEL": "max",
+    "CLAUDE_CODE_AUTO_COMPACT_WINDOW": "786432"
+  }
+}
