@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.18.1](https://github.com/LarryBUPT/A-Pidoc/compare/v0.18.0...v0.18.1) (2026-09-17)
+
+
+### Bug Fixes
+
+* 交付首轮审计的安全与持久化修复 ([#78](https://github.com/LarryBUPT/A-Pidoc/issues/78)) ([acca00b](https://github.com/LarryBUPT/A-Pidoc/commit/acca00b15163ce7d68907d3c424dbaaaaa25498f))
+
 ## [0.18.0](https://github.com/LarryBUPT/A-Pidoc/compare/v0.17.0...v0.18.0) (2026-09-17)
 
 
