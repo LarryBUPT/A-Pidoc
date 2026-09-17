@@ -86,6 +86,43 @@ test("request policy blocks unlisted ports and DNS results in private networks",
   );
 });
 
+test("DNS checks block private IPv4-mapped forms, shared-address boundaries and existing private targets", async () => {
+  const addresses = [
+    "127.0.0.1", "10.0.0.1", "169.254.169.254", "172.16.0.1", "192.168.1.1", "0.0.0.1",
+    "::", "::1", "fc00::1", "fd00::1", "fe80::1", "febf::1", "fc1::1", "fd::1",
+    "::ffff:7f00:1", "::ffff:127.0.0.1", "0:0:0:0:0:ffff:7f00:1", "::FFFF:A9FE:A9FE",
+    "::ffff:169.254.169.254", "::ffff:10.0.0.1", "::ffff:172.16.0.1", "::ffff:192.168.1.1",
+    "100.64.0.0", "100.127.255.255", "::ffff:6440:0", "::ffff:100.127.255.255"
+  ];
+  const request = { method: "GET" as const, url: "https://service.example/orders", headers: {}, body: null };
+  for (const address of addresses) {
+    const policy = new RequestPolicy({ allowedHosts: ["service.example"], resolveHost: async () => [address] });
+    await assert.rejects(() => policy.assertResolvedAddressAllowed(request), { code: "BLOCKED_PRIVATE_ADDRESS" }, address);
+  }
+  const mixed = new RequestPolicy({ allowedHosts: ["service.example"], resolveHost: async () => ["8.8.8.8", "::ffff:7f00:1"] });
+  await assert.rejects(() => mixed.assertResolvedAddressAllowed(request), { code: "BLOCKED_PRIVATE_ADDRESS" });
+});
+
+test("DNS checks retain public and mapped-public results outside the added shared-address range", async () => {
+  for (const address of ["8.8.8.8", "::ffff:8.8.8.8", "::ffff:808:808", "100.63.255.255", "100.128.0.0", "::ffff:643f:ffff", "2001:4860:4860::8888"]) {
+    const policy = new RequestPolicy({ allowedHosts: ["service.example"], resolveHost: async () => [address] });
+    await policy.assertResolvedAddressAllowed({ method: "GET", url: "https://service.example", headers: {}, body: null });
+  }
+});
+
+test("Host and port checks still precede DNS and explicitly allowed local targets keep their semantics", async () => {
+  let resolutions = 0;
+  const policy = new RequestPolicy({ allowedHosts: ["service.example"], allowedPorts: [443],
+    resolveHost: async () => { resolutions++; return ["::ffff:7f00:1"]; } });
+  await assert.rejects(() => policy.assertResolvedAddressAllowed({ method: "GET", url: "https://unlisted.example", headers: {}, body: null }), { code: "BLOCKED_HOST" });
+  await assert.rejects(() => policy.assertResolvedAddressAllowed({ method: "GET", url: "https://service.example:8443", headers: {}, body: null }), { code: "BLOCKED_PORT" });
+  assert.equal(resolutions, 0);
+  const local = new RequestPolicy({ resolveHost: async () => ["127.0.0.1"] });
+  await local.assertResolvedAddressAllowed({ method: "GET", url: "http://localhost", headers: {}, body: null });
+  await local.assertResolvedAddressAllowed({ method: "GET", url: "http://127.0.0.1", headers: {}, body: null });
+  await assert.rejects(() => local.assertResolvedAddressAllowed({ method: "GET", url: "https://service.example", headers: {}, body: null }), { code: "BLOCKED_HOST" });
+});
+
 test("HTTP API enforces Origin, Bearer authentication, and per-client rate limits", async (context) => {
   const api = createApiServer({ apiToken: "test-token-123456", rateLimit: 1 });
   context.after(() => api.close());

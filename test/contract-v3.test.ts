@@ -8,6 +8,7 @@ import { diffOpenApi } from "../src/contract/openapi-diff.js";
 import { analyzeContractImpact, generateMigrationPatchPlans } from "../src/contract/impact-analysis.js";
 import { verifyContractMigration } from "../src/contract/migration.js";
 import { evaluateContracts } from "../src/evaluation/contract-eval.js";
+import { assertContractEvaluation } from "./evaluation-invariants.js";
 
 async function json(path: string): Promise<unknown> { return JSON.parse(await readFile(path, "utf8")); }
 const impactRoot = resolve("test/fixtures/repository-v3-impact");
@@ -44,13 +45,8 @@ test("V3 migration refuses absent approval and an existing workspace", async (co
   await assert.rejects(() => verifyContractMigration({ root: migrationRoot, workspace: existing, previousDocument: previous, nextDocument: next, approved: true }), /already exists/);
 });
 
-test("V3 contract evaluation freezes diff, impact and migration evidence", async () => {
-  assert.deepEqual(await evaluateContracts(), {
-    passed: true,
-    diff: { total: 7, breaking: 5 },
-    impact: { calls: 2, impactedCalls: 2, impacts: 5 },
-    migration: { beforeImpacts: 1, afterImpacts: 0, testsPassed: true }
-  });
+test("V3 contract evaluation preserves breaking-change and verified migration invariants", async () => {
+  assertContractEvaluation(await evaluateContracts());
 });
 
 test("contract-verify CLI runs the approved isolated migration", async (context) => {

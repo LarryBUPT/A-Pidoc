@@ -7,6 +7,7 @@ import test from "node:test";
 import { scanRepository } from "../src/repository/scanner.js";
 import { buildRepositoryTasks, generateRepositoryPatchPlans, generateRepositoryTestPlans, runRepositoryTasks, verifyRepositoryPlan } from "../src/repository/workflow.js";
 import { evaluateRepositories } from "../src/evaluation/repository-eval.js";
+import { assertRepositoryEvaluation } from "./evaluation-invariants.js";
 
 const root = resolve("test/fixtures/repository-v2");
 async function document(): Promise<unknown> { return JSON.parse(await readFile(resolve(root, "openapi.json"), "utf8")); }
@@ -80,16 +81,9 @@ test("V2 batch defaults to dry-run and never calls a network tool", async () => 
   assert.equal(calls, 0);
 });
 
-test("V2 repository evaluation freezes three repositories and four clients", async () => {
+test("V2 repository evaluation preserves supported clients and verified repair", async () => {
   const result = await evaluateRepositories();
-  assert.deepEqual(result, {
-    passed: true,
-    repositories: 3,
-    calls: 8,
-    unresolvedCalls: 2,
-    clients: ["axios", "fetch", "okhttp", "requests"],
-    repair: { beforeErrors: 1, afterErrors: 0, testsPassed: true }
-  });
+  assertRepositoryEvaluation(result);
 });
 
 test("repo-verify CLI executes the isolated verification workflow", async (context) => {
