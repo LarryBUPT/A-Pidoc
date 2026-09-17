@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.18.0](https://github.com/LarryBUPT/A-Pidoc/compare/v0.17.0...v0.18.0) (2026-09-17)
+
+
+### Features
+
+* measure and bound independent V5 probes ([#70](https://github.com/LarryBUPT/A-Pidoc/issues/70)) ([b0cbed7](https://github.com/LarryBUPT/A-Pidoc/commit/b0cbed770a741b84c82f6b59471419f3e4319887))
+
 ## [0.17.0](https://github.com/LarryBUPT/A-Pidoc/compare/v0.16.0...v0.17.0) (2026-09-16)
 
 
