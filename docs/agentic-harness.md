@@ -36,3 +36,7 @@ PR-1～PR-6 已完成完整受控 V4.5，正式版本为 `v0.16.0`；required CI
 实际 API 工具族见 [PR-5](api-tool-bundles.md)。注册两个 profile 共用同一 Lead 提示与循环；真实工具可生成 HTTP、隔离补丁、Node 测试和磁盘摘要证据，离线 faux 不代表 live 模型验收。
 
 PR-6 采用[独立 Reviewer 与配对评测](reviewer-evaluation.md)。完成工具为相同的无副作用 proposal 实现；host 包装核验硬门禁并单独审查语义。完整 V4.5 的验收以实际 offline/live 发布证据为准。
+
+## V5 调查收敛看板补充
+
+重新执行live时出现重复读取、NO_PROGRESS_LIMIT接管。看板现在公开持久事实中的inspected状态和既有完成合同；压缩降级仍保留目标、预算、无进展计数。监控任务允许有证据的UNKNOWN根因与局部观察，不能伪造生产恢复。模型自主选工具，原Evidence Gate、Reviewer、审批与无进展上限保持不变；失败尝试与最终验收分开保留，不能据单次成功宣称根因已唯一定位或稳定成功率，见 [本次验收记录](evidence/v5-performance-live.json)。

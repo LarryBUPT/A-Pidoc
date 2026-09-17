@@ -15,6 +15,7 @@ export function validatePlan(p:ProbePlan):void{
   if(!/^[a-zA-Z0-9_-]{1,80}$/.test(p.id)||!p.tenantId||p.tenantId.length>80||u.hostname!=="127.0.0.1"||u.protocol!=="http:"||u.username||u.password||u.search||u.hash||!p.sideEffectFree||!(p.method==="POST"&&u.pathname==="/orders"||p.method==="GET"&&u.pathname==="/health"))throw new Error("UNREGISTERED_READ_ONLY_PROBE");
   if(p.sideEffectFree!==true||typeof p.enabled!=="boolean"||!["low","high"].includes(p.risk)||!Number.isSafeInteger(p.intervalMs)||p.intervalMs<10||p.intervalMs>86_400_000||!Number.isSafeInteger(p.nextAt)||p.nextAt<0||!Number.isSafeInteger(p.revision)||p.revision<0||!Number.isFinite(p.latencyLimitMs)||p.latencyLimitMs<1||p.variants.length<1||p.variants.length>8)throw new Error("INVALID_PROBE_PLAN");
   assertSupportedSchema(p.expectedResponse);
+  for(const flag of [p.parallelSafe,p.snapshotConsistent])if(flag!==undefined&&typeof flag!=="boolean")throw new Error("INVALID_PROBE_PLAN");
   if(Buffer.byteLength(JSON.stringify(p))>16_384||JSON.stringify(redactValue(p))!==JSON.stringify(p)||new Set(p.variants.map(v=>v.id)).size!==p.variants.length)throw new Error("UNSAFE_PROBE_PLAN");
   for(const v of p.variants)if(!/^[\w-]{1,80}$/.test(v.id)||!Number.isInteger(v.expectedStatus)||v.expectedStatus<100||v.expectedStatus>599||p.method==="GET"&&v.body!==null||Object.keys(v.headers).some(k=>k.toLowerCase()!=="content-type"))throw new Error("INVALID_PROBE_VARIANT");
 }
@@ -37,14 +38,37 @@ export class ProbeRunner {
 // Persist dispatch intent before I/O. An interrupted slot is an explicit gap,
 // never silently replayed. The next slot continues without a catch-up flood.
 export class ProbeScheduler {
-  constructor(readonly store:ReliabilityStore,readonly runner=new ProbeRunner()){}
+  private tickTail:Promise<unknown>=Promise.resolve();
+  constructor(readonly store:ReliabilityStore,readonly runner=new ProbeRunner(),readonly maxConcurrentOrigins=1){if(!Number.isInteger(maxConcurrentOrigins)||maxConcurrentOrigins<1||maxConcurrentOrigins>4)throw new Error("INVALID_PROBE_CONCURRENCY");}
   async register(p:ProbePlan){validatePlan(p);await this.store.update(s=>{if(Object.keys(s.plans).length>=32&&!s.plans[p.id])throw new Error("PLAN_CAPACITY");if(s.plans[p.id])throw new Error("PLAN_ALREADY_REGISTERED");s.plans[p.id]=structuredClone(p);});}
   async setEnabled(id:string,enabled:boolean,now=Date.now()){await this.store.update(s=>{const p=s.plans[id];if(!p)throw new Error("UNKNOWN_PLAN");p.enabled=enabled;p.revision++;if(enabled)p.nextAt=now;});}
-  async tick(now=Date.now(),signal?:AbortSignal):Promise<ProbeObservation[]>{
+  tick(now=Date.now(),signal?:AbortSignal):Promise<ProbeObservation[]>{
+    const next=this.tickTail.then(()=>this.tickOnce(now,signal));this.tickTail=next.catch(()=>undefined);return next;
+  }
+  private async tickOnce(now:number,signal?:AbortSignal):Promise<ProbeObservation[]>{
+    if(signal?.aborted)return[];
     const due=await this.store.update(s=>Object.values(s.plans).filter(p=>p.enabled&&p.nextAt<=now).flatMap(p=>{const slot=p.nextAt;if((s.lastSlots[p.id]??-1)>=slot)return[];s.lastSlots[p.id]=slot;p.nextAt=now+p.intervalMs;return [{plan:structuredClone(p),slot}];}));
-    const observations:ProbeObservation[]=[];
-    for(const d of due)for(const variant of d.plan.variants){if(signal?.aborted)break;const p=(await this.store.load()).plans[d.plan.id];if(!p?.enabled||p.revision!==d.plan.revision)break;const o=await this.runner.execute(d.plan,variant,d.slot,signal);observations.push(o);await this.store.update(s=>{s.probes.push(o);s.probes=s.probes.slice(-512);});}
-    return observations;
+    // One origin owns one slot in this pool, even across tenants/plans/paths.
+    // Model tools and mutations remain on the original sequential Harness.
+    type Dispatch={index:number;plan:ProbePlan;slot:number};
+    const segments:Dispatch[][]=[];let pending:Dispatch[]=[];
+    due.forEach((d,index)=>{const item={...d,index};if(this.maxConcurrentOrigins>1&&d.plan.parallelSafe===true&&d.plan.snapshotConsistent===true)pending.push(item);else{if(pending.length)segments.push(pending);pending=[];segments.push([item]);}});if(pending.length)segments.push(pending);
+    const rows:ProbeObservation[][]=due.map(()=>[]),controller=new AbortController(),poolSignal=signal?AbortSignal.any([signal,controller.signal]):controller.signal;
+    // Undeclared plans are exclusive barriers; default one retains I/O order.
+    for(const segment of segments){if(poolSignal.aborted)break;
+    const groups=new Map<string,Dispatch[]>();for(const item of segment){const key=new URL(item.plan.endpoint).origin,group=groups.get(key)??[];group.push(item);groups.set(key,group);}
+    const queue=[...groups.values()];let cursor=0;
+    const workers=Array.from({length:Math.min(this.maxConcurrentOrigins,queue.length)},async()=>{
+      try{while(!poolSignal.aborted){const group=queue[cursor++];if(!group)break;
+        for(const d of group)for(const variant of d.plan.variants){if(poolSignal.aborted)break;const p=(await this.store.load()).plans[d.plan.id];if(!p?.enabled||p.revision!==d.plan.revision)break;
+          const o=await this.runner.execute(d.plan,variant,d.slot,poolSignal);await this.store.update(s=>{s.probes.push(o);s.probes=s.probes.slice(-512);});rows[d.index]!.push(o);
+        }
+      }}catch(error){controller.abort();throw error;}
+    });
+    const settled=await Promise.allSettled(workers),failure=settled.find((v):v is PromiseRejectedResult=>v.status==="rejected");if(failure)throw failure.reason;
+    }
+    // Return registration/variant order; persistence records completion order.
+    return rows.flat();
   }
 }
 export function probeMetrics(observations:ProbeObservation[]){

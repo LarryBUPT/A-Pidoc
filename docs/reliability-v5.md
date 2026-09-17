@@ -85,3 +85,7 @@ node dist/src/cli.js reliability-recover --state .private/reliability/state.json
 [三轮离线摘要](evidence/v5-offline.json)记录164项总测试、20项专项合同与三次实际场景；模型provider为faux。[真实模型摘要](evidence/v5-live.json)使用DeepSeek `deepseek-v4-pro`，最终04中健康6探测/0模型；临时异常任务completed，10次模型/14次工具/34,085 Token，SDK估算$0.00933191，24,842ms，1次准确审批/1份本地回执，独立Reviewer pass。Schema事件有实际监控和API规范证据，因NO_PROGRESS_LIMIT阻断并留manual_handoff，不声称模型修复了响应字段。
 
 01失败与02/03较早成功均保留，最终04原始报告SHA-256和规范化源码摘要冻结；单次发布前场景不是统计成功率。专项三轮出现过一次原合同复查未通过，原日志保留，增加诊断后20次定向检查和最终三轮通过；根因未复现，不编造修复结论。全部旧门禁、业务26和生产依赖audit0继续通过。
+
+## 秋招性能补充
+
+V5受控闭环已发布；长期SLO和生产部署属于扩展路线。新增显式只读/可并行/快照一致的独立origin探针池，默认1、最多4，未声明计划独占串行；量化对照与边界见 [性能说明](v5-performance.md)。模型工具与准确审批继续由原Harness治理。

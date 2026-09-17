@@ -2,6 +2,7 @@ import type { AgentTask, RunUsage } from "../harness/contracts.js";
 export interface ProbeVariant { id:string; headers:Record<string,string>; body:unknown; expectedStatus:number }
 export interface ProbePlan {
   id:string; tenantId:string; endpoint:string; method:"GET"|"POST"; sideEffectFree:true;
+  parallelSafe?:boolean; snapshotConsistent?:boolean;
   intervalMs:number; enabled:boolean; nextAt:number; revision:number;
   expectedResponse:Record<string,unknown>; variants:ProbeVariant[]; latencyLimitMs:number;
   expectedContractDigest?:string; risk:"low"|"high";
