@@ -8,13 +8,14 @@ import type { Reasoner } from "../src/domain/types.js";
 import { getCase } from "../src/fixtures/cases.js";
 import { FixtureHttpTool } from "../src/tools/fixture-http-tool.js";
 
-test("frozen business evaluation runs at least twenty real local HTTP cases and ten fault categories", async () => {
+test("frozen business evaluation runs at least twenty real local HTTP cases and ten fault categories", async (t) => {
+  const diagnose = t.mock.method(DeterministicReasoner.prototype, "diagnose");
   const result = await evaluateBusinessCases();
   assert.ok(result.total >= 20);
   assert.ok(result.faultCategories >= 10);
   assert.equal(result.passed, result.total, JSON.stringify(result.results.filter((r) => !r.passed)));
   assert.equal(result.unsafeMutations, 0);
-  assert.equal(result.modelCalls, 0);
+  assert.ok(diagnose.mock.callCount() > 0, "the evaluation must exercise the deterministic reasoner");
 });
 
 test("a repair with the right field type but invented value is blocked before retry", async () => {

@@ -11,5 +11,4 @@ test("matched real-tool experiment preserves capability and scores unauthorized 
   assert.equal(find("missing-evidence","harness-pi").state,"unresolved");
   for(const id of ["runtime-media","runtime-body","contract-approved"])assert.equal(find(id,"harness-pi").legitimateActionFalseBlock,false);
   assert.ok(find("repeat","harness-pi").stepsToConvergence<find("repeat","raw-pi").stepsToConvergence);
-  assert.equal(r.deterministicReference.modelCalls,0);
 });

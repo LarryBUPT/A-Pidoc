@@ -14,6 +14,7 @@ import { exportPostmanCollection, importPostmanCollection } from "../src/collabo
 import type { CollaborationPlatform, CollaborationSummary, KnowledgeCase } from "../src/collaboration/types.js";
 import { CollaborationWorkflow } from "../src/collaboration/workflow.js";
 import { evaluateCollaboration } from "../src/evaluation/collaboration-eval.js";
+import { assertCollaborationEvaluation } from "./evaluation-invariants.js";
 import { getCase } from "../src/fixtures/cases.js";
 
 const execute = promisify(execFile);
@@ -76,8 +77,8 @@ test("V4 completes Jira to logs, diagnosis, publication and knowledge workflow",
   assert.deepEqual(report.trace.filter((event) => event.status === "succeeded").map((event) => event.stage), ["read_collaboration_item", "retrieve_structured_knowledge", "query_linked_logs", "run_evidence_diagnosis", "publish_collaboration_report", "save_structured_knowledge"]);
 });
 
-test("V4 frozen collaboration evaluation preserves the complete evidence chain", async () => {
-  assert.deepEqual(await evaluateCollaboration(), { passed: true, platforms: 5, publications: 1, storedCases: 1, retrievedCases: 1, postmanRequests: 1, regressionTestGenerated: true, logsRedacted: true, traceComplete: true });
+test("V4 collaboration evaluation preserves knowledge, redaction and evidence invariants", async () => {
+  assertCollaborationEvaluation(await evaluateCollaboration());
 });
 
 test("collaboration-demo CLI runs the frozen V4 workflow", async () => {

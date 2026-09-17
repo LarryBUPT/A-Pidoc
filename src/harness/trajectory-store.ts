@@ -1,8 +1,9 @@
 import { randomUUID } from "node:crypto";
-import { mkdir, open, readFile, rename, rm } from "node:fs/promises";
+import { mkdir, open, readFile, rm } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import type { AgentRun, PendingApproval, ApprovalGrant, TrajectoryStep } from "./contracts.js";
 import { redactValue } from "../security/redaction.js";
+import { atomicReplace, type RenameRetryIo } from "./atomic-replace.js";
 
 export interface RunSnapshot {
   formatVersion: 1; run: AgentRun; messages: unknown[];
@@ -26,7 +27,7 @@ export function appendStep(s: RunSnapshot, kind: TrajectoryStep["kind"], data: u
 export class TrajectoryStore {
   readonly file: string;
   private tail: Promise<unknown> = Promise.resolve();
-  constructor(file: string) { this.file = resolve(file); }
+  constructor(file: string, private readonly renameIo: RenameRetryIo = {}) { this.file = resolve(file); }
   async load(): Promise<RunSnapshot> {
     const s = JSON.parse(await readFile(this.file, "utf8")) as RunSnapshot;
     if (s.formatVersion !== 1 || !Number.isSafeInteger(s.stateRevision) || s.run.steps.some((v, i) => v.seq !== i + 1)) throw new Error("INVALID_SNAPSHOT");
@@ -58,6 +59,6 @@ export class TrajectoryStore {
     const temp = `${this.file}.${randomUUID()}.tmp`;
     const f = await open(temp, "wx", 0o600);
     try { await f.writeFile(JSON.stringify(s)); await f.sync(); } finally { await f.close(); }
-    try { await rename(temp, this.file); } finally { await rm(temp, { force: true }); }
+    try { await atomicReplace(temp, this.file, this.renameIo); } finally { await rm(temp, { force: true }); }
   }
 }

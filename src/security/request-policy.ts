@@ -1,6 +1,6 @@
 import type { ApiRequest } from "../domain/types.js";
 import { lookup } from "node:dns/promises";
-import { isIP } from "node:net";
+import { BlockList, isIP } from "node:net";
 import { PublicError } from "./errors.js";
 
 export interface RequestPolicyOptions {
@@ -15,23 +15,26 @@ function effectivePort(url: URL): number {
   return Number(url.port || (url.protocol === "https:" ? 443 : 80));
 }
 
-function isPrivateIpv4(address: string): boolean {
-  const parts = address.split(".").map(Number);
-  const first = parts[0] ?? -1;
-  const second = parts[1] ?? -1;
-  return first === 10 || first === 127 || (first === 169 && second === 254) ||
-    (first === 172 && second >= 16 && second <= 31) || (first === 192 && second === 168) || first === 0;
-}
+const privateAddresses = new BlockList();
+for (const [network, prefix] of [
+  ["0.0.0.0", 8], ["10.0.0.0", 8], ["127.0.0.0", 8], ["169.254.0.0", 16],
+  ["172.16.0.0", 12], ["192.168.0.0", 16], ["100.64.0.0", 10]
+] as const) privateAddresses.addSubnet(network, prefix, "ipv4");
+privateAddresses.addAddress("::", "ipv6");
+privateAddresses.addAddress("::1", "ipv6");
+privateAddresses.addSubnet("fc00::", 7, "ipv6");
+privateAddresses.addSubnet("fe80::", 10, "ipv6");
 
 function isPrivateAddress(address: string): boolean {
-  if (isIP(address) === 4) return isPrivateIpv4(address);
-  if (isIP(address) === 6) {
+  const version = isIP(address);
+  if (version === 6) {
     const normalized = address.toLowerCase();
-    return normalized === "::1" || normalized === "::" || normalized.startsWith("fc") ||
-      normalized.startsWith("fd") || normalized.startsWith("fe8") || normalized.startsWith("fe9") ||
-      normalized.startsWith("fea") || normalized.startsWith("feb");
+    // Retain the existing textual-prefix blocks; this change must not open an old target.
+    if (normalized.startsWith("fc") || normalized.startsWith("fd") || normalized.startsWith("fe8") ||
+        normalized.startsWith("fe9") || normalized.startsWith("fea") || normalized.startsWith("feb")) return true;
   }
-  return false;
+  // BlockList checks IPv4-mapped IPv6 against the same IPv4 subnets, in hex or dotted form.
+  return version !== 0 && privateAddresses.check(address, version === 4 ? "ipv4" : "ipv6");
 }
 
 export class RequestPolicy {

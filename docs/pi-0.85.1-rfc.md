@@ -25,7 +25,7 @@
 | provider API | root 改为显式 Models/provider；旧 API 在 compat | 旧路径只改官方 import，局部契约测试通过 |
 | durable transcript | 消息落盘不依赖 EventStream 观察消费者 | message_end 保存；stream delta 不反复写文件 |
 
-TrajectoryStore 使用同目录临时文件、文件 fsync、原子 rename 与 mkdir 排他锁。CAS 按 stateRevision 防覆盖；同一 run 的 runner lease 防止两个 loop 交错。陈旧锁不自动窃取，需人工核验。错误转换为稳定公开码；原始 provider/tool 异常不进入快照。预算与已用模型/工具次数、Token/估算费用、活动时长可持久恢复。
+TrajectoryStore 使用同目录临时文件、文件 fsync、原子 rename 与 mkdir 排他锁。TrajectoryStore 与 ReliabilityStore 仅在 Windows 的 rename 抛 EPERM/EACCES 时重试同一临时文件的替换：最多五次尝试，依次退避 10/20/40/80 ms；不重复执行事务回调，也不重试锁获取或其他文件错误，耗尽后仍抛原错误并保留原有人工接手行为。该重试不能保证消除这类瞬时失败：在本机并发读写压力探针中仍观察到重试耗尽后逃逸的 rename EPERM；锁目录创建（mkdir）的同类瞬时错误不在重试范围内，仍按原有失败关闭路径处理。CAS 按 stateRevision 防覆盖；同一 run 的 runner lease 防止两个 loop 交错。陈旧锁不自动窃取，需人工核验。错误转换为稳定公开码；原始 provider/tool 异常不进入快照。预算与已用模型/工具次数、Token/估算费用、活动时长可持久恢复。
 
 ## 尚未解决
 
