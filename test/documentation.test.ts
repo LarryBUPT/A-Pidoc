@@ -6,6 +6,9 @@ import { dirname, resolve } from "node:path";
 const publicMarkdown = [
   "README.md",
   "CONTRIBUTING.md",
+  "docs/README.md",
+  "docs/guides/getting-started.md",
+  "docs/guides/model-setup.md",
   "examples/README.md",
   "docs/architecture.md",
   "docs/build-log.md",
@@ -26,13 +29,15 @@ test("public Markdown links resolve to tracked workspace files", async () => {
 
 test("public docs expose the complete V3 and V4 verification entry points", async () => {
   const readme = await readFile(resolve("README.md"), "utf8");
+  const usage = await readFile(resolve("docs/guides/getting-started.md"), "utf8");
   const guide = await readFile(resolve("docs/verification.md"), "utf8");
+  assert.match(readme, /\]\(docs\/guides\/getting-started\.md\)/);
   for (const command of ["contract-diff", "contract-impact", "contract-verify", "eval:contract"]) {
-    assert.match(readme, new RegExp(command));
+    assert.match(usage, new RegExp(command));
     assert.match(guide, new RegExp(command));
   }
   for (const command of ["collaboration-demo", "collaboration-normalize", "postman-import", "postman-export", "eval:collaboration"]) {
-    assert.match(readme, new RegExp(command));
+    assert.match(usage, new RegExp(command));
     assert.match(guide, new RegExp(command));
   }
   assert.doesNotMatch(readme, /Axios\/自定义客户端/);
