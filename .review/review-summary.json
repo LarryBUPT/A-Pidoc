@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "round": "round-02",
+  "pr": null,
+  "branch": "codex/81-agentic-success-statistics",
+  "baseline": "833831338a8585a7caf89bb2b3494cacebaab481",
+  "head": "833831338a8585a7caf89bb2b3494cacebaab481",
+  "reviewerTool": "Claude Code",
+  "reviewerModel": "deepseek-flash[1m]",
+  "developerTool": "Codex",
+  "auditStatus": "completed",
+  "review": {
+    "total": 15,
+    "confirmed": 1,
+    "partiallyConfirmed": 3,
+    "rejected": 11,
+    "insufficientEvidence": 0
+  },
+  "remediation": {
+    "accepted": 1,
+    "partiallyAccepted": 0,
+    "rejected": 11,
+    "deferred": 3
+  },
+  "verification": {
+    "verifiedFixed": 1,
+    "partiallyFixed": 0,
+    "notFixed": 0,
+    "notReproducible": 11,
+    "unableToVerify": 0,
+    "regressionIntroduced": 0,
+    "verifiedRejected": 0,
+    "verifiedDeferred": 3
+  },
+  "blockingUnresolved": 0,
+  "remediationRounds": 1
+}

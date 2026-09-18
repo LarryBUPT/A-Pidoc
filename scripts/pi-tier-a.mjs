@@ -1,4 +1,5 @@
 import { spawnSync } from "node:child_process";
+import { describeNumbers } from "../dist/src/evaluation/statistics.js";
 
 const runs = 3;
 const results = [];
@@ -23,4 +24,5 @@ for (let index = 1; index <= runs; index += 1) {
 console.table(results);
 const passed = results.length === runs && results.every((result) => result.passed);
 console.log(`Pi Tier A stability: ${results.filter((result) => result.passed).length}/${runs} runs passed`);
+console.log(JSON.stringify({ completedRuns: results.length, plannedRuns: runs, durationMs: describeNumbers(results.map(r => r.durationMs)), interpretation: "Descriptive subprocess durations only; deterministic repeats do not estimate model success probability" }));
 if (!passed) process.exitCode = 1;

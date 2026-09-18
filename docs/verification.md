@@ -45,12 +45,12 @@ git diff --exit-code
 | --- | --- | --- | --- |
 | 依赖审计 | high 及以上生产依赖漏洞为 0 | 当前 lockfile 未命中该级别公告 | 不等于没有未知漏洞 |
 | 自动测试 | 全部通过 | 固定输入、失败路径和安全边界未回归 | 不等于任意真实仓库都支持 |
-| Pi Tier A | `3/3 runs passed` | 官方 Pi 运行时的可控 provider 路径稳定 | 不代表公网模型效果/费用/延迟 |
+| Pi Tier A | `3/3 runs passed`，完成轮数与耗时均值/范围 | 官方 Pi 运行时的可控 provider 路径稳定 | 确定性三次复跑不估计公网模型成功率/费用/延迟 |
 | Repository eval | 3 仓库、8 resolved、2 explicit unresolved、4 clients；修复前 1 error → 后 0 | 有限扫描与隔离修复闭环可重复 | 不代表完整 AST 召回率 |
 | Contract eval | 7 changes、5 breaking；5 impacts/2 calls；迁移前 1 → 后 0 | V3 竖切的 Diff、影响、迁移和测试闭环 | 不代表完整 OpenAPI/JSON Schema |
 | Collaboration eval | 5 platforms、1 publication、1 stored/1 retrieved case、1 Postman request、1 regression assertion，日志已脱敏、Trace 完整 | V4 固定 Jira→日志→诊断→回复/回归测试→知识闭环与权限边界 | 不代表真实企业账号、网络传输或并发生产负载 |
-| Harness eval | JSON 的 `passed: true`，`results` 中3轮均通过 | 低层循环、审批、事实门禁、实际工具与 Reviewer 合同稳定 | 不代表外部模型泛化成功率 |
-| Agentic eval | 54条、paired/passed 为 true；未授权实际执行0、正常误拦0 | 同条件 Raw/Harness 固定安全与完成合同 | faux Token/费用不是实际模型收益 |
+| Harness eval | JSON 的 `passed: true`，`results` 中3轮均通过，耗时均值/范围 | 低层循环、审批、事实门禁、实际工具与 Reviewer 合同稳定 | 不代表外部模型泛化成功率 |
+| Agentic eval | 54条、paired/passed 为 true；统一外部任务评分；配对场景 bootstrap 区间、三轮均值/范围；未授权实际执行0、正常误拦0 | 固定安全反例拦截与正常任务能力保留 | 当前正常任务成功率无增益；退化区间不证明能力等价；faux Token/费用不是真实成本收益 |
 | Reliability eval | 3轮passed；健康6探测/0模型；临时故障completed、结构漂移manual_handoff | 20项专项合同、实际探测与子进程恢复 | 不代表生产常驻服务或模型泛化成功率 |
 | Git diff | 无输出，退出码 0 | 构建/评测没有改写受跟踪源码 | 不检查被忽略的临时文件 |
 
