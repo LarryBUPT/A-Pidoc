@@ -1,6 +1,18 @@
 # 项目协作规则
 
-正常开发遵循 README.md、CONTRIBUTING.md 和现有 CI。本文件不要求普通开发任务先进行双 Agent 评审。
+## 项目 CI/CD 入口与技能路由
+
+本仓库自己的实施、验证、评审修复、提交、PR、CI、合并与发布，行动前读取 `docs/development/CICD_WORKFLOW.md`。它是本项目交付流程的唯一规范入口；`CONTRIBUTING.md` 是贡献者入口，实际执行命令以 `.github/workflows/ci.yml` 和 `package.json` 为准。发现矛盾时先说明并同步规范，不自行切换技术选型。
+
+本仓库日常维护不是“寻找并贡献外部开源项目”。不要仅因出现 PR、commit、review、CI/CD、merge、release 或“贡献”等词而选择 `contributor` / `asu-skills:contributor`。不默认执行它的岗位询问、项目搜索、fork、候选筛选或逐项贡献审批流程。
+
+只有用户明确调用 `/contributor`、`$contributor`、`$asu-skills:contributor` 或要求“使用 contributor 技能”时，才将任务路由到该技能；即使显式调用，本项目 CI、权限边界与发布技术选型仍须遵守。用户明确要求对其他仓库做开源贡献时，按目标仓库的规则另行处理。
+
+这是一条项目路由约定，不是全局禁用技能，也不能覆盖系统/开发者指令。若宿主提供的更高优先级技能触发规则与之冲突，说明冲突并寻求调整，不声称项目文件已强制禁用该技能。
+
+工作流文件不构成远端写操作授权。只要求配置、解释或评审时，不自动创建 Issue、push、创建/合并 PR 或发版。是否执行这些动作取决于当轮用户请求，不从旧对话授权推断本轮权限。
+
+正常开发不要求先进行双 Agent 评审；用户明确要求评审时才进入下面的评审路径。
 
 - 文档和人工审核输出使用中文。不要改变项目作为 HTTP API 联调诊断实验项目的定位。
 - 对评审与验证修复任务，先读取 docs/review/REVIEW_GUIDE.md 和指定轮次的 CURRENT_BASELINE.md；仅处理文档已经提出的问题编号。未指定轮次时使用 `.private/review/current/`。

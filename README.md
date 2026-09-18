@@ -45,11 +45,15 @@ npm run demo
 
 | 想体验什么 | 入口 |
 | --- | --- |
+| 开箱体验 Agent 工具调用与证据门禁 | `npm run demo:harness` |
+| 体验人工审批与隔离迁移验证 | `npm run demo:harness -- --migration` |
 | 诊断一条本地 HTTP 请求 | [运行请求示例](examples/README.md) |
 | 扫描仓库、检查接口升级影响 | [使用指南](docs/guides/getting-started.md) |
 | 团队协作演示 | `npm run demo:team` |
 | 接口巡检演示 | `npm run demo:reliability` |
 | 接入模型辅助诊断 | [模型配置](docs/guides/model-setup.md) |
+
+Harness 演示免密钥：模型决策和语义复核使用预设演示响应，真实执行本地 HTTP、文件与测试工具，以及审批和证据门禁。默认场景自动启动本地接口并展示 415→200；迁移场景在修改和运行测试前分别询问是否批准，输入 `yes` 才执行，默认拒绝。每次运行自动建立独立记录目录，摘要和完整证据保存在 `.private/runs/`。它用于体验运行机制，不代表真实模型自主调查能力。详见[使用指南](docs/guides/getting-started.md#体验-harness-交互免密钥)。
 
 ## 🔎 一次排查如何进行
 

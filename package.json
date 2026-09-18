@@ -7,6 +7,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "demo": "npm run build --silent && node dist/src/cli.js all",
+    "demo:harness": "npm run build --silent && node scripts/harness-demo.mjs",
     "serve": "npm run build --silent && node dist/src/server.js",
     "serve:pi": "npm run build --silent && node --env-file=.env dist/src/server.js",
     "test:unit": "node --test --test-concurrency=1 dist/test/*.test.js",

@@ -2,6 +2,8 @@
 
 本项目采用轻量 GitHub Flow，并用 GitHub Actions 做质量门禁、用 Release Please 管理版本与 GitHub Release。
 
+本项目交付流程的唯一规范入口是 [CICD_WORKFLOW.md](docs/development/CICD_WORKFLOW.md)，Codex 的任务路由入口是 [AGENTS.md](AGENTS.md)。本仓库日常维护、PR 与 CI/CD 不默认使用 contributor 技能；只有明确调用时才进入该技能，不因 PR 关键词套用外部开源贡献流程。
+
 ## 需求到完成
 
 1. 新建 Issue，写清场景与可自动验证的验收标准。
