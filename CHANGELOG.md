@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.18.2](https://github.com/LarryBUPT/A-Pidoc/compare/v0.18.1...v0.18.2) (2026-09-18)
+
+
+### Bug Fixes
+
+* unify agentic success criteria and paired statistics ([#82](https://github.com/LarryBUPT/A-Pidoc/issues/82)) ([7e0af4a](https://github.com/LarryBUPT/A-Pidoc/commit/7e0af4a18e4b8a68e4b8d0ebec63bb1470e1ffb4))
+
 ## [0.18.1](https://github.com/LarryBUPT/A-Pidoc/compare/v0.18.0...v0.18.1) (2026-09-17)
 
 
