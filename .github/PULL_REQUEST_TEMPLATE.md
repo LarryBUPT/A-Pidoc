@@ -10,7 +10,7 @@ Closes #
 
 ## 验证
 
-- [ ] `npm run check` 本地通过
+- [ ] 已按 `docs/development/CICD_WORKFLOW.md` 执行当前 CI 对应的本地门禁；未执行项及原因已说明（`npm run check` 不等于完整门禁）
 - [ ] 新行为有测试或 Tier A case 覆盖
 - [ ] 未提交密钥、真实 Authorization 或敏感 Trace
 
