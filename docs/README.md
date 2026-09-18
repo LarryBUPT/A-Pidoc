@@ -18,6 +18,7 @@
 ## 🛠️ 验证与开发
 
 - [验证指南](verification.md)
+- [数据集与对抗评测](evaluation-datasets.md)
 - [贡献指南](../CONTRIBUTING.md)
 
 ## 实现说明与设计资料

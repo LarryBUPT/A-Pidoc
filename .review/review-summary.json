@@ -1,36 +1,36 @@
 {
   "schemaVersion": 1,
-  "round": "round-02",
+  "round": "round-03",
   "pr": null,
-  "branch": "codex/81-agentic-success-statistics",
-  "baseline": "833831338a8585a7caf89bb2b3494cacebaab481",
-  "head": "833831338a8585a7caf89bb2b3494cacebaab481",
+  "branch": "codex/round-3-datasets",
+  "baseline": "cbc5a175f907f1ccf3ea6e784b1a1b1a74e0dcd6",
+  "head": "cbc5a175f907f1ccf3ea6e784b1a1b1a74e0dcd6",
   "reviewerTool": "Claude Code",
   "reviewerModel": "deepseek-flash[1m]",
   "developerTool": "Codex",
   "auditStatus": "completed",
   "review": {
-    "total": 15,
-    "confirmed": 1,
-    "partiallyConfirmed": 3,
-    "rejected": 11,
+    "total": 14,
+    "confirmed": 0,
+    "partiallyConfirmed": 2,
+    "rejected": 12,
     "insufficientEvidence": 0
   },
   "remediation": {
-    "accepted": 1,
-    "partiallyAccepted": 0,
-    "rejected": 11,
-    "deferred": 3
+    "accepted": 0,
+    "partiallyAccepted": 1,
+    "rejected": 12,
+    "deferred": 1
   },
   "verification": {
     "verifiedFixed": 1,
     "partiallyFixed": 0,
     "notFixed": 0,
-    "notReproducible": 11,
+    "notReproducible": 12,
     "unableToVerify": 0,
     "regressionIntroduced": 0,
     "verifiedRejected": 0,
-    "verifiedDeferred": 3
+    "verifiedDeferred": 1
   },
   "blockingUnresolved": 0,
   "remediationRounds": 1

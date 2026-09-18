@@ -53,7 +53,8 @@ async function run(): Promise<void> {
     return;
   }
   if (mode === "eval") {
-    const evaluation = await evaluateBusinessCases();
+    if (args.length && (args.length !== 2 || args[0] !== "--dataset" || !args[1] || args[1].startsWith("--"))) throw new Error("Usage: eval [--dataset file.json]");
+    const evaluation = await evaluateBusinessCases(args[1]);
     console.log(JSON.stringify(evaluation, null, 2));
     if (evaluation.passed !== evaluation.total) process.exitCode = 1;
     return;

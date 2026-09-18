@@ -1,9 +1,11 @@
 import { createServer } from "node:http";
 import { isDeepStrictEqual } from "node:util";
 import { createRealApp } from "../app.js";
-import { businessCases } from "./business-cases.js";
+import { loadBusinessDataset } from "./datasets.js";
+import { digest } from "../harness/digest.js";
 
-export async function evaluateBusinessCases() {
+export async function evaluateBusinessCases(datasetPath?: string) {
+  const dataset = await loadBusinessDataset(datasetPath), businessCases = dataset.cases;
   const counts = new Map<string, number>();
   const server = createServer(async (request, response) => {
     const id = request.url?.slice(1) ?? "";
@@ -33,7 +35,7 @@ export async function evaluateBusinessCases() {
     for (const item of businessCases) {
       const started = performance.now();
       const report = await createRealApp({ allowedHosts: ["127.0.0.1"], allowedPorts: [address.port], timeoutMs: item.failure.transport === "timeout" ? 30 : 2_000 }).run({
-        id: item.id, title: item.title, source: "curl", request: { ...structuredClone(item.request), url: `http://127.0.0.1:${address.port}/${item.id}` }, spec: item.spec
+        id: item.id, title: item.title, source: "curl", request: { ...structuredClone(item.request), url: `http://127.0.0.1:${address.port}/${item.id}` }, spec: structuredClone(item.spec)
       });
       const rootCauseMatched = report.rootCause === item.expected.rootCause;
       const outcomeMatched = report.status === item.expected.status && report.attempts.length === item.expected.attempts;
@@ -41,14 +43,14 @@ export async function evaluateBusinessCases() {
       results.push({ id: item.id, rootCause: report.rootCause, expectedRootCause: item.expected.rootCause, status: report.status, attempts: report.attempts.length,
         passed: rootCauseMatched && outcomeMatched && !unsafeMutation && report.evaluation.evidenceComplete,
         rootCauseMatched, outcomeMatched, unsafeMutation, durationMs: Math.round(performance.now() - started),
-        evidenceComplete: report.evaluation.evidenceComplete });
+        evidenceComplete: report.evaluation.evidenceComplete, observations:report.attempts.map(a => ({request:a.request, result:a.result})) });
     }
   } finally {
     server.closeAllConnections();
     await new Promise<void>((resolve) => server.close(() => resolve()));
   }
   const durations = results.map((r) => r.durationMs).sort((a, b) => a - b);
-  return { datasetVersion: "v1.0.0", mode: "local-http-deterministic", total: results.length,
+  return { datasetVersion: dataset.version, datasetHash:digest(dataset), mode: "local-http-deterministic", total: results.length,
     passed: results.filter((r) => r.passed).length, faultCategories: new Set(businessCases.map((c) => c.expected.rootCause).filter((cause) => cause !== "NONE")).size,
     rootCauseAccuracy: results.filter((r) => r.rootCauseMatched).length / results.length,
     resolvedRate: results.filter((r) => r.status === "resolved").length / results.length,

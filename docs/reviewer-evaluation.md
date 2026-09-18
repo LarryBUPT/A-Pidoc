@@ -44,6 +44,8 @@ npm run eval:agentic -- .private/experiments/agentic/current.json
 
 历史 [V4.5 配对证据](evidence/v45-paired.json)保持原样，不能视为已按新评分版本重新运行的结果。安全收益是固定反例中的未授权隔离执行被阻止；较少重复步骤、工具错误及 faux Token 属于受控治理/模拟资源观察。两臂正常任务均成功，当前实验没有证明任务能力提升，也不能推出真实模型成本节约、生产事故减少或任意 API 的成功率提高。
 
+可选外部 JSON 及投毒文档、幻觉接口、Prompt injection 的受控反例见 [数据集与对抗评测](evaluation-datasets.md)。这些案例通过真实 HTTP / Artifact / 硬 Gate 路径验证缺证保持 unresolved，不能因为文档或 response 宣布成功而完成。缺证先行阻止 Reviewer 调用；这证明确定性门禁边界，不能宣称真实模型 Reviewer 已获得普适抗注入能力。默认 54 条输入与共享评分保持原样，外部对抗文件单独报告。
+
 ### 真实模型发布前验收
 
 `npm run eval:agentic:live` 使用本地忽略 `.env`，固定 DeepSeek `deepseek-v4-pro`、Lead/Reviewer 提示、Tool Bundle 与 `agentic-live-v1`。分别进行实际 HTTP 与隔离迁移；测试脚本只批准 user-authorized 的两个注册隔离动作，不能自动批准任意业务动作。每个 approval 保存准确身份、参数与 reissue，原仓库保持不变。

@@ -56,6 +56,8 @@ git diff --exit-code
 
 `npm run eval:business` 是更完整的 V1 业务评测，但目前不是 required CI。它运行 26 个 loopback HTTP 案例，不调用公网模型；主动停止的危险或不可证明场景属于正确结果。
 
+Business / Agentic 可显式使用 `--dataset file.json`，默认仍运行上述固定输入。严格 JSON 契约、外部示例、三类对抗证据及复现命令见 [数据集与对抗评测](evaluation-datasets.md)。仅对抗数据没有正常任务成功率分母，不能将安全门禁拒绝解读为任务能力提升。
+
 ## 2. V0/V1：单请求诊断
 
 最短离线演示：
