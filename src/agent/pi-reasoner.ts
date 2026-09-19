@@ -13,6 +13,7 @@ import { DEBUG_AGENT_PROMPT_VERSION, DEBUG_AGENT_SYSTEM_PROMPT } from "./prompts
 import { PublicError } from "../security/errors.js";
 import { classifyFault, actionIsSupported, proposedRepair } from "./fault-analysis.js";
 import { validateSchema } from "../input/json-schema.js";
+import { createRetryingModelFetch, type ModelRetryOptions } from "../model/model-retry.js";
 
 const ROOT_CAUSES = new Set<RootCause>([
   "AUTH_HEADER_FORMAT",
@@ -41,6 +42,7 @@ export interface PiReasonerOptions {
   timeoutMs?: number;
   maxOutputTokens?: number;
   maxPromptBytes?: number;
+  retry?: ModelRetryOptions;
 }
 
 function object(value: unknown, label: string): Record<string, unknown> {
@@ -214,12 +216,23 @@ export class PiReasoner implements Reasoner {
         maxTokens: Math.min(this.options.model.maxTokens, this.maxOutputTokens)
       };
       const upstreamStream = this.options.streamFn ?? streamSimple;
-      const boundedStream: StreamFn = (model, context, streamOptions) => upstreamStream(model, context, {
-        ...streamOptions,
-        maxTokens: this.maxOutputTokens,
-        maxRetries: 0,
-        timeoutMs: this.timeoutMs
-      });
+      const retryNow = this.options.retry?.now ?? Date.now;
+      const deadlineMs = retryNow() + this.timeoutMs;
+      const boundedStream: StreamFn = (model, context, streamOptions) => {
+        const retryOptions: ModelRetryOptions & { deadlineMs: number; signal?: AbortSignal } = { ...this.options.retry, deadlineMs };
+        const baseFetch = streamOptions?.fetch ?? this.options.retry?.fetch;
+        if (baseFetch) retryOptions.fetch = baseFetch;
+        if (streamOptions?.signal) retryOptions.signal = streamOptions.signal;
+        const fetch = createRetryingModelFetch(retryOptions);
+        return upstreamStream(model, context, {
+          ...streamOptions,
+          fetch,
+          maxTokens: this.maxOutputTokens,
+          // The wrapper owns retry policy, timing and observability.
+          maxRetries: 0,
+          timeoutMs: Math.max(1, deadlineMs - retryNow())
+        });
+      };
       const agent = new Agent({
         initialState: {
           systemPrompt: DEBUG_AGENT_SYSTEM_PROMPT,

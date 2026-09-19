@@ -21,10 +21,12 @@ export interface CollaborationRunOptions {
 
 function operation(report: DebugReport): string { const url = new URL(report.originalRequest.url); return `${report.originalRequest.method} ${url.pathname}`; }
 function action(report: DebugReport): string { const diagnosis = [...report.attempts].reverse().find((attempt) => attempt.diagnosis)?.diagnosis; return diagnosis ? JSON.stringify(diagnosis.action) : "no repair action"; }
+// Stored knowledge records use the stable V4 collaboration protocol, independently of the package release version.
+const COLLABORATION_KNOWLEDGE_PROTOCOL_VERSION = "v4";
 function knowledgeCase(tenantId: string, workItemId: string, report: DebugReport, evidence: string[]): KnowledgeCase {
   const last = report.attempts.at(-1); const signature = `${report.rootCause}:${last?.result.status ?? 0}`; const op = operation(report); const fix = action(report);
   const id = createHash("sha256").update(`${tenantId}|${signature}|${op}|${fix}`).digest("hex").slice(0, 16);
-  return { id, tenantId, errorSignature: signature, operation: op, rootCause: report.rootCause, effectiveFix: fix, verification: `status=${report.status}; attempts=${report.attempts.length}; evidenceComplete=${report.evaluation.evidenceComplete}`, applicableVersion: "v4", evidenceSources: [`work_item:${workItemId}`, `debug_report:${report.runId}`, ...evidence], createdAt: new Date().toISOString() };
+  return { id, tenantId, errorSignature: signature, operation: op, rootCause: report.rootCause, effectiveFix: fix, verification: `status=${report.status}; attempts=${report.attempts.length}; evidenceComplete=${report.evaluation.evidenceComplete}`, applicableVersion: COLLABORATION_KNOWLEDGE_PROTOCOL_VERSION, evidenceSources: [`work_item:${workItemId}`, `debug_report:${report.runId}`, ...evidence], createdAt: new Date().toISOString() };
 }
 
 export class CollaborationWorkflow {

@@ -6,7 +6,7 @@ import { PiReasoner } from "../src/agent/pi-reasoner.js";
 import { DebugOrchestrator } from "../src/core/orchestrator.js";
 import type { HttpTool, Reasoner } from "../src/domain/types.js";
 import { getCase } from "../src/fixtures/cases.js";
-import { redactRequest, redactText, redactValue } from "../src/security/redaction.js";
+import { redactRequest, redactText, redactValue, REDACTED } from "../src/security/redaction.js";
 import { RequestPolicy } from "../src/security/request-policy.js";
 import { createApiServer } from "../src/server.js";
 import { FixtureHttpTool } from "../src/tools/fixture-http-tool.js";
@@ -41,6 +41,15 @@ test("value redaction removes secrets and basic PII hidden in ordinary text fiel
     redactRequest({ method: "GET", url: "https://example.test/?note=sk-secret-hidden-value", headers: {}, body: null }).url,
     /secret-hidden-value/
   );
+});
+
+test("integrity digests survive text redaction while sensitive keys remain redacted", () => {
+  const digest = `abcdef13800138000${"a".repeat(47)}`;
+  assert.equal(digest.length, 64);
+  const value = redactValue({ commandDigest: digest, token: digest, message: digest }) as Record<string, unknown>;
+  assert.equal(value.commandDigest, digest);
+  assert.equal(value.token, REDACTED);
+  assert.notEqual(value.message, digest);
 });
 
 test("provider errors are replaced before reports and Trace are exposed", async (context) => {

@@ -92,6 +92,7 @@ test("PiReasoner forwards output, retry, and timeout budgets to the provider", a
     model: provider.getModel(),
     maxOutputTokens: 1024,
     timeoutMs: 1234,
+    retry: { now: () => 0 },
     streamFn: (model, agentContext, options) => {
       captured = options;
       return streamSimple(model, agentContext, options);
@@ -101,7 +102,38 @@ test("PiReasoner forwards output, retry, and timeout budgets to the provider", a
   assert.equal(captured?.maxTokens, 1024);
   assert.equal(captured?.maxRetries, 0);
   assert.equal(captured?.timeoutMs, 1234);
+  assert.equal(typeof captured?.fetch, "function");
   assert.equal(typeof diagnosis.modelUsage?.totalTokens, "number");
+});
+
+test("PiReasoner retries one transient provider response through its request path", async (context) => {
+  const provider = registerFauxProvider({
+    provider: `a-pidoc-test-${++providerIndex}`,
+    models: [{ id: "retry-entry-model", input: ["text"] }]
+  });
+  context.after(() => provider.unregister());
+  provider.setResponses([fauxAssistantMessage(validOutput)]);
+  let providerCalls = 0, now = 0;
+  const waits: number[] = [];
+  const reasoner = new PiReasoner({
+    model: provider.getModel(),
+    retry: {
+      fetch: (async () => new Response(providerCalls++ === 0 ? "busy" : "ok", { status: providerCalls === 1 ? 503 : 200 })) as typeof globalThis.fetch,
+      now: () => now,
+      random: () => 0.5,
+      sleep: async ms => { waits.push(ms); now += ms; },
+      policy: { baseDelayMs: 100 }
+    },
+    streamFn: async (model, agentContext, options) => {
+      const response = await options?.fetch?.("https://provider.test/reasoner");
+      assert.equal(response?.status, 200);
+      return streamSimple(model, agentContext, options);
+    }
+  });
+  const diagnosis = await reasoner.diagnose(input());
+  assert.equal(diagnosis.rootCause, "CONTENT_TYPE_MISMATCH");
+  assert.equal(providerCalls, 2);
+  assert.deepEqual(waits, [100]);
 });
 
 test("PiReasoner accepts JSON enclosed in a markdown code fence", async (context) => {

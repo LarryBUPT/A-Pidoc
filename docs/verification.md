@@ -16,7 +16,8 @@ flowchart LR
     F --> H[Harness 合同 3 轮]
     H --> I[54 条 Raw/Harness 配对]
     I --> J[V5计划与恢复3轮]
-    J --> G[生成物一致性]
+    J --> K[V5双负载性能评测]
+    K --> G[生成物一致性]
 ```
 
 `v0.10.1` 的V3基线是75项；V4为83项，V4.5为144项，V5基础版本 `v0.17.0` 为164项，`v0.18.0` 发布记录为173项。不能把历史数字写成永久门槛。
@@ -36,6 +37,7 @@ npm run eval:collaboration
 npm run eval:harness
 npm run eval:agentic
 npm run eval:reliability
+npm run eval:performance
 git diff --exit-code
 ```
 
@@ -213,4 +215,10 @@ PR-6 增加 `npm run eval:agentic` 为 required CI 的同条件对照，模型�
 
 ## V5 性能配对门禁
 
-`npm run eval:performance`对相同HTTP与JSON存储跑两种负载，各六组AB/BA、预热剔除。required CI验证结果语义、并发上限和零模型合同；指标打印而不设机器相关速度阈值。全量单测173项，新合同8项；实际冻结指标与live区分见 [性能说明](v5-performance.md)。
+`npm run eval:performance`对相同HTTP与JSON存储跑两种负载，各六组AB/BA、预热剔除。required CI验证结果语义、并发上限和零模型合同；指标打印而不设机器相关速度阈值。`v0.18.0` 发布时为全量单测173项、新合同8项，当前数量以本轮测试输出为准；实际冻结指标与live区分见 [性能说明](v5-performance.md)。
+
+## 出站模型重试与 Artifact 时间
+
+Pi Reasoner、Harness Lead 和独立 Reviewer 的出站模型请求使用同一有限重试策略：只处理明确的 429、502、503、504、provider retryable 信号及白名单网络瞬时错误。默认最多重试2次，指数退避带有界 jitter，`Retry-After` 优先；单次等待、累计等待和整个 Run/诊断时限共同约束请求。401/403、请求或 Schema 错误、策略拒绝及工具副作用不会因此自动重放。Pi SDK 内置重试保持关闭，避免出现两层重试。
+
+新生成的 agentic、Harness、reliability 与 performance 报告包含 ISO 8601 `generatedAt`，它表示 artifact 序列化时间。已有历史 evidence 不回填无法可靠还原的时间戳。
