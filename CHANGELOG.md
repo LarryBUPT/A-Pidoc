@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.19.0](https://github.com/LarryBUPT/A-Pidoc/compare/v0.18.2...v0.19.0) (2026-09-18)
+
+
+### Features
+
+* add keyless Harness demo and codify project CI/CD ([#85](https://github.com/LarryBUPT/A-Pidoc/issues/85)) ([948ab85](https://github.com/LarryBUPT/A-Pidoc/commit/948ab85e38f7a573b37ad6e957edd94d27c4774a)), closes [#84](https://github.com/LarryBUPT/A-Pidoc/issues/84)
+* support external evaluation datasets and adversarial evidence checks ([#88](https://github.com/LarryBUPT/A-Pidoc/issues/88)) ([849c1b2](https://github.com/LarryBUPT/A-Pidoc/commit/849c1b28e4af30257f346180cbea3f4a7e1c4da1)), closes [#87](https://github.com/LarryBUPT/A-Pidoc/issues/87)
+
 ## [0.18.2](https://github.com/LarryBUPT/A-Pidoc/compare/v0.18.1...v0.18.2) (2026-09-18)
 
 
