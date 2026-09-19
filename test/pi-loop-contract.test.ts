@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFile, mkdir, rm } from "node:fs/promises";
 import { fauxAssistantMessage, fauxToolCall } from "@earendil-works/pi-ai";
-import { runAgentLoopContinue } from "@earendil-works/pi-agent-core";
+import { runAgentLoopContinue, type StreamFn } from "@earendil-works/pi-agent-core";
 import { streamSimple } from "@earendil-works/pi-ai/compat";
 import { harness, task, tool } from "./harness-helpers.js";
 import { PiLoopAdapter } from "../src/harness/pi-loop-adapter.js";
@@ -77,6 +77,26 @@ test("model and tool budgets stop additional turns and calls", async t => {
   const h = await harness(t, [tool("observe", async () => { n++; return { success: true, data: {}, evidence: [], warnings: [], durationMs: 0, redacted: true }; })], [fauxAssistantMessage([fauxToolCall("observe", {}), fauxToolCall("observe", {})]), fauxAssistantMessage("must not run")]);
   const input = task(); input.budget.maxModelCalls = 1; input.budget.maxToolCalls = 1;
   const s = await h.adapter.start(input); assert.equal(n, 1); assert.equal(s.run.state, "blocked"); assert.equal(h.provider.state.callCount, 1);
+});
+test("Harness model retry records attempts and cannot exceed the shared model-call budget", async t => {
+  const h = await harness(t, [], [fauxAssistantMessage("done")]);
+  let providerCalls = 0, now = 0;
+  const providerFetch = (async () => new Response(providerCalls++ === 0 ? "busy" : "ok", { status: providerCalls === 1 ? 503 : 200 })) as typeof globalThis.fetch;
+  const streamFn: StreamFn = async (model, context, options) => {
+    const response = await options?.fetch?.("https://provider.test/models");
+    if (!response?.ok) throw new Error(`provider status ${response?.status}`);
+    return streamSimple(model, context, options);
+  };
+  const retry = { fetch: providerFetch, now: () => now, random: () => 0.5, sleep: async (ms: number) => { now += ms; }, policy: { baseDelayMs: 100 } };
+  const adapter = new PiLoopAdapter(h.store, h.registry, { ...h.options, streamFn, retry });
+  const input = task(); input.budget.maxModelCalls = 2;
+  const state = await adapter.start(input);
+  assert.equal(state.run.state, "blocked");
+  assert.equal(state.run.usage.modelCalls, 2);
+  assert.equal(providerCalls, 2);
+  const retries = state.run.steps.filter(step => step.kind === "runtime" && (step.data as { type?: string }).type === "provider_retry");
+  assert.equal(retries.length, 2);
+  assert.ok(retries.some(step => (step.data as { retry?: { type?: string } }).retry?.type === "retry_attempt"));
 });
 test("provider and tool errors cannot leak their original secret", async t => {
   const h = await harness(t, [tool("observe", async () => { throw new Error("sk-private-secret-123456"); })], [fauxAssistantMessage(fauxToolCall("observe", {})), fauxAssistantMessage("provider failed", { stopReason: "error", errorMessage: "sk-private-secret-123456" })]);

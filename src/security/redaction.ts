@@ -1,6 +1,7 @@
 import type { ApiRequest, Diagnosis } from "../domain/types.js";
 
 const SENSITIVE_KEY = /authorization|api[-_]?key|token|secret|password|cookie/i;
+const INTEGRITY_KEYS = new Set(["sha256", "commandDigest", "sourceDigest", "workspaceDigest", "contractDigest", "preconditionDigest", "actionDigest", "normalizedArgsDigest", "stateDigest", "datasetDigest", "promptHash", "toolHash"]);
 export const REDACTED = "[REDACTED]";
 
 const TEXT_PATTERNS: RegExp[] = [
@@ -25,7 +26,11 @@ export function redactValue(value: unknown): unknown {
   if (typeof value === "string") return redactText(value);
   if (!value || typeof value !== "object") return value;
   return Object.fromEntries(
-    Object.entries(value).map(([key, item]) => [key, isSensitiveKey(key) ? REDACTED : redactValue(item)])
+    Object.entries(value).map(([key, item]) => [key,
+      isSensitiveKey(key) ? REDACTED :
+      INTEGRITY_KEYS.has(key) && typeof item === "string" && /^[a-f0-9]{64}$/.test(item) ? item :
+      redactValue(item)
+    ])
   );
 }
 

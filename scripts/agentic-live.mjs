@@ -8,6 +8,7 @@ import { TrajectoryStore } from "../dist/src/harness/trajectory-store.js";
 import { digest } from "../dist/src/harness/digest.js";
 import { runMetrics } from "../dist/src/evaluation/agentic-eval.js";
 import { safeHarnessError } from "../dist/src/api-harness/cli.js";
+import { artifactGeneratedAt } from "../dist/src/evaluation/artifact.js";
 const provider=process.env.A_PIDOC_PI_PROVIDER??"deepseek",modelId=process.env.A_PIDOC_PI_MODEL??"deepseek-v4-pro";
 const apiKey=process.env.A_PIDOC_PI_API_KEY??process.env.DEEPSEEK_API_KEY;
 const model=getModels(provider).find(m=>m.id===modelId),dir=resolve(process.argv[2]??`.private/live-v45/${randomUUID()}`);
@@ -33,5 +34,5 @@ for(const family of ["runtime-api","repository-contract"]) {
   finally{await sandbox?.close();}
 }
 const passed=results.length===2&&results.every(r=>r.state==="resolved")&&results.find(r=>r.family==="repository-contract")?.approvals===2;
-const report={passed,provider,model:modelId,dataset:"agentic-live-v1",results};await writeFile(join(dir,"report.json"),JSON.stringify(report,null,2),{mode:0o600});
+const report={generatedAt:artifactGeneratedAt(),passed,provider,model:modelId,dataset:"agentic-live-v1",results};await writeFile(join(dir,"report.json"),JSON.stringify(report,null,2),{mode:0o600});
 console.log(JSON.stringify({passed,report:join(dir,"report.json")}));if(!passed)process.exitCode=1;

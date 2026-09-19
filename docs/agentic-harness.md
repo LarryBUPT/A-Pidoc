@@ -37,6 +37,8 @@ PR-1～PR-6 已完成完整受控 V4.5，正式版本为 `v0.16.0`；required CI
 
 PR-6 采用[独立 Reviewer 与配对评测](reviewer-evaluation.md)。完成工具为相同的无副作用 proposal 实现；host 包装核验硬门禁并单独审查语义。完整 V4.5 的验收以实际 offline/live 发布证据为准。
 
+当前 Lead 与 Reviewer 共享有界 provider retry：实际初始调用及每次 retry 都消耗 `maxModelCalls`，退避和请求受剩余 `maxDurationMs` 限制，并记录结构化 retry 轨迹。工具调用不由模型请求重试层重放；已知工具策略/校验错误保持稳定错误码，未知实现异常只向模型暴露 `TOOL_EXECUTION_FAILED`。
+
 ## V5 调查收敛看板补充
 
 重新执行live时出现重复读取、NO_PROGRESS_LIMIT接管。看板现在公开持久事实中的inspected状态和既有完成合同；压缩降级仍保留目标、预算、无进展计数。监控任务允许有证据的UNKNOWN根因与局部观察，不能伪造生产恢复。模型自主选工具，原Evidence Gate、Reviewer、审批与无进展上限保持不变；失败尝试与最终验收分开保留，不能据单次成功宣称根因已唯一定位或稳定成功率，见 [本次验收记录](evidence/v5-performance-live.json)。

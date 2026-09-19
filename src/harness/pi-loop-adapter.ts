@@ -6,6 +6,7 @@ import { ToolRegistry } from "./tool-registry.js";
 import { redactValue, redactText } from "../security/redaction.js";
 import { mkdir, rm } from "node:fs/promises";
 import { dirname } from "node:path";
+import { createRetryingModelFetch, type ModelRetryOptions } from "../model/model-retry.js";
 
 export interface ToolInvocation { id: string; name: string; args: unknown }
 export interface LoopHooks {
@@ -20,6 +21,7 @@ export interface LoopHooks {
 export interface PiLoopOptions {
   model: Model<any>; streamFn: StreamFn; apiKey?: string;
   prompt: string; maxOutputTokens?: number; hooks?: LoopHooks; signal?: AbortSignal;
+  retry?: ModelRetryOptions;
 }
 const ACTIVE: RunState[] = ["running", "approval_granted_pending_reissue"];
 function budgetExceeded(s: RunSnapshot): boolean {
@@ -43,7 +45,8 @@ export class PiLoopAdapter {
   private async drive(prompts?: AgentMessage[]): Promise<RunSnapshot> {
     if (this.active) throw new Error("RUN_ALREADY_ACTIVE");
     this.active = true;
-    const started = Date.now();
+    const retryNow = this.options.retry?.now ?? Date.now;
+    const started = retryNow();
     let s: RunSnapshot;
     const lease = `${this.store.file}.runner.lock`;
     let ownsLease = false;
@@ -57,6 +60,8 @@ export class PiLoopAdapter {
         return await this.store.transact(v => { v.run.state = "blocked"; appendStep(v, "state_transition", { code: "EXECUTION_IN_DOUBT" }); });
       }
       if (budgetExceeded(s)) return await this.store.transact(v => { v.run.state = "blocked"; appendStep(v, "state_transition", { code: "RUN_BUDGET_EXHAUSTED" }); });
+      const deadlineMs = started + Math.max(0, s.run.task.budget.maxDurationMs - s.elapsedMs);
+      const controller = new AbortController();
       const hooks = this.options.hooks ?? {};
       const context: AgentContext = { systemPrompt: this.options.prompt, messages: structuredClone(s.messages) as AgentMessage[], tools: this.registry.toPiTools(s.run.task, hooks.executeTool) };
       const config: AgentLoopConfig = {
@@ -108,8 +113,27 @@ export class PiLoopAdapter {
         try {
           const state = await this.store.load();
           if (!ACTIVE.includes(state.run.state) || budgetExceeded(state) || Buffer.byteLength(JSON.stringify(llmContext)) > 131_072) throw new Error("RUN_BUDGET_EXHAUSTED");
-          await this.store.transact(v => { v.run.usage.modelCalls++; appendStep(v, "runtime", { type: "provider_request", execution: "sequential", model: model.id, provider: model.provider }); });
-          return await this.options.streamFn(model, llmContext, { ...requestOptions, maxRetries: 0, maxTokens: Math.min(this.options.maxOutputTokens ?? 2048, state.run.task.budget.maxTokens - state.run.usage.tokens), timeoutMs: Math.max(1, state.run.task.budget.maxDurationMs - state.elapsedMs), ...(this.options.apiKey ? { apiKey: this.options.apiKey } : {}) });
+          const remainingModelCalls = state.run.task.budget.maxModelCalls - state.run.usage.modelCalls;
+          if (remainingModelCalls < 1) throw new Error("RUN_BUDGET_EXHAUSTED");
+          await this.store.transact(v => { v.run.usage.modelCalls++; appendStep(v, "runtime", { type: "provider_request", execution: "sequential", model: model.id, provider: model.provider, attempt: 1, retry: false }); });
+          const retryOptions: ModelRetryOptions & { deadlineMs: number; signal: AbortSignal; maxRetries: number } = {
+            ...this.options.retry,
+            deadlineMs,
+            signal: controller.signal,
+            maxRetries: remainingModelCalls - 1,
+            onEvent: async event => {
+              await this.options.retry?.onEvent?.(event);
+              if (event.type === "initial_request") return;
+              await this.store.transact(v => {
+                if (event.type === "retry_attempt") v.run.usage.modelCalls++;
+                appendStep(v, "runtime", { type: "provider_retry", retry: event });
+              });
+            }
+          };
+          const baseFetch = requestOptions?.fetch ?? this.options.retry?.fetch;
+          if (baseFetch) retryOptions.fetch = baseFetch;
+          const fetch = createRetryingModelFetch(retryOptions);
+          return await this.options.streamFn(model, llmContext, { ...requestOptions, fetch, maxRetries: 0, maxTokens: Math.min(this.options.maxOutputTokens ?? 2048, state.run.task.budget.maxTokens - state.run.usage.tokens), timeoutMs: Math.max(1, deadlineMs - retryNow()), ...(this.options.apiKey ? { apiKey: this.options.apiKey } : {}) });
         } catch {
           const result: AssistantMessage = { role: "assistant", content: [], api: model.api, provider: model.provider, model: model.id, usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, totalTokens: 0, cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 } }, stopReason: "error", errorMessage: "PI_PROVIDER_OR_BUDGET_ERROR", timestamp: Date.now() };
           const failed = createAssistantMessageEventStream(); failed.push({ type: "error", reason: "error", error: result }); failed.end(result); return failed;
@@ -136,7 +160,6 @@ export class PiLoopAdapter {
         });
         await hooks.onEvent?.(event);
       };
-      const controller = new AbortController();
       const cancel=()=>controller.abort(this.options.signal?.reason);
       this.options.signal?.addEventListener("abort",cancel,{once:true});
       if(this.options.signal?.aborted)cancel();
@@ -146,7 +169,7 @@ export class PiLoopAdapter {
         if (prompts) await runAgentLoop(prompts, context, config, emit, controller.signal, stream);
         else await runAgentLoopContinue(context, config, emit, controller.signal, stream);
       } finally { clearTimeout(timer);this.options.signal?.removeEventListener("abort",cancel); }
-      return await this.store.transact(v => { v.elapsedMs += Date.now() - started; });
+      return await this.store.transact(v => { v.elapsedMs += retryNow() - started; });
     } catch {
       if (!ownsLease) throw new Error("RUN_LEASE_UNAVAILABLE");
       // Persistence failures reject: never continue an unaudited tool run.

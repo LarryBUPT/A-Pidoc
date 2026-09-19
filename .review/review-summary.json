@@ -1,36 +1,36 @@
 {
   "schemaVersion": 1,
-  "round": "round-03",
+  "round": "round-04",
   "pr": null,
-  "branch": "codex/round-3-datasets",
-  "baseline": "cbc5a175f907f1ccf3ea6e784b1a1b1a74e0dcd6",
-  "head": "cbc5a175f907f1ccf3ea6e784b1a1b1a74e0dcd6",
+  "branch": "codex/round-4-retry-errors-cleanup",
+  "baseline": "51be03a6c99fdc2e3318112f3a347c528fc4087d",
+  "head": "51be03a6c99fdc2e3318112f3a347c528fc4087d",
   "reviewerTool": "Claude Code",
   "reviewerModel": "deepseek-flash[1m]",
   "developerTool": "Codex",
   "auditStatus": "completed",
   "review": {
-    "total": 14,
+    "total": 12,
     "confirmed": 0,
-    "partiallyConfirmed": 2,
-    "rejected": 12,
+    "partiallyConfirmed": 4,
+    "rejected": 8,
     "insufficientEvidence": 0
   },
   "remediation": {
     "accepted": 0,
-    "partiallyAccepted": 1,
-    "rejected": 12,
-    "deferred": 1
+    "partiallyAccepted": 2,
+    "rejected": 8,
+    "deferred": 2
   },
   "verification": {
-    "verifiedFixed": 1,
+    "verifiedFixed": 2,
     "partiallyFixed": 0,
     "notFixed": 0,
-    "notReproducible": 12,
+    "notReproducible": 8,
     "unableToVerify": 0,
     "regressionIntroduced": 0,
     "verifiedRejected": 0,
-    "verifiedDeferred": 1
+    "verifiedDeferred": 2
   },
   "blockingUnresolved": 0,
   "remediationRounds": 1

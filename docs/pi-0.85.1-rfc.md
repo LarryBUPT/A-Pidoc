@@ -2,7 +2,7 @@
 
 ## 改了什么
 
-从精确 `0.74.2` 升级 `@earendil-works/pi-agent-core` 与 `pi-ai` 到精确 `0.85.1`；直接使用同版 `typebox@1.3.7` 构造工具 Schema。lockfile 固定完整依赖树。运行要求改为 Node.js 22.19+，CI 使用 Node 22。新增 PiLoopAdapter、ToolRegistry、TrajectoryStore、规范化摘要与可控多轮轨迹测试。
+从精确 `0.74.2` 升级 `@earendil-works/pi-agent-core` 与 `pi-ai` 到精确 `0.85.1`。lockfile 固定完整依赖树。运行要求改为 Node.js 22.19+，CI 使用 Node 22。新增 PiLoopAdapter、ToolRegistry、TrajectoryStore、规范化摘要与可控多轮轨迹测试。当前 ToolRegistry 直接传入经过闭对象检查的 JSON Schema，由固定版本的 Pi 运行时编译和校验；项目不再为一次 `Type.Unsafe` 透传保留直接 `typebox` 依赖。
 
 ## 为什么
 
