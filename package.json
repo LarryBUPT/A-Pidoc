@@ -8,6 +8,8 @@
     "build": "tsc -p tsconfig.json",
     "demo": "npm run build --silent && node dist/src/cli.js all",
     "demo:harness": "npm run build --silent && node scripts/harness-demo.mjs",
+    "mcp": "npm run build --silent && node dist/src/mcp/server.js",
+    "demo:mcp": "npm run build --silent && node scripts/mcp-demo.mjs",
     "serve": "npm run build --silent && node dist/src/server.js",
     "serve:pi": "npm run build --silent && node --env-file=.env dist/src/server.js",
     "test:unit": "node --test --test-concurrency=1 dist/test/*.test.js",
@@ -35,11 +37,14 @@
     "node": ">=22.19.0"
   },
   "devDependencies": {
+    "@modelcontextprotocol/client": "2.0.0",
     "@types/node": "24.3.1",
     "typescript": "5.9.2"
   },
   "dependencies": {
     "@earendil-works/pi-agent-core": "0.85.1",
-    "@earendil-works/pi-ai": "0.85.1"
+    "@earendil-works/pi-ai": "0.85.1",
+    "@modelcontextprotocol/server": "2.0.0",
+    "zod": "4.2.0"
   }
 }

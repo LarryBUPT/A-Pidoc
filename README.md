@@ -46,6 +46,7 @@ npm run demo
 | 想体验什么 | 入口 |
 | --- | --- |
 | 开箱体验 Agent 工具调用与证据门禁 | `npm run demo:harness` |
+| 通过标准 MCP 复用受控 API 调试能力 | [MCP Server 使用指南](docs/guides/mcp-server.md) |
 | 体验人工审批与隔离迁移验证 | `npm run demo:harness -- --migration` |
 | 诊断一条本地 HTTP 请求 | [运行请求示例](examples/README.md) |
 | 扫描仓库、检查接口升级影响 | [使用指南](docs/guides/getting-started.md) |

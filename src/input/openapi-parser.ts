@@ -26,6 +26,34 @@ export interface ParsedOpenApiOperation {
   schemaIssues: SchemaIssue[];
 }
 
+export interface OpenApiHeaderRequirement {
+  name: string;
+  required: boolean;
+  schema: unknown;
+}
+
+export interface OpenApiRequestDescription {
+  required: boolean;
+  contentTypes: string[];
+  schema: unknown;
+}
+
+export interface OpenApiOperationDescription {
+  operationId: string;
+  method: HttpMethod;
+  path: string;
+  summary?: string;
+  headers: OpenApiHeaderRequirement[];
+  request?: OpenApiRequestDescription;
+  sideEffectFree: boolean;
+}
+
+export interface OpenApiDocumentDescription {
+  title: string;
+  version: string;
+  operations: OpenApiOperationDescription[];
+}
+
 function object(value: unknown, label: string): JsonObject {
   if (!value || Array.isArray(value) || typeof value !== "object") throw new Error(`${label} must be an object`);
   return value as JsonObject;
@@ -50,6 +78,58 @@ function resolvePath(path: string, values: Record<string, string>): string {
 function exampleBody(schema: JsonObject | undefined): Record<string, unknown> | null {
   if (!schema) return null;
   return object(fillDocumentedDefaults(undefined, { type: "object", ...schema }), "documented body");
+}
+
+export function describeOpenApiDocument(document: unknown): { document: JsonObject; description: OpenApiDocumentDescription } {
+  const root = readApiDocument(document);
+  if (typeof root.openapi !== "string" || !root.openapi.startsWith("3.")) throw new Error("Only OpenAPI 3.x documents are supported");
+  const info = object(root.info, "OpenAPI info"), paths = object(root.paths, "OpenAPI paths");
+  const operations: OpenApiOperationDescription[] = [], ids = new Set<string>();
+  for (const [path, rawPathItem] of Object.entries(paths)) {
+    const pathItem = object(rawPathItem, `OpenAPI path ${path}`);
+    for (const method of ["GET", "POST", "PUT", "PATCH", "DELETE"] as HttpMethod[]) {
+      const rawOperation = pathItem[method.toLowerCase()];
+      if (rawOperation === undefined) continue;
+      const operation = object(rawOperation, `OpenAPI operation ${method} ${path}`);
+      const operationId = typeof operation.operationId === "string" && operation.operationId.trim()
+        ? operation.operationId.trim() : `${method} ${path}`;
+      if (ids.has(operationId)) throw new Error(`Duplicate OpenAPI operationId: ${operationId}`);
+      ids.add(operationId);
+      const parameters = [
+        ...(Array.isArray(pathItem.parameters) ? pathItem.parameters : []),
+        ...(Array.isArray(operation.parameters) ? operation.parameters : [])
+      ];
+      const headers: OpenApiHeaderRequirement[] = [];
+      for (const rawParameter of parameters) {
+        const parameter = object(rawParameter, "OpenAPI parameter");
+        if (parameter.in !== "header" || typeof parameter.name !== "string") continue;
+        headers.push({ name: parameter.name, required: parameter.required === true, schema: parameter.schema ?? {} });
+      }
+      let request: OpenApiRequestDescription | undefined;
+      if (operation.requestBody !== undefined) {
+        const requestBody = object(operation.requestBody, "OpenAPI requestBody");
+        const content = object(requestBody.content, "OpenAPI requestBody.content");
+        const contentTypes = Object.keys(content);
+        const jsonType = contentTypes.find(type => type === "application/json" || type.endsWith("+json"));
+        const media = jsonType ? object(content[jsonType], `OpenAPI media type ${jsonType}`) : undefined;
+        request = { required: requestBody.required === true, contentTypes, schema: media?.schema ?? {} };
+      }
+      operations.push({
+        operationId, method, path,
+        ...(typeof operation.summary === "string" ? { summary: operation.summary } : {}),
+        headers, ...(request ? { request } : {}),
+        sideEffectFree: method === "GET" || operation["x-a-pidoc-side-effect-free"] === true
+      });
+    }
+  }
+  return {
+    document: root,
+    description: {
+      title: typeof info.title === "string" ? info.title : "Untitled API",
+      version: typeof info.version === "string" ? info.version : "unknown",
+      operations
+    }
+  };
 }
 
 export function validateJsonBody(body: Record<string, unknown> | null, schema: unknown): SchemaIssue[] {

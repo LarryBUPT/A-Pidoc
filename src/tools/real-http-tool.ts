@@ -6,7 +6,7 @@ import { PublicError } from "../security/errors.js";
 async function readLimitedBody(response: Response, limit: number): Promise<string> {
   const declaredSize = Number(response.headers.get("content-length"));
   if (Number.isFinite(declaredSize) && declaredSize > limit) {
-    throw new Error(`Response exceeds ${limit} byte limit`);
+    throw new PublicError("RESPONSE_TOO_LARGE", `Response exceeds ${limit} byte limit`, 502);
   }
   if (!response.body) return "";
 
@@ -19,7 +19,7 @@ async function readLimitedBody(response: Response, limit: number): Promise<strin
     size += value.byteLength;
     if (size > limit) {
       await reader.cancel();
-      throw new Error(`Response exceeds ${limit} byte limit`);
+      throw new PublicError("RESPONSE_TOO_LARGE", `Response exceeds ${limit} byte limit`, 502);
     }
     chunks.push(value);
   }

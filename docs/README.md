@@ -6,6 +6,7 @@
 
 - [使用指南](guides/getting-started.md)
 - [模型配置](guides/model-setup.md)
+- [MCP Server](guides/mcp-server.md)
 - [本地请求示例](../examples/README.md)
 
 ## 🧭 深入了解
