@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.21.0](https://github.com/LarryBUPT/A-Pidoc/compare/v0.20.0...v0.21.0) (2026-09-20)
+
+
+### Features
+
+* add stdio MCP API tools ([#93](https://github.com/LarryBUPT/A-Pidoc/issues/93)) ([ef5c3f1](https://github.com/LarryBUPT/A-Pidoc/commit/ef5c3f1c4c54793f079cd6bbbef85ded4a526b97))
+
 ## [0.20.0](https://github.com/LarryBUPT/A-Pidoc/compare/v0.19.0...v0.20.0) (2026-09-19)
 
 
