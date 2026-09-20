@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { ToolRegistry } from "../src/harness/tool-registry.js";
 import { task, tool } from "./harness-helpers.js";
+import { PublicError } from "../src/security/errors.js";
 
 function piTool(registry: ToolRegistry) {
   return registry.toPiTools(task())[0]!;
@@ -30,4 +31,9 @@ test("ToolRegistry maps unknown implementation failures to a non-leaking generic
   assert.ok(failure instanceof Error);
   assert.equal(failure.message, "TOOL_EXECUTION_FAILED");
   assert.doesNotMatch(String(failure), /private-secret|database password/);
+});
+
+test("ToolRegistry preserves safe public error codes without exposing implementation messages", async () => {
+  const registry = new ToolRegistry([tool("observe", async () => { throw new PublicError("REQUEST_TIMEOUT", "upstream secret detail", 504); })]);
+  await assert.rejects(piTool(registry).execute("call", {}), error => error instanceof Error && error.message === "REQUEST_TIMEOUT" && !String(error).includes("secret"));
 });
