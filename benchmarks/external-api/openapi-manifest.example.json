@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "a-pidoc.external-openapi-manifest/v1",
+  "corpus": {
+    "name": "APIs.guru bounded example",
+    "source": "https://api.apis.guru/v2/list.json",
+    "version": "catalog-snapshot-2026-09-21",
+    "retrievedAt": "2026-09-21T00:00:00+00:00"
+  },
+  "entries": [
+    {
+      "sourceId": "1forge.com-0.0.1",
+      "documentUrl": "https://api.apis.guru/v2/specs/1forge.com/0.0.1/swagger.json",
+      "sourceRepository": "https://github.com/APIs-guru/openapi-directory",
+      "openApiMajor": 2,
+      "domain": "financial",
+      "preferredVersion": "0.0.1",
+      "retrievedAt": "2026-09-21T00:00:00+00:00",
+      "sha256": "fb1f64450ecb41864d7465a9eb1b5387eb05644f52189f1af527c8d002245f4e",
+      "bytes": 2052,
+      "license": {
+        "spdx": "NOASSERTION",
+        "termsUrl": "https://github.com/APIs-guru/openapi-directory"
+      },
+      "permissions": { "parse": true, "localExecution": false },
+      "expectedPolicy": "supported"
+    }
+  ]
+}

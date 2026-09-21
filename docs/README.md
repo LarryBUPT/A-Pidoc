@@ -20,6 +20,7 @@
 
 - [验证指南](verification.md)
 - [数据集与对抗评测](evaluation-datasets.md)
+- [外部 API 基准与真实模型评测](guides/external-api-benchmark.md)
 - [贡献指南](../CONTRIBUTING.md)
 
 ## 实现说明与设计资料

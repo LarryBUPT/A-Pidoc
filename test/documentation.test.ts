@@ -9,6 +9,7 @@ const publicMarkdown = [
   "docs/README.md",
   "docs/guides/getting-started.md",
   "docs/guides/model-setup.md",
+  "docs/guides/external-api-benchmark.md",
   "examples/README.md",
   "docs/architecture.md",
   "docs/build-log.md",
@@ -41,4 +42,21 @@ test("public docs expose the complete V3 and V4 verification entry points", asyn
     assert.match(guide, new RegExp(command));
   }
   assert.doesNotMatch(readme, /Axios\/自定义客户端/);
+});
+
+test("external benchmark docs distinguish runnable assets from live evidence", async () => {
+  const assetGuide = await readFile(resolve("benchmarks/external-api/README.md"), "utf8");
+  const productGuide = await readFile(resolve("docs/guides/external-api-benchmark.md"), "utf8");
+  const verification = await readFile(resolve("docs/verification.md"), "utf8");
+
+  for (const document of [assetGuide, productGuide]) {
+    assert.match(document, /Directus[\s\S]*Hurl[\s\S]*Schemathesis[\s\S]*(?:未执行|尚未执行)/);
+    assert.doesNotMatch(document, /--network host/);
+  }
+  assert.match(assetGuide, /--allow-host api\.apis\.guru/);
+  for (const chain of ["01-identity-read.hurl", "02-orders-crud.hurl", "03-invalid-token.hurl"]) {
+    assert.match(assetGuide, new RegExp(chain.replace(".", "\\.")));
+  }
+  assert.match(assetGuide, /--secret invalid_token=/);
+  assert.match(verification, /benchmark:probe[\s\S]*--allow-host/);
 });
