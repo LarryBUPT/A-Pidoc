@@ -31,7 +31,10 @@
     "demo:reliability": "npm run build --silent && node scripts/reliability-demo.mjs",
     "eval:reliability": "npm run build --silent && node scripts/reliability-eval.mjs",
     "eval:reliability:live": "npm run build --silent && node --env-file=.env scripts/reliability-live.mjs",
-    "eval:performance": "npm run build --silent && node scripts/performance-eval.mjs"
+    "eval:performance": "npm run build --silent && node scripts/performance-eval.mjs",
+    "benchmark:probe": "npm run build --silent && node dist/src/benchmark/cli.js probe",
+    "benchmark:receipt": "npm run build --silent && node dist/src/benchmark/cli.js receipt",
+    "eval:external": "npm run build --silent && node dist/src/benchmark/cli.js eval"
   },
   "engines": {
     "node": ">=22.19.0"

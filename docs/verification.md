@@ -58,6 +58,8 @@ git diff --exit-code
 
 `npm run eval:business` 是更完整的 V1 业务评测，但目前不是 required CI。它运行 26 个 loopback HTTP 案例，不调用公网模型；主动停止的危险或不可证明场景属于正确结果。
 
+`npm run benchmark:probe -- --manifest <file> --allow-host <document-host>` 与 `npm run eval:external -- ...` 是可选的外部基准入口，不属于 required CI。前者只从操作方显式允许的主机下载并解析锁定 OpenAPI 文档，不调用其生产 operation；后者要求显式本地 Host/Port 白名单与物理分离的 case/oracle。当前只有 APIs.guru 样本探针实跑；Directus/Hurl/Schemathesis live 尚未执行，不能据配置文件宣称真实产品闭环通过。固定资产及证据解释见[外部 API 基准指南](guides/external-api-benchmark.md)。
+
 Business / Agentic 可显式使用 `--dataset file.json`，默认仍运行上述固定输入。严格 JSON 契约、外部示例、三类对抗证据及复现命令见 [数据集与对抗评测](evaluation-datasets.md)。仅对抗数据没有正常任务成功率分母，不能将安全门禁拒绝解读为任务能力提升。
 
 ## 2. V0/V1：单请求诊断

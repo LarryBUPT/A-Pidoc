@@ -1,0 +1,39 @@
+name: a-pidoc-external-benchmark
+
+services:
+  directus:
+    image: directus/directus@sha256:4d4ba1596b3cae218a3fc8f5f2a55f2ac9eec93eb3fda68b2c51fe6b18d20040
+    restart: "no"
+    ports:
+      - target: 8055
+        published: "${A_PIDOC_DIRECTUS_PORT:-18055}"
+        host_ip: 127.0.0.1
+        protocol: tcp
+    environment:
+      SECRET: "${A_PIDOC_DIRECTUS_SECRET:?set a one-time secret}"
+      ADMIN_EMAIL: "${A_PIDOC_DIRECTUS_ADMIN_EMAIL:?set a one-time admin email}"
+      ADMIN_PASSWORD: "${A_PIDOC_DIRECTUS_ADMIN_PASSWORD:?set a one-time admin password}"
+      ADMIN_TOKEN: "${A_PIDOC_DIRECTUS_ADMIN_TOKEN:?set a one-time admin token}"
+      DB_CLIENT: sqlite3
+      DB_FILENAME: /directus/database/data.db
+      TELEMETRY: "false"
+      PUBLIC_URL: "http://127.0.0.1:${A_PIDOC_DIRECTUS_PORT:-18055}"
+    tmpfs:
+      - /directus/database:size=128m,uid=1000,gid=1000
+      - /directus/uploads:size=64m,uid=1000,gid=1000
+    networks: [benchmark]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8055/server/health').then(r=>{if(!r.ok)process.exit(1)})"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+      start_period: 10s
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 512m
+    cpus: 1.0
+    pids_limit: 256
+
+networks:
+  benchmark:
+    internal: true
