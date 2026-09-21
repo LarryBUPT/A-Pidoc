@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.22.0](https://github.com/LarryBUPT/A-Pidoc/compare/v0.21.0...v0.22.0) (2026-09-21)
+
+
+### Features
+
+* add bounded external API benchmark ([#96](https://github.com/LarryBUPT/A-Pidoc/issues/96)) ([d7ae02f](https://github.com/LarryBUPT/A-Pidoc/commit/d7ae02f7e7dec0c0b5ca33134278abeb1ff43c08)), closes [#95](https://github.com/LarryBUPT/A-Pidoc/issues/95)
+
 ## [0.21.0](https://github.com/LarryBUPT/A-Pidoc/compare/v0.20.0...v0.21.0) (2026-09-20)
 
 
