@@ -1,37 +1,37 @@
 {
   "schemaVersion": 1,
-  "round": "round-06",
+  "round": "round-07",
   "pr": null,
-  "branch": "codex/real-api-benchmark",
-  "baseline": "50a007c95ed2704ee74fe42ad3cb4a8089aa87ce",
-  "head": "50a007c95ed2704ee74fe42ad3cb4a8089aa87ce",
+  "branch": "codex/80-audit-metadata-v2",
+  "baseline": "146d846e3ca297d9d663bcae872bb0f23ac49ff7",
+  "head": "146d846e3ca297d9d663bcae872bb0f23ac49ff7",
   "reviewerTool": "Claude Code",
   "reviewerModel": "deepseek-flash[1m]",
-  "developerTool": "Codex",
+  "developerTool": null,
   "auditStatus": "completed",
   "review": {
-    "total": 9,
-    "confirmed": 8,
-    "partiallyConfirmed": 1,
+    "total": 0,
+    "confirmed": 0,
+    "partiallyConfirmed": 0,
     "rejected": 0,
     "insufficientEvidence": 0
   },
   "remediation": {
-    "accepted": 6,
-    "partiallyAccepted": 1,
+    "accepted": 0,
+    "partiallyAccepted": 0,
     "rejected": 0,
-    "deferred": 2
+    "deferred": 0
   },
   "verification": {
-    "verifiedFixed": 7,
+    "verifiedFixed": 0,
     "partiallyFixed": 0,
     "notFixed": 0,
     "notReproducible": 0,
     "unableToVerify": 0,
     "regressionIntroduced": 0,
     "verifiedRejected": 0,
-    "verifiedDeferred": 2
+    "verifiedDeferred": 0
   },
   "blockingUnresolved": 0,
-  "remediationRounds": 1
+  "remediationRounds": 0
 }
