@@ -15,3 +15,15 @@
 ## 未修复编号
 
 待填写原因及需要的人工决定。不得覆盖原始问题鉴定。
+
+机器块中的 `attempt` 为本次修复轮次（1 或 2）；每项处置只可为 `ACCEPTED`、`PARTIALLY_ACCEPTED`、`REJECTED` 或 `DEFERRED`。延期项必须说明原因、残留风险与是否阻断审计结论。
+
+```audit-json
+{
+  "schemaVersion": 1,
+  "round": "round-01",
+  "complete": false,
+  "attempt": 1,
+  "findings": []
+}
+```

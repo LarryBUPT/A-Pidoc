@@ -15,3 +15,15 @@
 ## 本轮结论
 
 待填写通过、未通过与无法验证的编号，及下一步负责人。
+
+机器块覆盖全部原 finding。`retryable` 只适用于明确且可安全再次处理的残余缺陷；正确拒绝或延期不计为修复成功。
+
+```audit-json
+{
+  "schemaVersion": 1,
+  "round": "round-01",
+  "complete": false,
+  "attempt": 1,
+  "findings": []
+}
+```

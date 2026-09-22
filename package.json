@@ -34,7 +34,16 @@
     "eval:performance": "npm run build --silent && node scripts/performance-eval.mjs",
     "benchmark:probe": "npm run build --silent && node dist/src/benchmark/cli.js probe",
     "benchmark:receipt": "npm run build --silent && node dist/src/benchmark/cli.js receipt",
-    "eval:external": "npm run build --silent && node dist/src/benchmark/cli.js eval"
+    "eval:external": "npm run build --silent && node dist/src/benchmark/cli.js eval",
+    "test:audit": "node --test --test-concurrency=1 test/audit-workflow.test.mjs",
+    "audit:prepare": "node scripts/audit-workflow.mjs prepare",
+    "audit:advance": "node scripts/audit-workflow.mjs advance",
+    "audit:status": "node scripts/audit-workflow.mjs status",
+    "audit:stop": "node scripts/audit-workflow.mjs stop",
+    "audit:archive": "node scripts/audit-workflow.mjs archive",
+    "audit:summary": "node scripts/review-summary.mjs",
+    "audit:validate": "node scripts/validate-review-summary.mjs",
+    "review:metrics": "node scripts/review-summary.mjs --metrics"
   },
   "engines": {
     "node": ">=22.19.0"
