@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.23.0](https://github.com/LarryBUPT/A-Pidoc/compare/v0.22.0...v0.23.0) (2026-09-22)
+
+
+### Features
+
+* add local audit metadata workflow for issue 80 ([#100](https://github.com/LarryBUPT/A-Pidoc/issues/100)) ([5fed722](https://github.com/LarryBUPT/A-Pidoc/commit/5fed722062c754dfb8803d18cbf1f69d11aa0b5b))
+
 ## [0.22.0](https://github.com/LarryBUPT/A-Pidoc/compare/v0.21.0...v0.22.0) (2026-09-21)
 
 
