@@ -7,7 +7,13 @@
       "Bash(git status --short)",
       "Bash(git rev-parse HEAD)",
       "Bash(git diff --name-only)",
-      "Bash(git diff --stat)"
+      "Bash(git diff --stat)",
+      "Bash(npm run audit:status)",
+      "Bash(npm run audit:advance)",
+      "Bash(npm run audit:stop -- --reason agent_unavailable)",
+      "Bash(npm run build)",
+      "Bash(npm run test:unit)",
+      "Bash(npm run eval:harness)"
     ],
     "deny": [
       "Read(/.env)",

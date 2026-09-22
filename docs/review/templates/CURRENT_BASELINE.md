@@ -10,8 +10,23 @@
 - 工具 / 实际模型：待填写
 - 可执行验证、联网与修改授权范围：待填写
 
-| 编号 | 原文断言与来源 | 待核实证据 | 范围边界 | 人工决定 |
+| 编号 | 原文断言与来源 | 待核实证据 | 范围边界 | 需延期的取舍 |
 | --- | --- | --- | --- | --- |
 | 待填写 | 待填写 | 待填写 | 待填写 | 待判断 |
 
 未列入的问题不纳入本轮。未经实际核对，不把占位内容视为事实。
+
+下面的机器块由 `audit:prepare` 写入真实轮次、完整提交 SHA 和显式选定的主题。准备者须先补齐正文中的主题来源、断言与边界；脚本不从占位文字推测范围。
+
+```audit-json
+{
+  "schemaVersion": 1,
+  "round": "round-01",
+  "pr": null,
+  "branch": "codex/issue-topic",
+  "baseline": "<full-baseline-sha>",
+  "head": "<full-head-sha>",
+  "topics": ["AUDIT-001"],
+  "maxRemediationRounds": 2
+}
+```

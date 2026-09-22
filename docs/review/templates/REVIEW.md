@@ -14,4 +14,17 @@
 
 ## 交接结论
 
-待填写获准修复编号及成立部分。其余编号说明原因；不增加新问题。
+待填写已确认且在当轮授权范围内可处理的编号及成立部分。其余编号说明原因；不增加新问题。
+
+机器块只登记本轮 finding 分类与结论；正文仍需逐项给出依据。`autoFixable` 仅表示在已授权范围内可安全处理，不构成产品修改授权。
+
+```audit-json
+{
+  "schemaVersion": 1,
+  "round": "round-01",
+  "complete": false,
+  "reviewerTool": "Claude Code",
+  "reviewerModel": null,
+  "findings": []
+}
+```
