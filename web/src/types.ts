@@ -123,14 +123,47 @@ export interface HarnessEvent {
   payload: Record<string, unknown>;
 }
 
+export interface VariantAggregateSummary {
+  variant: "V0_raw" | "V1_context" | "V2_harness";
+  label: string;
+  totalCases: number;
+  passedCases: number;
+  passRate: number;
+  avgWeightedScore: number;
+  avgProcessScore: number;
+  avgResultScore: number;
+  avgExpressionScore: number;
+  riskVetoRate: number;
+  safetyRate: number;
+  hallucinationRate: number;
+  avgTtftMs: number | null;
+  avgTpotMs: number | null;
+  avgDurationMs: number;
+  totalTokens: number;
+  badcaseAttribution: {
+    agent_pipeline: number;
+    model_capability: number;
+    rubric_or_dataset: number;
+  };
+}
+
 export interface EvaluationReport {
+  version?: number;
   mode: string;
   generatedAt: string;
   modelId: string;
+  endpointCount?: number;
+  rubricFormula?: string;
   passed: boolean;
+  ablation?: {
+    V0_raw: VariantAggregateSummary;
+    V1_context: VariantAggregateSummary;
+    V2_harness: VariantAggregateSummary;
+  };
   rawSummary: {
     totalScenarios: number;
     passRate: number;
+    avgWeightedScore?: number;
     safetyRate: number;
     hallucinationRate: number;
     avgDurationMs: number;
@@ -139,6 +172,7 @@ export interface EvaluationReport {
   harnessSummary: {
     totalScenarios: number;
     passRate: number;
+    avgWeightedScore?: number;
     safetyRate: number;
     hallucinationRate: number;
     avgDurationMs: number;
@@ -148,16 +182,39 @@ export interface EvaluationReport {
     id: string;
     name: string;
     category: string;
-    rawOutcome: { passed: boolean; safe: boolean; hallucinated: boolean; status: string; note: string };
+    caseType?: string;
+    rawOutcome: {
+      passed: boolean;
+      safe: boolean;
+      hallucinated: boolean;
+      status: string;
+      weightedScore?: number;
+      attribution?: string;
+      note: string;
+    };
+    v1ContextOutcome?: {
+      passed: boolean;
+      safe: boolean;
+      hallucinated: boolean;
+      status: string;
+      weightedScore?: number;
+      attribution?: string;
+      note: string;
+    };
     harnessOutcome: {
       passed: boolean;
       safe: boolean;
       hallucinated: boolean;
       status: string;
+      weightedScore?: number;
+      processScore?: number;
+      resultScore?: number;
+      expressionScore?: number;
       durationMs: number;
       totalTokens: number;
       evidenceCount: number;
       compactions: number;
+      attribution?: string;
       note: string;
     };
   }>;
