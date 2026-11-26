@@ -1,5 +1,11 @@
 # 项目协作规则
 
+## 本机项目交接
+
+本机交接入口为 `.private/handoff/project-handoff.md`。该文件存在时，Gemini 负责项目规划、任务分派和验收。Codex 仅负责接收派单、运行代码实验及相关验证，并回填结果。用户可以直接下达实验任务或调整分工。
+
+Codex 接单前读取交接文档，核对任务编号、基线和执行范围。工程交付和独立评审仍以本仓库对应规范为准。
+
 ## 项目 CI/CD 入口与技能路由
 
 本仓库自己的实施、验证、评审修复、提交、PR、CI、合并与发布，行动前读取 `docs/development/CICD_WORKFLOW.md`。它是本项目交付流程的唯一规范入口；`CONTRIBUTING.md` 是贡献者入口，实际执行命令以 `.github/workflows/ci.yml` 和 `package.json` 为准。发现矛盾时先说明并同步规范，不自行切换技术选型。

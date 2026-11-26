@@ -31,45 +31,30 @@ jobs:
           node-version: 22
           cache: npm
 
-      - name: Install locked dependencies
+      - name: Install backend dependencies
         run: npm ci --registry=https://registry.npmjs.org
 
-      - name: Audit production dependencies
+      - name: Install frontend dependencies
+        run: npm --prefix web ci --registry=https://registry.npmjs.org
+
+      - name: Audit backend production dependencies
         run: npm audit --omit=dev --audit-level=high --registry=https://registry.npmjs.org
 
-      - name: Compile TypeScript
+      - name: Build backend TypeScript
         run: npm run build
 
-      - name: Run unit tests and offline Pi Tier A stability eval
-        run: npm run eval:tier-a
+      - name: Build Vue 3 workbench
+        run: npm run build:web
 
-      - name: Run frozen repository repair evaluation
-        run: npm run eval:repository
+      - name: Run unit tests
+        run: npm run test:unit
 
-      - name: Run frozen contract migration evaluation
-        run: npm run eval:contract
+      - name: Run offline Raw vs Harness evaluation benchmark
+        run: npm run eval:offline
 
-      - name: Run frozen team collaboration evaluation
-        run: npm run eval:collaboration
-
-      - name: Run three offline low-level Harness contract evaluations
-        run: npm run eval:harness
-
-      - name: Run matched offline Raw Pi and Harness-Pi comparison
-        run: npm run eval:agentic
-
-      - name: Run three V5 scheduled reliability and worker recovery evaluations
-        run: npm run eval:reliability
-
-      - name: Compare bounded independent probes with identical HTTP and storage load
-        run: npm run eval:performance
-
-      - name: Verify generated output is reproducible after all evaluations
+      - name: Verify working tree cleanliness after build and eval
         run: git diff --exit-code
 
-      # workflow_dispatch check suites are not associated with an open PR.
-      # Publish the same context as a commit status after every check succeeds
-      # so repository rules can recognize explicitly dispatched release PR CI.
       - name: Publish required status for dispatched CI
         if: github.event_name == 'workflow_dispatch'
         env:
