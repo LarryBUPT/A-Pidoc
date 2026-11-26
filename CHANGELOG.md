@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/LarryBUPT/A-Pidoc/compare/v1.0.0...v1.1.0) (2026-11-26)
+
+
+### Features
+
+* add 4-dimension Rubrics, 32-endpoint benchmark, and 3-way ablation eval suite ([#106](https://github.com/LarryBUPT/A-Pidoc/issues/106)) ([c202dfa](https://github.com/LarryBUPT/A-Pidoc/commit/c202dfa1613ebe869640c355b34c942527a022a7)), closes [#105](https://github.com/LarryBUPT/A-Pidoc/issues/105)
+
 ## [1.0.0](https://github.com/LarryBUPT/A-Pidoc/compare/v0.23.0...v1.0.0) (2026-11-26)
 
 
