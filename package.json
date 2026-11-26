@@ -1,6 +1,6 @@
 {
   "name": "a-pidoc",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "type": "module",
   "description": "A Pi-powered full-stack Agent Harness for API debugging, contract migration, and trace evaluation.",
