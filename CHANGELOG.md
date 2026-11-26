@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.0.0](https://github.com/LarryBUPT/A-Pidoc/compare/v0.23.0...v1.0.0) (2026-11-26)
+
+
+### ⚠ BREAKING CHANGES
+
+* replaces legacy V0-V4 CLI subcommands and internal APIs with the v2 full-stack Pi Agent Harness architecture (serve/run/mcp/eval).
+
+### Features
+
+* rebuild A-Pidoc as full-stack Pi Agent Harness architecture ([#103](https://github.com/LarryBUPT/A-Pidoc/issues/103)) ([f0bb66c](https://github.com/LarryBUPT/A-Pidoc/commit/f0bb66c7a21e8191c47ea1591424672ac7964ed7)), closes [#102](https://github.com/LarryBUPT/A-Pidoc/issues/102)
+
 ## [0.23.0](https://github.com/LarryBUPT/A-Pidoc/compare/v0.22.0...v0.23.0) (2026-09-22)
 
 
