@@ -124,7 +124,7 @@ test("Multi-Agent specialist delegation runs in isolated read-only context and r
     assert.ok(snapshot.evidence.some((item) => item.kind === "specialist_brief"));
     assert.ok(snapshot.evidence.some((item) => item.kind === "openapi_search"));
   } finally {
-    await rm(tempRoot, { recursive: true, force: true });
+    await rm(tempRoot, { recursive: true, force: true, maxRetries: 5, retryDelay: 25 });
   }
 });
 
@@ -168,6 +168,6 @@ test("MCP server exposes controlled OpenAPI search and verifiable evidence readi
 
     await client.close();
   } finally {
-    await rm(tempRoot, { recursive: true, force: true });
+    await rm(tempRoot, { recursive: true, force: true, maxRetries: 5, retryDelay: 25 });
   }
 });
